@@ -18,7 +18,7 @@ libOpenIPMIcmdlang_la_LIBADD = -lm \
 	$(top_builddir)/utils/libOpenIPMIutils.la \
 	$(top_builddir)/lib/libOpenIPMI.la
 libOpenIPMIcmdlang_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION) \
-	-L$(libdir) -no-undefined
+	-no-undefined
 
 bin_PROGRAMS = openipmish
 
