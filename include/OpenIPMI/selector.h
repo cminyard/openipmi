@@ -212,6 +212,13 @@ void ipmi_sel_set_read_fds_handler(struct selector_s          *sel,
 int sel_alloc_selector(os_handler_t *os_hnd, struct selector_s **new_selector)
   IPMI_FUNC_DEPRECATED;
 
+/*
+ * If you fork and expect to use the selector in the forked process,
+ * you *must* call this function in the forked process or you may
+ * get strange results.
+ */
+int sel_setup_forked_process(struct selector_s *sel);
+
 #ifdef __cplusplus
 }
 #endif
