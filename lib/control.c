@@ -431,8 +431,7 @@ control_final_destroy(ipmi_control_t *control)
     if (control->waitq)
 	opq_destroy(control->waitq);
 
-    if (control->entity)
-	ipmi_entity_remove_control(control->entity, control);
+    ipmi_entity_remove_control(control->entity, control);
 
     if (control->oem_info_cleanup_handler)
 	control->oem_info_cleanup_handler(control, control->oem_info);

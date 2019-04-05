@@ -1040,8 +1040,7 @@ sensor_final_destroy(ipmi_sensor_t *sensor)
     if (sensor->handler_list_cl)
 	locked_list_destroy(sensor->handler_list_cl);
 
-    if (sensor->entity)
-	ipmi_entity_remove_sensor(sensor->entity, sensor);
+    ipmi_entity_remove_sensor(sensor->entity, sensor);
 
     if (sensor->oem_info_cleanup_handler)
 	sensor->oem_info_cleanup_handler(sensor, sensor->oem_info);
