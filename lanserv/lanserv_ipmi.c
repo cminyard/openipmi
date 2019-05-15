@@ -2638,7 +2638,7 @@ handle_rakp1_payload(lanserv_data_t *lan, msg_t *msg)
     if (!user) {
 	lan->sysinfo->log(lan->sysinfo, NEW_SESSION_FAILED, msg,
 		 "RAKP msg: invalid user: %s", username);
-	err = IPMI_RMCPP_ILLEGAL_PARAMETER;
+	err = IPMI_RMCPP_UNAUTHORIZED_NAME;
 	goto out_err;
     }
 
