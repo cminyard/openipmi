@@ -114,7 +114,7 @@ LOCKFILE=/var/lock/subsys/ipmi
 DEV_IPMI_TIMEOUT=15
 
 UDEV_EXISTS=0
-if [ -e /sbin/udev -o -e /sbin/udevd ]; then
+if [ -e /sbin/udev -o -e /sbin/udevd -o -e /bin/udevadm ]; then
     UDEV_EXISTS=1
 fi
 
