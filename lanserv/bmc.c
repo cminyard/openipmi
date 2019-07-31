@@ -613,6 +613,9 @@ ipmi_mc_enable(lmc_data_t *mc)
 	    err = sys->lan_channel_init(sys->info, chan);
 	else if (chan->medium_type == IPMI_CHANNEL_MEDIUM_RS232)
 	    err = sys->ser_channel_init(sys->info, chan);
+	else if ((chan->medium_type == IPMI_CHANNEL_MEDIUM_IPMB) &&
+		((chan->channel_num != 0) || (chan->prim_ipmb_in_cfg_file)))
+	    err = sys->ipmb_channel_init(sys->info, chan);
 	else 
 	    chan_init(chan);
 	if (err) {
@@ -802,6 +805,7 @@ ipmi_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
     mc->ipmb_channel.protocol_type = IPMI_CHANNEL_PROTOCOL_IPMB;
     mc->ipmb_channel.session_support = IPMI_CHANNEL_SESSION_LESS;
     mc->ipmb_channel.active_sessions = 0;
+    mc->ipmb_channel.prim_ipmb_in_cfg_file = 0;
     mc->channels[0] = &mc->ipmb_channel;
     mc->channels[0]->log = sys->clog;
 

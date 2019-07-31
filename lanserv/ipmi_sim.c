@@ -90,6 +90,7 @@
 #include <OpenIPMI/serv.h>
 #include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/serserv.h>
+#include <OpenIPMI/ipmbserv.h>
 
 #include "emu.h"
 #include <OpenIPMI/persist.h>
@@ -565,6 +566,100 @@ ser_channel_init(void *info, channel_t *chan)
 	isim_add_fd(fd);
 
     return err;
+}
+
+static int
+ipmb_open(char *ipmi_dev)
+{
+    int ipmi_fd;
+
+    if (!ipmi_dev) {
+	fprintf(stderr, "ipmi_dev is not specified\n");
+	return -1;
+    }
+
+    ipmi_fd = open(ipmi_dev, O_RDWR);
+    if (ipmi_fd == -1)
+        fprintf(stderr, "Could not open ipmi device\n");
+
+    return ipmi_fd;
+}
+
+static void
+ipmb_data_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
+{
+    ipmbserv_data_t *ipmb = cb_data;
+    unsigned int  len;
+    unsigned char msgd[256];
+
+    len = read(fd, msgd, sizeof(msgd));
+
+    if (ipmb->sysinfo->debug & DEBUG_MSG)
+        printf(">ipmb_data_ready size %d\n", len);
+    if (len <= 0) {
+        if ((len < 0) && (errno == EINTR))
+            return;
+
+        ipmb->os_hnd->remove_fd_to_wait_for(ipmb->os_hnd, id);
+        close(fd);
+        ipmb->fd = -1;
+        return;
+    }
+
+    ipmbserv_handle_data(ipmb, msgd, len);
+}
+
+static void
+ipmb_send(ipmbserv_data_t *ipmb, unsigned char *data, unsigned int data_len)
+{
+    int rv;
+
+    if (ipmb->fd == -1)
+	/* Not connected */
+	return;
+
+    rv = write(ipmb->fd, data, data_len);
+    if (rv) {
+	/* FIXME - log an error. */
+    }
+}
+
+static int
+ipmb_channel_init(void *info, channel_t *chan)
+{
+    misc_data_t *data = info;
+    ipmbserv_data_t *ipmb = chan->chan_info;
+    int err;
+    os_hnd_fd_id_t *fd_id;
+
+    ipmb->os_hnd = data->os_hnd;
+    ipmb->user_info = data;
+    ipmb->send_out = ipmb_send;
+
+    err = ipmbserv_init(ipmb);
+    if (err) {
+        fprintf(stderr, "Unable to init ipmb: 0x%x\n", err);
+        exit(1);
+    }
+
+    ipmb->fd = ipmb_open(ipmb->ipmbdev);
+    if (ipmb->fd == -1){
+        fprintf(stderr, "Unable to open ipmi device file: 0x%x\n", err);
+        exit(1);
+    }
+
+    err = data->os_hnd->add_fd_to_wait_for(data->os_hnd, ipmb->fd,
+                                            ipmb_data_ready, ipmb,
+                                            NULL, &fd_id);
+    if (err) {
+	close(ipmb->fd);
+	ipmb->fd = -1;
+	fprintf(stderr, "Unable to open ipmi device file: 0x%x\n", err);
+	exit(1);
+    }
+
+    isim_add_fd(ipmb->fd);
+    return 0;
 }
 
 static void
@@ -1438,6 +1533,7 @@ main(int argc, const char *argv[])
     sysinfo.cfree = ifree;
     sysinfo.lan_channel_init = lan_channel_init;
     sysinfo.ser_channel_init = ser_channel_init;
+    sysinfo.ipmb_channel_init = ipmb_channel_init;
     data.sys = &sysinfo;
 
     err = pipe(sigpipeh);

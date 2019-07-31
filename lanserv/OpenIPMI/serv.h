@@ -219,6 +219,9 @@ struct channel_s
      */
     int (*oem_intf_recv_handler)(channel_t *chan, msg_t *msg,
 				 unsigned char *rdata, unsigned int *rdata_len);
+
+    /* Set to 1 if ipmb channel 0 is listed in the config file, 0 otherwise */
+    int prim_ipmb_in_cfg_file;
 };
 
 struct user_s
@@ -408,6 +411,7 @@ struct sys_data_s {
     void (*cfree)(channel_t *chan, void *data);
     int (*lan_channel_init)(void *info, channel_t *chan);
     int (*ser_channel_init)(void *info, channel_t *chan);
+    int (*ipmb_channel_init)(void *info, channel_t *chan);
 };
 
 static inline void

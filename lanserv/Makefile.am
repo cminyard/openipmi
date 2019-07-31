@@ -34,7 +34,7 @@ noinst_HEADERS = emu.h bmc.h
 
 libIPMIlanserv_la_SOURCES = lanserv_ipmi.c lanserv_asf.c priv_table.c \
 	lanserv_oem_force.c lanserv_config.c config.c serv.c serial_ipmi.c \
-	persist.c extcmd.c
+	persist.c extcmd.c ipmb_ipmi.c
 libIPMIlanserv_la_LIBADD = $(OPENSSLLIBS) -ldl $(RT_LIB)
 libIPMIlanserv_la_LDFLAGS = -version-info $(LD_VERSION) \
 	../utils/libOpenIPMIutils.la

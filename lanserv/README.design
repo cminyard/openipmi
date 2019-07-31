@@ -31,6 +31,8 @@ msg.h - This defines an IPMI message that is passed around, and a few
 
 serserv.h - The configuration of a serial interface.
 
+ipmbserv.h - The configuration of an IPMB interface.
+
 serv.h - This defines data structures used by the whole system.
 
 
@@ -76,6 +78,8 @@ emu.h - Defines the interface between bmc_xxx.c and emu_cmd.c
 
 extcmd.c - Code for running the external command for dealing with LAN
 	configuration.
+
+ipmb_ipmi.c - An implementation of the IPMB protocol.
 
 ipmi_sim.c - The main file for the ipmi_sim program.
 
