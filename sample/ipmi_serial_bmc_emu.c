@@ -42,7 +42,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/select.h>
-#include <editline/readline.h>
+#include <readline/readline.h>
 
 #define _GNU_SOURCE
 #include <getopt.h>
