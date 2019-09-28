@@ -637,7 +637,7 @@ static struct sdr_field type2[] =
       .strvals = modifier_unit_fields },
     { "percentage",		SDR_BOOLBIT,	21, 0, 1 },
     { "base_unit",		SDR_BITS,	22, 0, 8 },
-    { "modifier_unit",		SDR_BITS,	23, 0, 8 },
+    { "modifier_unit_code",	SDR_BITS,	23, 0, 8 },
     { "sensor_direction",	SDR_BITS,	24, 6, 2,
       .strvals = sensor_direction_fields },
     { "id_string_modifier",	SDR_BITS,	24, 4, 2,
