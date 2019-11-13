@@ -261,7 +261,7 @@ ipmi_emu_register_cmd_handler(unsigned char netfn, unsigned char cmd,
 {
     unsigned int ni = netfn >> 1;
 
-    if (netfn >= 32)
+    if (ni >= 32)
 	return EINVAL;
 
     if (!netfn_handlers[ni].handlers) {
