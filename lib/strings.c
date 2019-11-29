@@ -1291,7 +1291,7 @@ ipmi_get_error_string(unsigned int err,
 	err_type = "IPMI: ";
     } else if (IPMI_IS_RMCPP_ERR(err)) {
 	int rmcpp_err = IPMI_GET_RMCPP_ERR(err);
-	if ((rmcpp_err <= 0) && (rmcpp_err > 0x12))
+	if ((rmcpp_err <= 0) || (rmcpp_err > 0x12))
 	    rmcpp_err = 0x13;
 	snprintf(buffer+7, buf_len-7, "%s (0x%02x)",
 		 rmcpp_error_codes[rmcpp_err - 1],
@@ -1329,7 +1329,7 @@ int ipmi_get_error_string_len(unsigned int err)
 	return ipmi_get_cc_string_len(IPMI_GET_IPMI_ERR(err)) + 7;
     } else if (IPMI_IS_RMCPP_ERR(err)) {
 	int rmcpp_err = IPMI_GET_RMCPP_ERR(err);
-	if ((rmcpp_err <= 0) && (rmcpp_err > 0x12))
+	if ((rmcpp_err <= 0) || (rmcpp_err > 0x12))
 	    rmcpp_err = 0x13;
 	return strlen(rmcpp_error_codes[rmcpp_err - 1]) + 15;
     } else if (IPMI_IS_SOL_ERR(err)) {
