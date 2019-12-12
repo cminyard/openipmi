@@ -1,5 +1,5 @@
 OPENIPMI_PKG_NAME=OpenIPMI
-AC_INIT([OpenIPMI], [2.0.27], [minyard@acm.org], [OpenIPMI])
+AC_INIT([OpenIPMI], [2.0.28], [minyard@acm.org], [OpenIPMI])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_HEADER([config.h])
