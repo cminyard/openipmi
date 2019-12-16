@@ -51,6 +51,7 @@
 #include <OpenIPMI/ipmi_cmdlang.h>
 #include <OpenIPMI/ipmi_debug.h>
 #include <readline/readline.h>
+#include <readline/history.h>
 
 #ifdef HAVE_GLIB
 #include <glib.h>

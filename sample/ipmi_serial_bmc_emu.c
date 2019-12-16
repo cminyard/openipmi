@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include <sys/select.h>
 #include <readline/readline.h>
+#include <readline/history.h>
 
 #define _GNU_SOURCE
 #include <getopt.h>
