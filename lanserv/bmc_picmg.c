@@ -1062,10 +1062,18 @@ handle_picmg_cmd_get_shelf_manager_ip_addresses(lmc_data_t    *mc,
     *rdata_len = 10 + ap->addr_len;
 }
 
+void handle_picmg_msg(lmc_data_t    *mc,
+		      msg_t         *msg,
+		      unsigned char *rdata,
+		      unsigned int  *rdata_len,
+		      void          *cb_data);
+
 int
 ipmi_emu_atca_enable(emu_data_t *emu)
 {
     emu->atca_mode = 1;
+    ipmi_emu_register_group_extension_handler(IPMI_PICMG_GRP_EXT,
+					      handle_picmg_msg, NULL);
     return 0;
 }
 
@@ -1089,7 +1097,8 @@ void
 handle_picmg_msg(lmc_data_t    *mc,
 		 msg_t         *msg,
 		 unsigned char *rdata,
-		 unsigned int  *rdata_len)
+		 unsigned int  *rdata_len,
+		 void          *cb_data)
 {
     switch(msg->cmd) {
     case IPMI_PICMG_CMD_GET_PROPERTIES:

@@ -345,6 +345,13 @@ int ipmi_emu_register_oi_iana_handler(uint8_t cmd, cmd_handler_f handler,
 #define OPENIPMI_IANA_CMD_GET_HISTORY_RETURN_SIZE	2
 
 /*
+ * Registration for group extensions
+ */
+void ipmi_emu_register_group_extension_handler(uint8_t group_extension,
+					       cmd_handler_f handler,
+					       void *cb_data);
+
+/*
  * SOL handling
  */
 

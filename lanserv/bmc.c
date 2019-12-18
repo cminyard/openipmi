@@ -71,6 +71,19 @@ get_lanserv_version(void)
     return PVERSION;
 }
 
+struct {
+    cmd_handler_f handler;
+    void *cb_data;
+} group_extension_handlers[256];
+
+void
+ipmi_emu_register_group_extension_handler(uint8_t group_extension,
+					  cmd_handler_f handler, void *cb_data)
+{
+    group_extension_handlers[group_extension].handler = handler;
+    group_extension_handlers[group_extension].cb_data = cb_data;
+}
+
 static void
 handle_group_extension_netfn(lmc_data_t    *mc,
 			     msg_t         *msg,
@@ -78,21 +91,17 @@ handle_group_extension_netfn(lmc_data_t    *mc,
 			     unsigned int  *rdata_len,
 			     void          *cb_data)
 {
+    uint8_t ge;
+
     if (check_msg_length(msg, 1, rdata, rdata_len))
 	return;
 
-    switch (msg->data[0]) {
-    case IPMI_PICMG_GRP_EXT:
-	if (mc->emu->atca_mode)
-	    handle_picmg_msg(mc, msg, rdata, rdata_len);
-	else
-	    handle_invalid_cmd(mc, rdata, rdata_len);
-	break;
-
-    default:
+    ge = msg->data[0];
+    if (group_extension_handlers[ge].handler)
+	group_extension_handlers[ge].handler(mc, msg, rdata, rdata_len,
+				     group_extension_handlers[ge].cb_data);
+    else
 	handle_invalid_cmd(mc, rdata, rdata_len);
-	break;
-    }
 }
 
 static struct iana_handler_elem {

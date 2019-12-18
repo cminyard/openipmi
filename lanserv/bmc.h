@@ -425,11 +425,6 @@ extern cmd_handler_f transport_netfn_handlers[256];
 extern cmd_handler_f sensor_event_netfn_handlers[256];
 extern cmd_handler_f oem0_netfn_handlers[256];
 
-void handle_picmg_msg(lmc_data_t    *mc,
-		      msg_t         *msg,
-		      unsigned char *rdata,
-		      unsigned int  *rdata_len);
-
 #define set_bit(m, b, v) (m) = (v) ? ((m) | (1 << (b))) : ((m) & ~(1 << (b)))
 #define bit_set(m, b) (!!((m) & (1 << (b))))
 
