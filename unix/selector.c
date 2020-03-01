@@ -741,7 +741,11 @@ sel_stop_timer_with_done(sel_timer_t *timer,
     struct selector_s *sel = timer->val.sel;
 
     sel_timer_lock(sel);
-    if (timer->val.stopped || timer->val.done_handler) {
+    if (timer->val.done_handler) {
+	sel_timer_unlock(sel);
+	return EBUSY;
+    }
+    if (timer->val.stopped) {
 	sel_timer_unlock(sel);
 	return ETIMEDOUT;
     }
