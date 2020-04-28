@@ -135,7 +135,6 @@ timeout_handler(void *cb_data, os_hnd_timer_id_t *id)
     struct timeval *then = cb_data;
     struct timeval now;
     struct timeval diff;
-    int            rv;
 
     fprintf(stderr, "Timeout!\n");
     test_os_hnd->get_monotonic_time(test_os_hnd, &now);
@@ -148,8 +147,8 @@ timeout_handler(void *cb_data, os_hnd_timer_id_t *id)
 	diff.tv_sec = 0;
 	diff.tv_usec = 500000;
 	*then = now;
-	rv = test_os_hnd->start_timer(test_os_hnd, id, &diff,
-				      timeout_handler, then);
+	test_os_hnd->start_timer(test_os_hnd, id, &diff,
+				 timeout_handler, then);
     } else if (expect_timeout == 1) {
 	expect_timeout++;
 	if (diff.tv_sec != 0)
