@@ -732,8 +732,12 @@ main(int argc, char *argv[])
     /*
      * We have to daemonize before we fork or sigchld won't work.
      */
-    if (daemonize)
-	daemon(0, 0);
+    if (daemonize) {
+	if (daemon(0, 0) == -1) {
+	    perror("Call to daemonize failed");
+	    exit(1);
+	}
+    }
 
     if (execnow) {
 	int infd = newpipe(&outfile);
