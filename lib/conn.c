@@ -269,7 +269,6 @@ ipmi_conn_check_oem_handlers(ipmi_con_t               *conn,
 {
     conn_check_oem_t *check;
     int              rv;
-    unsigned int     count = 0;
 
     check = ipmi_mem_alloc(sizeof(*check));
     if (!check)
@@ -284,10 +283,6 @@ ipmi_conn_check_oem_handlers(ipmi_con_t               *conn,
     check->cb_data = cb_data;
 
     locked_list_iterate(oem_handlers, conn_handler_call, check);
-
-    ipmi_lock(check->lock);
-    count = check->count;
-    ipmi_unlock(check->lock);
 
     /* Say that this function is done with the check. */
     conn_oem_check_done(conn, check);
