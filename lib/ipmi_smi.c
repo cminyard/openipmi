@@ -1644,7 +1644,7 @@ smi_args_get_val(ipmi_args_t  *args,
 	    " would be 0.  This is an integer value.";
     if (*value) {
 	int len;
-	len = snprintf(dummy, 1, "%d", sargs->ifnum);
+	len = snprintf(dummy, 0, "%d", sargs->ifnum);
 	sval = ipmi_mem_alloc(len+1);
 	if (! sval)
 	    return ENOMEM;

@@ -678,7 +678,7 @@ isim_log(sys_data_t *sys, int logtype, msg_t *msg, const char *format,
 #define mformat " channel=%d netfn=0x%x cmd=0x%x rs_addr=0x%x rs_lun=0x%x" \
 	    " rq_addr=0x%x\n rq_lun=0x%x rq_seq=0x%x\n"
 
-	len += snprintf(&dummy, 1, mformat, msg->channel, msg->netfn,
+	len += snprintf(&dummy, 0, mformat, msg->channel, msg->netfn,
 			msg->cmd, msg->rs_addr, msg->rs_lun, msg->rq_addr,
 			msg->rq_lun, msg->rq_seq);
 	len += 3 * msg->len + 3;

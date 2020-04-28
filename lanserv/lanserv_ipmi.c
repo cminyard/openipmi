@@ -248,7 +248,7 @@ raw_send(lanserv_data_t *lan,
 			  "Raw LAN send to:");
 	for (i = 0; i < vecs; i++)
 	    len += vec[i].iov_len;
-	slen = snprintf(&dummy, 1, format);
+	slen = snprintf(&dummy, 0, format);
 	slen += len * 3 + 3;
 	str = malloc(slen);
 	if (!str)

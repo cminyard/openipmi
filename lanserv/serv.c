@@ -251,8 +251,8 @@ debug_log_raw_msg(sys_data_t *sys,
 
     gettimeofday(&tv, NULL);
     va_start(ap, format);
-    slen = vsnprintf(&dummy, 1, format, ap);
-    slen += snprintf(&dummy, 1, " %ld.%6.6ld", tv.tv_sec, tv.tv_usec);
+    slen = vsnprintf(&dummy, 0, format, ap);
+    slen += snprintf(&dummy, 0, " %ld.%6.6ld", tv.tv_sec, tv.tv_usec);
     va_end(ap);
     slen += len * 3 + 2;
     str = malloc(slen);
