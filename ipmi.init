@@ -346,7 +346,7 @@ unload_all_ipmi_modules()
 	done
         # delete interface node ONLY if ipmi_devintf is unloaded
         [ `lsmod | grep -c "ipmi_devintf"` -eq 0 ] &&
-	        rm -f "/dev/ipmi${INTF_NUM}"
+	        [ ${UDEV_EXISTS} -eq 0 ] && rm -f "/dev/ipmi${INTF_NUM}"
 }
 
 unload_ipmi_modules_leave_features()
@@ -356,7 +356,7 @@ unload_ipmi_modules_leave_features()
 	done
         # delete interface node ONLY if ipmi_devintf is unloaded
         [ `lsmod | grep -c "ipmi_devintf"` -eq 0 ] &&
-	        rm -f "/dev/ipmi${INTF_NUM}"
+	        [ ${UDEV_EXISTS} -eq 0 ] && rm -f "/dev/ipmi${INTF_NUM}"
 	lsmod | egrep -q "ipmi_(poweroff|watchdog)" > /dev/null 2>&1
 	if [ "$?" -ne "0" ]; then
 		stop_watchdog_quiet
