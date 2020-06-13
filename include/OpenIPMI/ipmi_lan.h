@@ -179,6 +179,12 @@ int ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
    unspecified, it used AF_UNSPEC. */
 #define IPMI_LANP_ADDRESS_FAMILY		13
 
+/* The timeout for normal messages, default 1000000 microseconds. */
+#define IPMI_LANP_DEFAULT_TIMEOUT		14
+
+/* The timeout for messages with side effects, default 5000000 microseconds. */
+#define IPMI_LANP_DEFAULT_SIDEEFFECT_TIMEOUT	15
+
 /*
  * Set up an IPMI LAN connection.  The boatload of parameters are:
  *

@@ -76,8 +76,8 @@ dump_hex(void *vdata, int len)
 
 /* Timeout to wait for IPMI responses, in microseconds.  For commands
    with side effects, we wait 5 seconds, not one. */
-#define LAN_RSP_TIMEOUT 1000000
-#define LAN_RSP_TIMEOUT_SIDEEFF 5000000
+#define DEFAULT_LAN_RSP_TIMEOUT 1000000
+#define DEFAULT_LAN_RSP_TIMEOUT_SIDEEFF 5000000
 
 /* # of times to try a message before we fail it. */
 #define LAN_RSP_RETRIES 6
@@ -391,6 +391,10 @@ struct lan_data_s
        larger than 63 (64 sequence numbers minus 1 for our reserved
        sequence zero. */
     unsigned int max_outstanding_msg_count;
+
+    /* Timeouts for normal messages and messages with side effects. */
+    int msg_timeout;
+    int msg_timeout_sideeff;
 
     /* Address family specified at startup. */
     unsigned int addr_family;
@@ -2464,11 +2468,11 @@ rsp_timeout_handler(void              *cb_data,
 	    rspi->data[0] = IPMI_UNKNOWN_ERR_CC;
 	} else {
 	    if (!lan->seq_table[seq].side_effects) {
-		timeout.tv_sec = LAN_RSP_TIMEOUT / 1000000;
-		timeout.tv_usec = LAN_RSP_TIMEOUT % 1000000;
+		timeout.tv_sec = lan->msg_timeout / 1000000;
+		timeout.tv_usec = lan->msg_timeout % 1000000;
 	    } else {
-		timeout.tv_sec = LAN_RSP_TIMEOUT_SIDEEFF / 1000000;
-		timeout.tv_usec = LAN_RSP_TIMEOUT_SIDEEFF % 1000000;
+		timeout.tv_sec = lan->msg_timeout_sideeff / 1000000;
+		timeout.tv_usec = lan->msg_timeout_sideeff % 1000000;
 	    }
 	    ipmi->os_hnd->start_timer(ipmi->os_hnd,
 				      id,
@@ -2730,11 +2734,11 @@ handle_msg_send(lan_timer_info_t      *info,
     }
 
     if (!side_effects) {
-	timeout.tv_sec = LAN_RSP_TIMEOUT / 1000000;
-	timeout.tv_usec = LAN_RSP_TIMEOUT % 1000000;
+	timeout.tv_sec = lan->msg_timeout / 1000000;
+	timeout.tv_usec = lan->msg_timeout % 1000000;
     } else {
-	timeout.tv_sec = LAN_RSP_TIMEOUT_SIDEEFF / 1000000;
-	timeout.tv_usec = LAN_RSP_TIMEOUT_SIDEEFF % 1000000;
+	timeout.tv_sec = lan->msg_timeout_sideeff / 1000000;
+	timeout.tv_usec = lan->msg_timeout_sideeff % 1000000;
     }
     lan->seq_table[seq].timer = info->timer;
     rv = ipmi->os_hnd->start_timer(ipmi->os_hnd,
@@ -5463,6 +5467,8 @@ ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
     int max_outstanding_msg_count = DEFAULT_MAX_OUTSTANDING_MSG_COUNT;
     unsigned int addr_family = AF_UNSPEC;
     unsigned int set_addr_family = AF_UNSPEC;
+    int msg_timeout = DEFAULT_LAN_RSP_TIMEOUT;
+    int msg_timeout_sideeff = DEFAULT_LAN_RSP_TIMEOUT_SIDEEFF;
 
     memset(&cparm, 0, sizeof(cparm));
 
@@ -5574,7 +5580,15 @@ ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
 	case IPMI_LANP_ADDRESS_FAMILY:
 	    set_addr_family = addr_family = parms[i].parm_val;
 	    break;
-		
+
+	case IPMI_LANP_DEFAULT_TIMEOUT:
+	    msg_timeout = parms[i].parm_val;
+	    break;
+
+	case IPMI_LANP_DEFAULT_SIDEEFFECT_TIMEOUT:
+	    msg_timeout_sideeff = parms[i].parm_val;
+	    break;
+
 	default:
 	    return EINVAL;
 	}
@@ -5721,6 +5735,8 @@ ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
 
     lan->outstanding_msg_count = 0;
     lan->max_outstanding_msg_count = max_outstanding_msg_count;
+    lan->msg_timeout = msg_timeout;
+    lan->msg_timeout_sideeff = msg_timeout_sideeff;
     lan->addr_family = set_addr_family;
     lan->wait_q = NULL;
     lan->wait_q_tail = NULL;
