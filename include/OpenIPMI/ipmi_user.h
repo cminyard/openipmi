@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_USER_H
 #define OPENIPMI_USER_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_mc.h>
 
 #ifdef __cplusplus
@@ -57,15 +58,20 @@ typedef void (*ipmi_user_list_cb)(ipmi_mc_t        *mc,
 				  ipmi_user_list_t *list,
 				  void             *cb_data);
 #define IPMI_MC_ALL_USERS	0
+IPMI_DLL_PUBLIC
 int ipmi_mc_get_users(ipmi_mc_t         *mc,
 		      unsigned int      channel,
 		      unsigned int      user,
 		      ipmi_user_list_cb handler,
 		      void              *cb_data);
 
+IPMI_DLL_PUBLIC
 int ipmi_user_list_get_channel(ipmi_user_list_t *list, unsigned int *channel);
+IPMI_DLL_PUBLIC
 int ipmi_user_list_get_max_user(ipmi_user_list_t *list, unsigned int *max);
+IPMI_DLL_PUBLIC
 int ipmi_user_list_get_enabled_users(ipmi_user_list_t *list, unsigned int *e);
+IPMI_DLL_PUBLIC
 int ipmi_user_list_get_fixed_users(ipmi_user_list_t *list, unsigned int *f);
 
 /*
@@ -73,7 +79,9 @@ int ipmi_user_list_get_fixed_users(ipmi_user_list_t *list, unsigned int *f);
  * but this lets you keep a copy of it and free that copy.  DO NOT
  * free the copy given to you by ipmi_mc_get_users().
  */
+IPMI_DLL_PUBLIC
 ipmi_user_list_t *ipmi_user_list_copy(ipmi_user_list_t *list);
+IPMI_DLL_PUBLIC
 void ipmi_user_list_free(ipmi_user_list_t *list);
 
 /*
@@ -87,19 +95,24 @@ typedef struct ipmi_user_s ipmi_user_t;
  * ipmi_user_free().  The users are indexed sequentially and
  * not necessarily by number.
  */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_user_list_get_user_count(ipmi_user_list_t *users);
+IPMI_DLL_PUBLIC
 ipmi_user_t *ipmi_user_list_get_user(ipmi_user_list_t *list,
 				     unsigned int     idx);
 
 /*
  * Allows users to be copied and freed.
  */
+IPMI_DLL_PUBLIC
 ipmi_user_t *ipmi_user_copy(ipmi_user_t *user);
+IPMI_DLL_PUBLIC
 void ipmi_user_free(ipmi_user_t *user);
 
 /* Write the user info to the given user number on the given MC.  Note
    that the user number in the user data structure is ignore, the
    passed in one is used. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_set_user(ipmi_mc_t       *mc,
 		     unsigned int    channel,
 		     unsigned int    num,
@@ -107,12 +120,15 @@ int ipmi_mc_set_user(ipmi_mc_t       *mc,
 		     ipmi_mc_done_cb handler,
 		     void            *cb_data);
 
+IPMI_DLL_PUBLIC
 int ipmi_user_get_channel(ipmi_user_t *user, unsigned int *channel);
 
 /*
  * Get/set the number for the user.
  */
+IPMI_DLL_PUBLIC
 int ipmi_user_get_num(ipmi_user_t *user, unsigned int *num);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_num(ipmi_user_t *user, unsigned int num);
 
 /*
@@ -122,31 +138,48 @@ int ipmi_user_set_num(ipmi_user_t *user, unsigned int num);
  * password set is for 16-byte passwords, the password2 is for 20-byte
  * passwords.
  */
+IPMI_DLL_PUBLIC
 int ipmi_user_get_name_len(ipmi_user_t *user, unsigned int *len);
+IPMI_DLL_PUBLIC
 int ipmi_user_get_name(ipmi_user_t *user, char *name, unsigned int *len);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_name(ipmi_user_t *user, char *name, unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_password(ipmi_user_t *user, char *pw, unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_password2(ipmi_user_t *user, char *pw, unsigned int len);
 
 /*
  * Various bits of information about a user, this is per-channel.
  */
+IPMI_DLL_PUBLIC
 int ipmi_user_get_link_auth_enabled(ipmi_user_t *user, unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_link_auth_enabled(ipmi_user_t *user, unsigned int val);
+IPMI_DLL_PUBLIC
 int ipmi_user_get_msg_auth_enabled(ipmi_user_t *user, unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_msg_auth_enabled(ipmi_user_t *user, unsigned int val);
+IPMI_DLL_PUBLIC
 int ipmi_user_get_access_cb_only(ipmi_user_t *user, unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_access_cb_only(ipmi_user_t *user, unsigned int val);
+IPMI_DLL_PUBLIC
 int ipmi_user_get_privilege_limit(ipmi_user_t *user, unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_privilege_limit(ipmi_user_t *user, unsigned int val);
+IPMI_DLL_PUBLIC
 int ipmi_user_get_session_limit(ipmi_user_t *user, unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_session_limit(ipmi_user_t *user, unsigned int val);
 
 /*
  * The enable for the user.  Note that the enable value cannot be
  * fetched and will return an error unless set.
  */
+IPMI_DLL_PUBLIC
 int ipmi_user_get_enable(ipmi_user_t *user, unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_user_set_enable(ipmi_user_t *user, unsigned int val);
 
 
@@ -154,6 +187,7 @@ int ipmi_user_set_enable(ipmi_user_t *user, unsigned int val);
  * Normally only the fields set for a user are actually modified.
  * This will force all fields to be written.
  */
+IPMI_DLL_PUBLIC
 int ipmi_user_set_all(ipmi_user_t *user);
 
 #ifdef __cplusplus

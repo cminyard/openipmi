@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_FRU_H
 #define OPENIPMI_FRU_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 #include <OpenIPMI/ipmi_bits.h>
 #include <time.h>
@@ -61,15 +62,18 @@ typedef struct ipmi_fru_node_s ipmi_fru_node_t;
 
 
 /* The the domain the FRU uses. */
+IPMI_DLL_PUBLIC
 ipmi_domain_id_t ipmi_fru_get_domain_id(ipmi_fru_t *fru);
 
 /* Name of the FRU. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_name(ipmi_fru_t *fru, char *name, int length);
 
 /*
  * Allocate a FRU and start fetching it.
  */
 typedef void (*ipmi_fru_fetched_cb)(ipmi_fru_t *fru, int err, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_fru_alloc(ipmi_domain_t       *domain,
 		   unsigned char       is_logical,
 		   unsigned char       device_address,
@@ -89,6 +93,7 @@ typedef void (*ipmi_fru_cb)(ipmi_domain_t *domain,
 			    ipmi_fru_t    *fru,
 			    int           err,
 			    void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_fru_alloc(ipmi_domain_t *domain,
 			  unsigned char is_logical,
 			  unsigned char device_address,
@@ -105,6 +110,7 @@ int ipmi_domain_fru_alloc(ipmi_domain_t *domain,
    destruction later.  You can supply a callback that, if not NULL,
    will be called when the sdr is destroyed. */
 typedef void (*ipmi_fru_destroyed_cb)(ipmi_fru_t *fru, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_fru_destroy(ipmi_fru_t            *fru,
 		     ipmi_fru_destroyed_cb handler,
 		     void                  *cb_data);
@@ -115,6 +121,7 @@ int ipmi_fru_destroy(ipmi_fru_t            *fru,
    appear here. */
 typedef void (*ipmi_fru_ptr_cb)(ipmi_fru_t *fru,
 				void       *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_fru_iterate_frus(ipmi_domain_t   *domain,
 			   ipmi_fru_ptr_cb handler,
 			   void            *cb_data);
@@ -124,6 +131,7 @@ void ipmi_fru_iterate_frus(ipmi_domain_t   *domain,
    error reading the data.  So if this is non-zero, even if the FRU is
    corrupt, you can create areas and fields and write out to the
    FRU. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_fru_get_data_length(ipmi_fru_t *fru);
 
 /* Used to track references to a FRU.  You can use this instead of
@@ -131,11 +139,15 @@ unsigned int ipmi_fru_get_data_length(ipmi_fru_t *fru);
    This is primarily here to help reference-tracking garbage
    collection systems like what is in Perl to be able to automatically
    destroy FRUs when they are done. */
+IPMI_DLL_PUBLIC
 void ipmi_fru_ref(ipmi_fru_t *fru);
+IPMI_DLL_PUBLIC
 void ipmi_fru_deref(ipmi_fru_t *fru);
 
 /* Set options for the FRU.  See ipmi_bits.h for IPMI_STRING_OPTION_xxx. */
+IPMI_DLL_PUBLIC
 void ipmi_fru_set_options(ipmi_fru_t *fru, unsigned int options);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_fru_get_options(ipmi_fru_t *fru);
 
 /*
@@ -155,6 +167,7 @@ unsigned int ipmi_fru_get_options(ipmi_fru_t *fru);
 
 /* Return the main node of a FRU and the type of fru.  You must free
    the returned node using ipmi_fru_put_node(). */
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_root_node(ipmi_fru_t      *fru,
 			   const char      **type,
 			   ipmi_fru_node_t **node);
@@ -163,7 +176,9 @@ int ipmi_fru_get_root_node(ipmi_fru_t      *fru,
    else), you should probably "get" the node when you copy it and
    "put" the node when you are done with it.  These are refcount type
    things for the pointers. */
+IPMI_DLL_PUBLIC
 void ipmi_fru_get_node(ipmi_fru_node_t *node);
+IPMI_DLL_PUBLIC
 void ipmi_fru_put_node(ipmi_fru_node_t *node);
 
 /*
@@ -208,6 +223,7 @@ void ipmi_fru_put_node(ipmi_fru_node_t *node);
  * Any of the return values may be NULL, that value will just not be
  * returned.
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_node_get_field(ipmi_fru_node_t           *node,
 			    unsigned int              index,
 			    const char                **name,
@@ -238,6 +254,7 @@ int ipmi_fru_node_get_field(ipmi_fru_node_t           *node,
  *
  * Setting a record type subnode is not supported.
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_node_set_field(ipmi_fru_node_t           *node,
 			    unsigned int              index,
 			    enum ipmi_fru_data_type_e dtype,
@@ -250,10 +267,12 @@ int ipmi_fru_node_set_field(ipmi_fru_node_t           *node,
 /*
  * Can an index in a node be set?  Returns 0 if so, an error if not.
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_node_settable(ipmi_fru_node_t *node,
 			   unsigned int    index);
 
 /* Only for arrays, get's the array's subtype. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_node_get_subtype(ipmi_fru_node_t           *node,
 			      enum ipmi_fru_data_type_e *subtype);
 
@@ -263,6 +282,7 @@ int ipmi_fru_node_get_subtype(ipmi_fru_node_t           *node,
    value.  data will return a pointer to an allocated string for the
    value.  For integer values, pos will map to the actual intval
    values.  For others, the order is undetermined. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_node_get_enum_val(ipmi_fru_node_t *node,
 			       unsigned int    index,
 			       int             *pos,
@@ -271,6 +291,7 @@ int ipmi_fru_node_get_enum_val(ipmi_fru_node_t *node,
 
 /* Free data that comes from ipmi_fru_node_get_field if the data return is
    non-NULL. */
+IPMI_DLL_PUBLIC
 void ipmi_fru_data_free(char *data);
 
 
@@ -295,155 +316,216 @@ void ipmi_fru_data_free(char *data);
    Also, when fetching the string, you must set the max_len variable
    to the maximum length of the returned data.  The actual length
    copied into the output string is returned in max_len. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_internal_use_version(ipmi_fru_t    *fru,
 				      unsigned char *version);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_internal_use_len(ipmi_fru_t   *fru,
 				  unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_internal_use(ipmi_fru_t    *fru,
 			      unsigned char *data,
 			      unsigned int  *max_len);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_version(ipmi_fru_t    *fru,
 				      unsigned char *version);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_type(ipmi_fru_t    *fru,
 				   unsigned char *type);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_part_number_len(ipmi_fru_t   *fru,
 					      unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_part_number_type(ipmi_fru_t           *fru,
 					       enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_part_number(ipmi_fru_t   *fru,
 					  char         *str,
 					  unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_serial_number_len(ipmi_fru_t   *fru,
 						unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_serial_number_type(ipmi_fru_t           *fru,
 						 enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_serial_number(ipmi_fru_t   *fru,
 					    char         *str,
 					    unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_custom_len(ipmi_fru_t   *fru,
 					 unsigned int num,
 					 unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_custom_type(ipmi_fru_t           *fru,
 					  unsigned int         num,
 					  enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_chassis_info_custom(ipmi_fru_t   *fru,
 				     unsigned int num,
 				     char         *str,
 				     unsigned int *strlen);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_version(ipmi_fru_t    *fru,
 				    unsigned char *version);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_lang_code(ipmi_fru_t    *fru,
 				      unsigned char *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_mfg_time(ipmi_fru_t   *fru,
 				     time_t *time);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_manufacturer_len(ipmi_fru_t   *fru,
 						   unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_manufacturer_type(ipmi_fru_t           *fru,
 						    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_manufacturer(ipmi_fru_t   *fru,
 					       char         *str,
 					       unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_product_name_len(ipmi_fru_t   *fru,
 						   unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_product_name_type(ipmi_fru_t           *fru,
 						    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_product_name(ipmi_fru_t   *fru,
 					       char         *str,
 					       unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_serial_number_len(ipmi_fru_t   *fru,
 						    unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_serial_number_type(ipmi_fru_t           *fru,
 						     enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_serial_number(ipmi_fru_t   *fru,
 						char         *str,
 						unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_part_number_len(ipmi_fru_t   *fru,
 						  unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_part_number_type(ipmi_fru_t           *fru,
 						   enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_board_part_number(ipmi_fru_t   *fru,
 					      char         *str,
 					      unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_fru_file_id_len(ipmi_fru_t   *fru,
 					    unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_fru_file_id_type(ipmi_fru_t           *fru,
 					     enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_fru_file_id(ipmi_fru_t   *fru,
 					char         *str,
 					unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_custom_len(ipmi_fru_t   *fru,
 				       unsigned int num,
 				       unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_custom_type(ipmi_fru_t           *fru,
 					unsigned int         num,
 					enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_board_info_custom(ipmi_fru_t   *fru,
 				   unsigned int num,
 				   char         *str,
 				   unsigned int *strlen);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_version(ipmi_fru_t    *fru,
 				      unsigned char *version);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_lang_code(ipmi_fru_t    *fru,
 					unsigned char *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_manufacturer_name_len(ipmi_fru_t   *fru,
 						    unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_manufacturer_name_type(ipmi_fru_t           *fru,
 						     enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_manufacturer_name(ipmi_fru_t   *fru,
 						char         *str,
 						unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_name_len(ipmi_fru_t   *fru,
 					       unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_name_type(ipmi_fru_t           *fru,
 						enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_name(ipmi_fru_t   *fru,
 					   char         *str,
 					   unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_part_model_number_len(ipmi_fru_t   *fru,
 							    unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_part_model_number_type(ipmi_fru_t           *fru,
 							     enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_part_model_number(ipmi_fru_t   *fru,
 							char         *str,
 							unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_version_len(ipmi_fru_t   *fru,
 						  unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_version_type(ipmi_fru_t           *fru,
 						   enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_version(ipmi_fru_t   *fru,
 					      char         *str,
 					      unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_serial_number_len(ipmi_fru_t   *fru,
 							unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_serial_number_type(ipmi_fru_t           *fru,
 							 enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_product_serial_number(ipmi_fru_t   *fru,
 						    char         *str,
 						    unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_asset_tag_len(ipmi_fru_t   *fru,
 					    unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_asset_tag_type(ipmi_fru_t           *fru,
 					     enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_asset_tag(ipmi_fru_t   *fru,
 					char         *str,
 					unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_fru_file_id_len(ipmi_fru_t   *fru,
 					      unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_fru_file_id_type(ipmi_fru_t           *fru,
 					       enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_fru_file_id(ipmi_fru_t   *fru,
 					  char         *str,
 					  unsigned int *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_custom_len(ipmi_fru_t   *fru,
 					 unsigned int num,
 					 unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_custom_type(ipmi_fru_t           *fru,
 					  unsigned int         num,
 					  enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_product_info_custom(ipmi_fru_t   *fru,
 				     unsigned int num,
 				     char         *str,
@@ -455,24 +537,30 @@ int ipmi_fru_get_product_info_custom(ipmi_fru_t   *fru,
  * is the field from the record.  It does not tell you the data type like
  * the above "type" fields do.
  */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_fru_get_num_multi_records(ipmi_fru_t *fru);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_multi_record_type(ipmi_fru_t    *fru,
 				   unsigned int  num,
 				   unsigned char *type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_multi_record_format_version(ipmi_fru_t    *fru,
 					     unsigned int  num,
 					     unsigned char *ver);
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_multi_record_data_len(ipmi_fru_t   *fru,
 				       unsigned int num,
 				       unsigned int *len);
 /* Note that length is a in/out parameter, you must set the length to
    the length of the buffer and the function will set it to the actual
    length. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_multi_record_data(ipmi_fru_t    *fru,
 				   unsigned int  num,
 				   unsigned char *data,
 				   unsigned int  *length);
 /* Get part of the multirecord data. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_multi_record_slice(ipmi_fru_t    *fru,
 				    unsigned int  num,
 				    unsigned int  offset,
@@ -521,6 +609,7 @@ int ipmi_fru_get_multi_record_slice(ipmi_fru_t    *fru,
  * Note this is old an you should use the fru node stuf at the top of
  * this file.
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_get(ipmi_fru_t                *fru,
 		 int                       index,
 		 const char                **name,
@@ -533,12 +622,14 @@ int ipmi_fru_get(ipmi_fru_t                *fru,
 
 /* Convert an idx to a name (does not require a FRU).  Return an error
    if the index is out of range. */
+IPMI_DLL_PUBLIC
 char *ipmi_fru_index_to_str(int idx);
 
 /*
  * Find the index number for the given string.  Returns -1 if the string
  * is invalid.
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_str_to_index(char *name);
 
 /* More internal stuff.  The average user will not need to be able
@@ -570,23 +661,30 @@ int ipmi_fru_str_to_index(char *name);
 
 /* If you set the length to zero when adding an area, you will get a
    minimally sized area. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_add_area(ipmi_fru_t   *fru,
 		      unsigned int area,
 		      unsigned int offset,
 		      unsigned int length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_delete_area(ipmi_fru_t *fru, int area);
+IPMI_DLL_PUBLIC
 int ipmi_fru_area_get_offset(ipmi_fru_t   *fru,
 			     unsigned int area,
 			     unsigned int *offset);
+IPMI_DLL_PUBLIC
 int ipmi_fru_area_get_length(ipmi_fru_t   *fru,
 			     unsigned int area,
 			     unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_area_set_offset(ipmi_fru_t   *fru,
 			     unsigned int area,
 			     unsigned int offset);
+IPMI_DLL_PUBLIC
 int ipmi_fru_area_set_length(ipmi_fru_t   *fru,
 			     unsigned int area,
 			     unsigned int length);
+IPMI_DLL_PUBLIC
 int ipmi_fru_area_get_used_length(ipmi_fru_t *fru,
 				  unsigned int area,
 				  unsigned int *used_length);
@@ -608,86 +706,108 @@ int ipmi_fru_area_get_used_length(ipmi_fru_t *fru,
  * multi-records, no multi-record fields will be written and the area
  * will be deleted automatically.
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_internal_use(ipmi_fru_t    *fru,
 			      unsigned char *data,
 			      unsigned int  len);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_chassis_info_type(ipmi_fru_t    *fru,
 				   unsigned char type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_chassis_info_part_number(ipmi_fru_t   *fru,
 					  enum ipmi_str_type_e type,
 					  char         *str,
 					  unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_chassis_info_serial_number(ipmi_fru_t   *fru,
 					    enum ipmi_str_type_e type,
 					    char         *str,
 					    unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_chassis_info_custom(ipmi_fru_t   *fru,
 				     unsigned int num,
 				     enum ipmi_str_type_e type,
 				     char         *str,
 				     unsigned int len);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_lang_code(ipmi_fru_t    *fru,
 				      unsigned char type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_mfg_time(ipmi_fru_t   *fru,
 				     time_t       time);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_board_manufacturer(ipmi_fru_t   *fru,
 					       enum ipmi_str_type_e type,
 					       char         *str,
 					       unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_board_product_name(ipmi_fru_t   *fru,
 					       enum ipmi_str_type_e type,
 					       char         *str,
 					       unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_board_serial_number(ipmi_fru_t   *fru,
 						enum ipmi_str_type_e type,
 						char         *str,
 						unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_board_part_number(ipmi_fru_t   *fru,
 					      enum ipmi_str_type_e type,
 					      char         *str,
 					      unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_fru_file_id(ipmi_fru_t   *fru,
 					enum ipmi_str_type_e type,
 					char         *str,
 					unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_board_info_custom(ipmi_fru_t   *fru,
 				   unsigned int num,
 				   enum ipmi_str_type_e type,
 				   char         *str,
 				   unsigned int len);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_lang_code(ipmi_fru_t    *fru,
 					unsigned char type);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_manufacturer_name(ipmi_fru_t   *fru,
 						enum ipmi_str_type_e type,
 						char         *str,
 						unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_product_name(ipmi_fru_t   *fru,
 					   enum ipmi_str_type_e type,
 					   char         *str,
 					   unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_product_part_model_number(ipmi_fru_t   *fru,
 							enum ipmi_str_type_e type,
 							char         *str,
 							unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_product_version(ipmi_fru_t   *fru,
 					      enum ipmi_str_type_e type,
 					      char         *str,
 					      unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_product_serial_number(ipmi_fru_t   *fru,
 						    enum ipmi_str_type_e type,
 						    char         *str,
 						    unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_asset_tag(ipmi_fru_t   *fru,
 					enum ipmi_str_type_e type,
 					char         *str,
 					unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_fru_file_id(ipmi_fru_t   *fru,
 					  enum ipmi_str_type_e type,
 					  char         *str,
 					  unsigned int len);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_product_info_custom(ipmi_fru_t   *fru,
 				     unsigned int num,
 				     enum ipmi_str_type_e type,
@@ -695,10 +815,12 @@ int ipmi_fru_set_product_info_custom(ipmi_fru_t   *fru,
 				     unsigned int len);
 
 /* Set the type field for a multi-record. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_multi_record_type(ipmi_fru_t    *fru,
 				   unsigned int  num,
 				   unsigned char type);
 /* Replace the data in a multi-record.  "data" may not be NULL. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_multi_record_data(ipmi_fru_t    *fru,
 				   unsigned int  num,
 				   unsigned char *data,
@@ -708,6 +830,7 @@ int ipmi_fru_set_multi_record_data(ipmi_fru_t    *fru,
    or larger then the current number of multirecords.  If "data" is
    NULL, then delete the given multirecord.  For deletion, type and
    version are ignored. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_multi_record(ipmi_fru_t    *fru,
 			      unsigned int  num,
 			      unsigned char type,
@@ -718,6 +841,7 @@ int ipmi_fru_set_multi_record(ipmi_fru_t    *fru,
    information.  Overwrite data at the given offset to the given
    length.  The length must be within the multirecord's current
    length. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_ovw_multi_record_data(ipmi_fru_t    *fru,
 				   unsigned int  num,
 				   unsigned char *data,
@@ -725,6 +849,7 @@ int ipmi_fru_ovw_multi_record_data(ipmi_fru_t    *fru,
 				   unsigned int  length);
 /* Insert new data in the given multirecord.  The total length may not
    exceed the maximum length of a multirecord. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_ins_multi_record_data(ipmi_fru_t    *fru,
 				   unsigned int  num,
 				   unsigned char *data,
@@ -732,6 +857,7 @@ int ipmi_fru_ins_multi_record_data(ipmi_fru_t    *fru,
 				   unsigned int  length);
 /* Delete data in the given multirecord.  The total length may not
    go below zero. */
+IPMI_DLL_PUBLIC
 int ipmi_fru_del_multi_record_data(ipmi_fru_t    *fru,
 				   unsigned int  num,
 				   unsigned int  offset,
@@ -745,18 +871,22 @@ int ipmi_fru_del_multi_record_data(ipmi_fru_t    *fru,
  * interface.  Also note that the "version" fields are note settable
  * and are always set to 1 (per the spec).
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_int_val(ipmi_fru_t *fru,
 			 int        index,
 			 int        num,
 			 int        val);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_time_val(ipmi_fru_t *fru,
 			  int        index,
 			  int        num,
 			  time_t     time);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_float_val(ipmi_fru_t *fru,
 			   int        index,
 			   int        num,
 			   double     val);
+IPMI_DLL_PUBLIC
 int ipmi_fru_set_data_val(ipmi_fru_t                *fru,
 			  int                       index,
 			  int                       num,
@@ -773,6 +903,7 @@ int ipmi_fru_set_data_val(ipmi_fru_t                *fru,
  * can be simultaneously writing the FRU data without knowing about it,
  * resulting in corruptions.  Be careful.
  */
+IPMI_DLL_PUBLIC
 int ipmi_fru_write(ipmi_fru_t *fru, ipmi_fru_cb done, void *cb_data);
 
 
@@ -808,6 +939,7 @@ int ipmi_fru_write(ipmi_fru_t *fru, ipmi_fru_cb done, void *cb_data);
  * same FRU node, you must provide your own locks.
  */
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_multi_record_get_root_node(ipmi_fru_t      *fru,
 					unsigned int    record_num,
 					const char      **name,
@@ -819,10 +951,12 @@ int ipmi_fru_multi_record_get_root_node(ipmi_fru_t      *fru,
  * Cruft
  *
  ************************************************************************/
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_internal_use_data(ipmi_fru_t    *fru,
 				   unsigned char *data,
 				   unsigned int  *max_len);
 
+IPMI_DLL_PUBLIC
 int ipmi_fru_get_internal_use_length(ipmi_fru_t   *fru,
 				     unsigned int *length);
 

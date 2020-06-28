@@ -23,7 +23,11 @@
 #ifndef OPENIPMI_UTILS_H_
 #define OPENIPMI_UTILS_H_
 
+#include <OpenIPMI/dllvisibility.h>
+#include <OpenIPMI/ipmi_types.h>
+
 /* Do a hash on a pointer value. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_hash_pointer(void *);
 
 typedef void (*ipmi_ifru_cb)(ipmi_domain_t *domain, ipmi_fru_t *fru,
@@ -35,6 +39,7 @@ typedef void (*ipmi_ifru_cb)(ipmi_domain_t *domain, ipmi_fru_t *fru,
 #define IPMI_FRU_FTR_PRODUCT_INFO_AREA_MASK 8
 #define IPMI_FRU_FTR_MULTI_RECORD_AREA_MASK 16
 #define IPMI_FRU_ALL_AREA_MASK 0x1f
+IPMI_DLL_PUBLIC
 int ipmi_fru_alloc_notrack(ipmi_domain_t *domain,
 			   unsigned char is_logical,
 			   unsigned char device_address,
@@ -51,6 +56,7 @@ int ipmi_fru_alloc_notrack(ipmi_domain_t *domain,
  * Used for destroying notrack FRUs only.
  */
 typedef void (*ipmi_fru_idestroyed_cb)(ipmi_fru_t *fru, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_fru_destroy_internal(ipmi_fru_t            *fru,
 			      ipmi_fru_idestroyed_cb handler,
 			      void                  *cb_data);

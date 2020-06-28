@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_POSIX_H
 #define OPENIPMI_POSIX_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/selector.h>
 #include <OpenIPMI/deprecator.h>
@@ -51,6 +52,7 @@ extern "C" {
    your own os_vlog handler, logs will go to stderr.  If you supply a
    posix_vlog handler and don't call set_log_handler in the OS handler,
    posix_vlog() will still be used. */
+IPMI_DLL_PUBLIC
 void posix_vlog(char *format,
 		enum ipmi_log_type_e log_type,
 		va_list ap);
@@ -63,8 +65,10 @@ void posix_vlog(char *format,
  * for the selector.
  *********************************************************************/
 /* Allocate and configure an OS handler. */
+IPMI_DLL_PUBLIC
 os_handler_t *ipmi_posix_setup_os_handler(void);
 /* Gets the selector associated with the OS handler. */
+IPMI_DLL_PUBLIC
 struct selector_s *ipmi_posix_os_handler_get_sel(os_handler_t *os_hnd);
 
 
@@ -88,10 +92,13 @@ struct selector_s *ipmi_posix_os_handler_get_sel(os_handler_t *os_hnd);
  *
  * You only really need to use this in special circumstances.
  *********************************************************************/
+IPMI_DLL_PUBLIC
 os_handler_t *ipmi_posix_get_os_handler(void);
+IPMI_DLL_PUBLIC
 void ipmi_posix_free_os_handler(os_handler_t *os_hnd);
 /* You MUST set the SEL you alloc in the OS handler before you do
    anything else with the OS handler. */
+IPMI_DLL_PUBLIC
 void ipmi_posix_os_handler_set_sel(os_handler_t *os_hnd,
 				   struct selector_s *sel);
 
@@ -105,8 +112,10 @@ void ipmi_posix_os_handler_set_sel(os_handler_t *os_hnd,
    change and they need to wake up.  It must be some unused signal (it
    does not have to be queued); a signal handler will be installed for
    it. */
+IPMI_DLL_PUBLIC
 os_handler_t *ipmi_posix_thread_setup_os_handler(int wake_sig);
 /* Gets the selector associated with the OS handler. */
+IPMI_DLL_PUBLIC
 struct selector_s *ipmi_posix_thread_os_handler_get_sel(os_handler_t *os_hnd);
 
 /**********************************************************************
@@ -115,9 +124,13 @@ struct selector_s *ipmi_posix_thread_os_handler_get_sel(os_handler_t *os_hnd);
  * ipmi_posix_thread_get_os_handler(), it has no way to set the
  * wake signal.
  *********************************************************************/
+IPMI_DLL_PUBLIC
 os_handler_t *ipmi_posix_thread_get_os_handler(void);
+IPMI_DLL_PUBLIC
 os_handler_t *ipmi_posix_thread_get_os_handler2(int wake_sig);
+IPMI_DLL_PUBLIC
 void ipmi_posix_thread_free_os_handler(os_handler_t *os_hnd);
+IPMI_DLL_PUBLIC
 void ipmi_posix_thread_os_handler_set_sel(os_handler_t *os_hnd,
 					  struct selector_s *sel);
 
@@ -125,39 +138,33 @@ void ipmi_posix_thread_os_handler_set_sel(os_handler_t *os_hnd,
  * Cruft, do not use these function any more.
  *********************************************************************/
 
-#ifndef IPMI_FUNC_DEPRECATED
-# if (__GNUC__ > 3) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 2))
-#  define IPMI_FUNC_DEPRECATED __attribute__ ((deprecated))
-#  define IPMI_TYPE_DEPRECATED __attribute__ ((deprecated))
-#  define IPMI_VAR_DEPRECATED __attribute__ ((deprecated))
-# else
-#  define IPMI_FUNC_DEPRECATED
-#  define IPMI_TYPE_DEPRECATED
-#  define IPMI_VAR_DEPRECATED
-# endif
-#endif
-
 /* Cleanup and free an OS handler. */
+IPMI_DLL_PUBLIC
 void ipmi_posix_cleanup_os_handler(os_handler_t *os_hnd)
      IPMI_FUNC_DEPRECATED;
 /* Calls sel_select() with the proper data. */
+IPMI_DLL_PUBLIC
 int ipmi_posix_sel_select(os_handler_t   *os_hnd,
 			   struct timeval *timeout)
      IPMI_FUNC_DEPRECATED;
 /* Calls sel_select_loop() with the proper data. */
+IPMI_DLL_PUBLIC
 void ipmi_posix_sel_select_loop(os_handler_t *os_hnd)
      IPMI_FUNC_DEPRECATED;
 
 /* Clean up the threaded selector, including returning the signal to
    its original state. */
+IPMI_DLL_PUBLIC
 void ipmi_posix_thread_cleanup_os_handler(os_handler_t *os_hnd)
      IPMI_FUNC_DEPRECATED;
 /* Calls sel_select() with the proper data.  Note that if you send
    "wake_sig" to the calling thread, this will return. */
+IPMI_DLL_PUBLIC
 int ipmi_posix_thread_sel_select(os_handler_t   *os_hnd,
 				 struct timeval *timeout)
      IPMI_FUNC_DEPRECATED;
 /* Calls sel_select_loop() with the proper data. */
+IPMI_DLL_PUBLIC
 void ipmi_posix_thread_sel_select_loop(os_handler_t *os_hnd)
      IPMI_FUNC_DEPRECATED;
 

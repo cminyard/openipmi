@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_SMI_H
 #define OPENIPMI_SMI_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_mc.h>
 #include <netinet/in.h>
 
@@ -50,6 +51,7 @@ extern "C" {
  *     user.  The user can use it for anything they like.
  *  new_con - the newly created connection is returned here.
  */
+IPMI_DLL_PUBLIC
 int ipmi_smi_setup_con(int                if_num,
 		       os_handler_t       *handlers,
 		       void               *user_data,

@@ -35,6 +35,7 @@
 #ifndef OPENIPMI_PEF_H
 #define OPENIPMI_PEF_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 
 #ifdef __cplusplus
@@ -59,12 +60,14 @@ typedef void (*ipmi_pef_ptr_cb)(ipmi_pef_t *pef,
 
 /* Allocate a PEF.  The PEF will not be usable (it can only be
    destroyed) until the done callback is called. */
+IPMI_DLL_PUBLIC
 int ipmi_pef_alloc(ipmi_mc_t        *mc,
 		   ipmi_pef_done_cb done,
 		   void             *cb_data,
 		   ipmi_pef_t       **new_pef);
 
 /* Destroy a PEF. */
+IPMI_DLL_PUBLIC
 int ipmi_pef_destroy(ipmi_pef_t       *pef,
                      ipmi_pef_done_cb handler,
                      void             *cb_data);
@@ -74,9 +77,12 @@ int ipmi_pef_destroy(ipmi_pef_t       *pef,
    recommended.  This is primarily here to help reference-tracking
    garbage collection systems like what is in Perl to be able to
    automatically destroy pefs when they are done. */
+IPMI_DLL_PUBLIC
 void ipmi_pef_ref(ipmi_pef_t *pef);
+IPMI_DLL_PUBLIC
 void ipmi_pef_deref(ipmi_pef_t *pef);
 
+IPMI_DLL_PUBLIC
 void ipmi_pef_iterate_pefs(ipmi_domain_t   *domain,
 			   ipmi_pef_ptr_cb handler,
 			   void            *cb_data);
@@ -91,6 +97,7 @@ typedef void (*ipmi_pef_get_cb)(ipmi_pef_t    *pef,
 				unsigned char *data,
 				unsigned int  data_len,
 				void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_pef_get_parm(ipmi_pef_t      *pef,
 		      unsigned int    parm,
 		      unsigned int    set,
@@ -99,6 +106,7 @@ int ipmi_pef_get_parm(ipmi_pef_t      *pef,
 		      void            *cb_data);
 
 /* Set the parameter value in the PEF to the given data. */
+IPMI_DLL_PUBLIC
 int ipmi_pef_set_parm(ipmi_pef_t       *pef,
 		      unsigned int     parm,
 		      unsigned char    *data,
@@ -107,24 +115,36 @@ int ipmi_pef_set_parm(ipmi_pef_t       *pef,
 		      void             *cb_data);
 
 /* Returns if the MC has a valid working PEF. */
+IPMI_DLL_PUBLIC
 int ipmi_pef_valid(ipmi_pef_t *pef);
 
 /* Information fetched from the PEF capabilities. */
+IPMI_DLL_PUBLIC
 int ipmi_pef_supports_diagnostic_interrupt(ipmi_pef_t *pef);
+IPMI_DLL_PUBLIC
 int ipmi_pef_supports_oem_action(ipmi_pef_t *pef);
+IPMI_DLL_PUBLIC
 int ipmi_pef_supports_power_cycle(ipmi_pef_t *pef);
+IPMI_DLL_PUBLIC
 int ipmi_pef_supports_reset(ipmi_pef_t *pef);
+IPMI_DLL_PUBLIC
 int ipmi_pef_supports_power_down(ipmi_pef_t *pef);
+IPMI_DLL_PUBLIC
 int ipmi_pef_supports_alert(ipmi_pef_t *pef);
 
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pef_major_version(ipmi_pef_t *pef);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pef_minor_version(ipmi_pef_t *pef);
 
+IPMI_DLL_PUBLIC
 unsigned int num_event_filter_table_entries(ipmi_pef_t *pef);
 
 /* Return the MC this PEF uses. */
+IPMI_DLL_PUBLIC
 ipmi_mcid_t ipmi_pef_get_mc(ipmi_pef_t *pef);
 #define IPMI_PEF_NAME_LEN 64
+IPMI_DLL_PUBLIC
 int ipmi_pef_get_name(ipmi_pef_t *pef, char *name, int length);
 
 /* Standard entries in the PEF configuration. */
@@ -170,6 +190,7 @@ typedef void (*ipmi_pef_get_config_cb)(ipmi_pef_t        *pef,
 				       int               err,
 				       ipmi_pef_config_t *config,
 				       void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_pef_get_config(ipmi_pef_t             *pef,
 			ipmi_pef_get_config_cb done,
 			void                   *cb_data);
@@ -179,6 +200,7 @@ int ipmi_pef_get_config(ipmi_pef_t             *pef,
    copy is made of the configuration, so you are free to do whatever
    you like with it after this.  Note that this unlocks the config, so
    it cannot be used for future set operations. */
+IPMI_DLL_PUBLIC
 int ipmi_pef_set_config(ipmi_pef_t        *pef,
 			ipmi_pef_config_t *pefc,
 			ipmi_pef_done_cb  done,
@@ -186,12 +208,14 @@ int ipmi_pef_set_config(ipmi_pef_t        *pef,
 
 /* Clear the lock on a PEF.  If the PEF config is non-NULL, then it's
    lock is also cleared. */
+IPMI_DLL_PUBLIC
 int ipmi_pef_clear_lock(ipmi_pef_t        *pef,
 			ipmi_pef_config_t *pefc,
 			ipmi_pef_done_cb  done,
 			void              *cb_data);
 
 /* Free a PEF configuration. */
+IPMI_DLL_PUBLIC
 void ipmi_pef_free_config(ipmi_pef_config_t *config);
 
 /* This interface lets you fetch and set the data values by parm
@@ -217,6 +241,7 @@ enum ipmi_pefconf_val_type_e { IPMI_PEFCONFIG_INT, IPMI_PEFCONFIG_BOOL,
    the data will not be filled in (except for index, which must always
    be present).  That lets you get the value type without getting the
    data, for instance. */
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_val(ipmi_pef_config_t *pefc,
 			   unsigned int      parm,
 			   const char        **name,
@@ -227,6 +252,7 @@ int ipmi_pefconfig_get_val(ipmi_pef_config_t *pefc,
 			   unsigned int      *dval_len);
   /* Set a value in the pef config.  You must know ahead of time the
      actual value type and set the proper one. */
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_val(ipmi_pef_config_t *pefc,
 			   unsigned int      parm,
 			   int               index,
@@ -242,20 +268,26 @@ int ipmi_pefconfig_set_val(ipmi_pef_config_t *pefc,
    enumeration value, or -1 if val is the last or past the last
    enumeration value.  If this returns 0, val will be set to the
    string value for the enumeration. */
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_enum_val(unsigned int parm, int val, int *nval,
 			    const char **sval);
 /* Sometimes array indexes may be enumerations.  This allows the user
    to detect if a specific parm's array index is an enumeration, and
    to get the enumeration values.  */
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_enum_idx(unsigned int parm, int idx, const char **sval);
 /* Free data from ipmi_pefconfig_get_val(). */
+IPMI_DLL_PUBLIC
 void ipmi_pefconfig_data_free(void *data);
 /* Convert a string to a pefconfig parm number.  Returns -1 if the
    string is invalid. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_str_to_parm(char *name);
 /* Convert the parm to a string name. */
+IPMI_DLL_PUBLIC
 const char *ipmi_pefconfig_parm_to_str(unsigned int parm);
 /* Get the type of a specific parm. */
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_parm_to_type(unsigned int                 parm,
 				enum ipmi_pefconf_val_type_e *valtype);
 
@@ -263,50 +295,78 @@ int ipmi_pefconfig_parm_to_type(unsigned int                 parm,
 /*
  * Main configuration items for the PEF.
  */
+IPMI_DLL_PUBLIC
 unsigned int
 ipmi_pefconfig_get_alert_startup_delay_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_startup_delay_enabled(ipmi_pef_config_t *pefc,
 						   unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_startup_delay_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_startup_delay_enabled(ipmi_pef_config_t *pefc,
 					     unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_event_messages_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_event_messages_enabled(ipmi_pef_config_t *pefc,
 					      unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_pef_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_pef_enabled(ipmi_pef_config_t *pefc, unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int
 ipmi_pefconfig_get_diagnostic_interrupt_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_diagnostic_interrupt_enabled(ipmi_pef_config_t *pefc,
 						    unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_oem_action_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_oem_action_enabled(ipmi_pef_config_t *pefc,
 					  unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_power_cycle_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_power_cycle_enabled(ipmi_pef_config_t *pefc,
 					   unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_reset_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_reset_enabled(ipmi_pef_config_t *pefc, unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_power_down_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_power_down_enabled(ipmi_pef_config_t *pefc,
 					  unsigned int val);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_alert_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_enabled(ipmi_pef_config_t *pefc, unsigned int val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_startup_delay(ipmi_pef_config_t *pefc,
 				     unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_startup_delay(ipmi_pef_config_t *pefc,
 				     unsigned int val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_alert_startup_delay(ipmi_pef_config_t *pefc,
 					   unsigned int *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_startup_delay(ipmi_pef_config_t *pefc,
 					   unsigned int val);
 
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_guid_enabled(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_guid_enabled(ipmi_pef_config_t *pefc,
 				    unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_guid_val(ipmi_pef_config_t *pefc,
 				unsigned char     *data,
 				unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_guid_val(ipmi_pef_config_t *pefc,
 				unsigned char     *data,
 				unsigned int      data_len);
@@ -320,10 +380,13 @@ int ipmi_pefconfig_set_guid_val(ipmi_pef_config_t *pefc,
  * implementation converts it to be zero-based (entry zero *is* the
  * first entry)
  */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_num_event_filters(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_enable_filter(ipmi_pef_config_t *pefc,
 				     unsigned int      sel,
 				     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_enable_filter(ipmi_pef_config_t *pefc,
 				     unsigned int      sel,
 				     unsigned int      val);
@@ -332,58 +395,74 @@ int ipmi_pefconfig_set_enable_filter(ipmi_pef_config_t *pefc,
 #define IPMI_PEFPARM_EFT_FILTER_CONFIG_MANUFACTURE_CONFIG 2
 #define IPMI_PEFPARM_EFT_FILTER_CONFIG_SOFTWARE_CONFIG 0
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_filter_type(ipmi_pef_config_t *pefc,
 				   unsigned int      sel,
 				   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_filter_type(ipmi_pef_config_t *pefc,
 				   unsigned int      sel,
 				   unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_diagnostic_interrupt(ipmi_pef_config_t *pefc,
 					    unsigned int      sel,
 					    unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_diagnostic_interrupt(ipmi_pef_config_t *pefc,
 					    unsigned int      sel,
 					    unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_oem_action(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_oem_action(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_power_cycle(ipmi_pef_config_t *pefc,
 				   unsigned int      sel,
 				   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_power_cycle(ipmi_pef_config_t *pefc,
 				   unsigned int      sel,
 				   unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_reset(ipmi_pef_config_t *pefc,
 			     unsigned int      sel,
 			     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_reset(ipmi_pef_config_t *pefc,
 			     unsigned int      sel,
 			     unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_power_down(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_power_down(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_alert(ipmi_pef_config_t *pefc,
 			     unsigned int      sel,
 			     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert(ipmi_pef_config_t *pefc,
 			     unsigned int      sel,
 			     unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_alert_policy_number(ipmi_pef_config_t *pefc,
 					   unsigned int      sel,
 					   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_policy_number(ipmi_pef_config_t *pefc,
 					   unsigned int      sel,
 					   unsigned int      val);
@@ -396,107 +475,139 @@ int ipmi_pefconfig_set_alert_policy_number(ipmi_pef_config_t *pefc,
 #define IPMI_PEFPARM_EVENT_SEVERITY_NON_CRITICAL	0x08
 #define IPMI_PEFPARM_EVENT_SEVERITY_CRITICAL		0x10
 #define IPMI_PEFPARM_EVENT_SEVERITY_NON_RECOVERABLE	0x20
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_event_severity(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_event_severity(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_generator_id_addr(ipmi_pef_config_t *pefc,
 					 unsigned int      sel,
 					 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_generator_id_addr(ipmi_pef_config_t *pefc,
 					 unsigned int      sel,
 					 unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_generator_id_channel_lun(ipmi_pef_config_t *pefc,
 						unsigned int      sel,
 						unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_generator_id_channel_lun(ipmi_pef_config_t *pefc,
 						unsigned int      sel,
 						unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_sensor_type(ipmi_pef_config_t *pefc,
 				   unsigned int      sel,
 				   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_sensor_type(ipmi_pef_config_t *pefc,
 				   unsigned int      sel,
 				   unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_sensor_number(ipmi_pef_config_t *pefc,
 				     unsigned int      sel,
 				     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_sensor_number(ipmi_pef_config_t *pefc,
 				     unsigned int      sel,
 				     unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_event_trigger(ipmi_pef_config_t *pefc,
 				     unsigned int      sel,
 				     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_event_trigger(ipmi_pef_config_t *pefc,
 				     unsigned int      sel,
 				     unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data1_offset_mask(ipmi_pef_config_t *pefc,
 					 unsigned int      sel,
 					 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data1_offset_mask(ipmi_pef_config_t *pefc,
 					 unsigned int      sel,
 					 unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data1_mask(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data1_mask(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data1_compare1(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data1_compare1(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data1_compare2(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data1_compare2(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data2_mask(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data2_mask(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data2_compare1(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data2_compare1(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data2_compare2(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data2_compare2(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      val);
 
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data3_mask(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data3_mask(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data3_compare1(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data3_compare1(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_data3_compare2(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_data3_compare2(ipmi_pef_config_t *pefc,
 				      unsigned int      sel,
 				      unsigned int      val);
@@ -510,46 +621,61 @@ int ipmi_pefconfig_set_data3_compare2(ipmi_pef_config_t *pefc,
  * implementation converts it to be zero-based (entry zero *is* the
  * first entry)
  */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_num_alert_policies(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_policy_num(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_policy_num(ipmi_pef_config_t *pefc,
 				  unsigned int      sel,
 				  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_enabled(ipmi_pef_config_t *pefc,
 			       unsigned int      sel,
 			       unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_enabled(ipmi_pef_config_t *pefc,
 			       unsigned int      sel,
 			       unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_policy(ipmi_pef_config_t *pefc,
 			      unsigned int      sel,
 			      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_policy(ipmi_pef_config_t *pefc,
 			      unsigned int      sel,
 			      unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_channel(ipmi_pef_config_t *pefc,
 			       unsigned int      sel,
 			       unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_channel(ipmi_pef_config_t *pefc,
 			       unsigned int      sel,
 			       unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_destination_selector(ipmi_pef_config_t *pefc,
 					    unsigned int      sel,
 					    unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_destination_selector(ipmi_pef_config_t *pefc,
 					    unsigned int      sel,
 					    unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_alert_string_event_specific(ipmi_pef_config_t *pefc,
 						   unsigned int      sel,
 						   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_string_event_specific(ipmi_pef_config_t *pefc,
 						   unsigned int      sel,
 						   unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_alert_string_selector(ipmi_pef_config_t *pefc,
 					     unsigned int      sel,
 					     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_string_selector(ipmi_pef_config_t *pefc,
 					     unsigned int      sel,
 					     unsigned int      val);
@@ -559,21 +685,28 @@ int ipmi_pefconfig_set_alert_string_selector(ipmi_pef_config_t *pefc,
  * unlike the other PEF set data, there is a zero value here so the
  * numbering matches the numbering in the actual data.
  */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pefconfig_get_num_alert_strings(ipmi_pef_config_t *pefc);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_event_filter(ipmi_pef_config_t *pefc,
 				    unsigned int      sel,
 				    unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_event_filter(ipmi_pef_config_t *pefc,
 				    unsigned int      sel,
 				    unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_alert_string_set(ipmi_pef_config_t *pefc,
 					unsigned int      sel,
 					unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_string_set(ipmi_pef_config_t *pefc,
 					unsigned int      sel,
 					unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_alert_string(ipmi_pef_config_t *pefc, unsigned int sel,
 				    unsigned char *val, unsigned int *len);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_alert_string(ipmi_pef_config_t *pefc, unsigned int sel,
 				    unsigned char *val);
 
@@ -581,10 +714,12 @@ int ipmi_pefconfig_set_alert_string(ipmi_pef_config_t *pefc, unsigned int sel,
 /*
  * Cruft, don't use
  */
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_get_guid(ipmi_pef_config_t *pefc,
 			    unsigned int      *enabled,
 			    unsigned char     *data,
 			    unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_pefconfig_set_guid(ipmi_pef_config_t *pefc, unsigned int enabled,
 			    unsigned char *data, unsigned int data_len);
 

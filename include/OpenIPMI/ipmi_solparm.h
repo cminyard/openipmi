@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_SOLPARM_H
 #define OPENIPMI_SOLPARM_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 
 #ifdef __cplusplus
@@ -54,11 +55,13 @@ typedef void (*ipmi_solparm_ptr_cb)(ipmi_solparm_t *solparm,
 				    void           *cb_data);
 
 /* Allocate a SOLPARM. */
+IPMI_DLL_PUBLIC
 int ipmi_solparm_alloc(ipmi_mc_t      *mc,
 		       unsigned int   channel,
 		       ipmi_solparm_t **new_solparm);
 
 /* Destroy a SOLPARM. */
+IPMI_DLL_PUBLIC
 int ipmi_solparm_destroy(ipmi_solparm_t       *solparm,
 			 ipmi_solparm_done_cb handler,
 			 void                 *cb_data);
@@ -68,17 +71,23 @@ int ipmi_solparm_destroy(ipmi_solparm_t       *solparm,
    recommended.  This is primarily here to help reference-tracking
    garbage collection systems like what is in Perl to be able to
    automatically destroy solparms when they are done. */
+IPMI_DLL_PUBLIC
 void ipmi_solparm_ref(ipmi_solparm_t *solparm);
+IPMI_DLL_PUBLIC
 void ipmi_solparm_deref(ipmi_solparm_t *solparm);
 
+IPMI_DLL_PUBLIC
 void ipmi_solparm_iterate_solparms(ipmi_domain_t       *domain,
 				   ipmi_solparm_ptr_cb handler,
 				   void                *cb_data);
 
+IPMI_DLL_PUBLIC
 ipmi_mcid_t ipmi_solparm_get_mc_id(ipmi_solparm_t *solparm);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_solparm_get_channel(ipmi_solparm_t *solparm);
 
 #define IPMI_SOLPARM_NAME_LEN 64
+IPMI_DLL_PUBLIC
 int ipmi_solparm_get_name(ipmi_solparm_t *solparm, char *name, int length);
 
 
@@ -93,6 +102,7 @@ typedef void (*ipmi_solparm_get_cb)(ipmi_solparm_t    *solparm,
 				    unsigned char     *data,
 				    unsigned int      data_len,
 				    void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_solparm_get_parm(ipmi_solparm_t      *solparm,
 			  unsigned int        parm,
 			  unsigned int        set,
@@ -101,6 +111,7 @@ int ipmi_solparm_get_parm(ipmi_solparm_t      *solparm,
 			  void                *cb_data);
 
 /* Set the parameter value in the SOLPARM to the given data. */
+IPMI_DLL_PUBLIC
 int ipmi_solparm_set_parm(ipmi_solparm_t       *solparm,
 			  unsigned int         parm,
 			  unsigned char        *data,
@@ -133,6 +144,7 @@ typedef void (*ipmi_sol_get_config_cb)(ipmi_solparm_t    *solparm,
 				       int               err,
 				       ipmi_sol_config_t *config,
 				       void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sol_get_config(ipmi_solparm_t         *solparm,
 			ipmi_sol_get_config_cb done,
 			void                   *cb_data);
@@ -142,6 +154,7 @@ int ipmi_sol_get_config(ipmi_solparm_t         *solparm,
    a copy is made of the configuration, so you are free to do whatever
    you like with it after this.  Note that this unlocks the config, so
    it cannot be used for future set operations. */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_config(ipmi_solparm_t       *solparm,
 			ipmi_sol_config_t    *config,
 			ipmi_solparm_done_cb done,
@@ -149,12 +162,14 @@ int ipmi_sol_set_config(ipmi_solparm_t       *solparm,
 
 /* Clear the lock on a SOL.  If the SOL config is non-NULL, then it's
    lock is also cleared. */
+IPMI_DLL_PUBLIC
 int ipmi_sol_clear_lock(ipmi_solparm_t       *solparm,
 			ipmi_sol_config_t    *solc,
 			ipmi_solparm_done_cb done,
 			void                 *cb_data);
 
 /* Free a SOL config. */
+IPMI_DLL_PUBLIC
 void ipmi_sol_free_config(ipmi_sol_config_t *config);
 
 /*
@@ -187,6 +202,7 @@ enum ipmi_solconf_val_type_e { IPMI_SOLCONFIG_INT, IPMI_SOLCONFIG_BOOL,
    the data will not be filled in (except for index, which must always
    be present).  That lets you get the value type without getting the
    data, for instance. */
+IPMI_DLL_PUBLIC
 int ipmi_solconfig_get_val(ipmi_sol_config_t *solc,
 			   unsigned int      parm,
 			   const char        **name,
@@ -197,6 +213,7 @@ int ipmi_solconfig_get_val(ipmi_sol_config_t *solc,
 			   unsigned int      *dval_len);
   /* Set a value in the sol config.  You must know ahead of time the
      actual value type and set the proper one. */
+IPMI_DLL_PUBLIC
 int ipmi_solconfig_set_val(ipmi_sol_config_t *solc,
 			   unsigned int      parm,
 			   int               index,
@@ -212,96 +229,105 @@ int ipmi_solconfig_set_val(ipmi_sol_config_t *solc,
    enumeration value, or -1 if val is the last or past the last
    enumeration value.  If this returns 0, val will be set to the
    string value for the enumeration. */
+IPMI_DLL_PUBLIC
 int ipmi_solconfig_enum_val(unsigned int parm, int val, int *nval,
 			    const char **sval);
 /* Sometimes array indexes may be enumerations.  This allows the user
    to detect if a specific parm's array index is an enumeration, and
    to get the enumeration values.  */
+IPMI_DLL_PUBLIC
 int ipmi_solconfig_enum_idx(unsigned int parm, int idx, const char **sval);
 /* Free data from ipmi_solconfig_get_val(). */
+IPMI_DLL_PUBLIC
 void ipmi_solconfig_data_free(void *data);
 /* Convert a string to a solconfig parm number.  Returns -1 if the
    string is invalid. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_solconfig_str_to_parm(char *name);
 /* Convert the parm to a string name. */
+IPMI_DLL_PUBLIC
 const char *ipmi_solconfig_parm_to_str(unsigned int parm);
 /* Get the type of a specific parm. */
+IPMI_DLL_PUBLIC
 int ipmi_solconfig_parm_to_type(unsigned int                 parm,
 				enum ipmi_solconf_val_type_e *valtype);
 
 
 /* Settings for getting at individual parameters directly. */
 
-unsigned int
-ipmi_solconfig_get_enable(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_enable(ipmi_sol_config_t *solc,
-			  unsigned int      val);
+IPMI_DLL_PUBLIC
+unsigned int ipmi_solconfig_get_enable(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_enable(ipmi_sol_config_t *solc,
+			      unsigned int      val);
 
+IPMI_DLL_PUBLIC
 unsigned int
 ipmi_solconfig_get_force_payload_encryption(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_force_payload_encryption(ipmi_sol_config_t *solc,
-					    unsigned int      val);
-
-unsigned int
-ipmi_solconfig_get_force_payload_authentication(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_force_payload_authentication(ipmi_sol_config_t *solc,
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_force_payload_encryption(ipmi_sol_config_t *solc,
 						unsigned int      val);
 
+IPMI_DLL_PUBLIC
 unsigned int
-ipmi_solconfig_get_privilege_level(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_privilege_level(ipmi_sol_config_t *solc,
-				   unsigned int      val);
+ipmi_solconfig_get_force_payload_authentication(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_force_payload_authentication(ipmi_sol_config_t *solc,
+						    unsigned int      val);
 
-unsigned int
-ipmi_solconfig_get_char_accumulation_interval(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_char_accumulation_interval(ipmi_sol_config_t *solc,
-					      unsigned int      val);
-
-unsigned int
-ipmi_solconfig_get_char_send_threshold(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_char_send_threshold(ipmi_sol_config_t *solc,
+IPMI_DLL_PUBLIC
+unsigned int ipmi_solconfig_get_privilege_level(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_privilege_level(ipmi_sol_config_t *solc,
 				       unsigned int      val);
 
+IPMI_DLL_PUBLIC
 unsigned int
-ipmi_solconfig_get_retry_count(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_retry_count(ipmi_sol_config_t *solc,
-			       unsigned int      val);
+ipmi_solconfig_get_char_accumulation_interval(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_char_accumulation_interval(ipmi_sol_config_t *solc,
+					      unsigned int      val);
 
-unsigned int
-ipmi_solconfig_get_retry_interval(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_retry_interval(ipmi_sol_config_t *solc,
-				  unsigned int      val);
+IPMI_DLL_PUBLIC
+unsigned int ipmi_solconfig_get_char_send_threshold(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_char_send_threshold(ipmi_sol_config_t *solc,
+				       unsigned int      val);
 
-unsigned int
-ipmi_solconfig_get_non_volatile_bitrate(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_non_volatile_bitrate(ipmi_sol_config_t *solc,
-					unsigned int      val);
-
-unsigned int
-ipmi_solconfig_get_volatile_bitrate(ipmi_sol_config_t *solc);
-int
-ipmi_solconfig_set_volatile_bitrate(ipmi_sol_config_t *solc,
+IPMI_DLL_PUBLIC
+unsigned int ipmi_solconfig_get_retry_count(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_retry_count(ipmi_sol_config_t *solc,
 				   unsigned int      val);
 
-int
-ipmi_solconfig_get_port_number(ipmi_sol_config_t *solc,
-			       unsigned int      *data);
-int
-ipmi_solconfig_set_port_number(ipmi_sol_config_t *solc,
-			       unsigned int      val);
+IPMI_DLL_PUBLIC
+unsigned int ipmi_solconfig_get_retry_interval(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_retry_interval(ipmi_sol_config_t *solc,
+				      unsigned int      val);
 
-int
-ipmi_solconfig_get_payload_channel(ipmi_sol_config_t *solc,
+IPMI_DLL_PUBLIC
+unsigned int ipmi_solconfig_get_non_volatile_bitrate(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_non_volatile_bitrate(ipmi_sol_config_t *solc,
+					unsigned int      val);
+
+IPMI_DLL_PUBLIC
+unsigned int ipmi_solconfig_get_volatile_bitrate(ipmi_sol_config_t *solc);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_volatile_bitrate(ipmi_sol_config_t *solc,
+				   unsigned int      val);
+
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_get_port_number(ipmi_sol_config_t *solc,
 				   unsigned int      *data);
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_set_port_number(ipmi_sol_config_t *solc,
+				   unsigned int      val);
+
+IPMI_DLL_PUBLIC
+int ipmi_solconfig_get_payload_channel(ipmi_sol_config_t *solc,
+				       unsigned int      *data);
 
 #ifdef __cplusplus
 }

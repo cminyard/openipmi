@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_CMDLANG_H
 #define OPENIPMI_CMDLANG_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/selector.h>
 #include <OpenIPMI/ipmi_bits.h>
 #include <OpenIPMI/ipmi_types.h>
@@ -117,11 +118,14 @@ struct ipmi_cmdlang_s
 
 /* Parse and handle the given command string.  This always calls the
    done function when complete. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_handle(ipmi_cmdlang_t *cmdlang, char *str);
 
 /* If the event info is true, then the system will output object
    information with each add or change event. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_set_evinfo(int evinfo);
+IPMI_DLL_PUBLIC
 int ipmi_cmdlang_get_evinfo(void);
 
 /*
@@ -139,6 +143,7 @@ typedef void (*ipmi_help_finisher_cb)(ipmi_cmdlang_t *cmdlang);
    passed in below will be in the "handler_data" field of the cmd_info
    structure.  Note that if you are attaching subcommands to this
    command, you should pass in a NULL handler.  Returns an error value. */
+IPMI_DLL_PUBLIC
 int ipmi_cmdlang_reg_cmd(ipmi_cmdlang_cmd_t      *parent,
 			 char                    *name,
 			 char                    *help,
@@ -158,6 +163,7 @@ typedef struct ipmi_cmdlang_init_s
     ipmi_cmdlang_cmd_t      **new_val;
     ipmi_help_finisher_cb   help_finish;
 } ipmi_cmdlang_init_t;
+IPMI_DLL_PUBLIC
 int ipmi_cmdlang_reg_table(ipmi_cmdlang_init_t *table, int len);
 
 
@@ -181,86 +187,111 @@ int ipmi_cmdlang_reg_table(ipmi_cmdlang_init_t *table, int len);
 */
 
 /* ipmi_domain_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_domain_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_entity_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_entity_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_sensor_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_sensor_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_control_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_control_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_mc_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_mc_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_connection_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_connection_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_pet_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_pet_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_lanparm_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_lanparm_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_solparm_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_solparm_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_fru_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_fru_handler(ipmi_cmd_info_t *cmd_info);
 
 /* ipmi_pef_ptr_cb */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_pef_handler(ipmi_cmd_info_t *cmd_info);
 
 
 /* All output from the command language is in name/value pairs.  The
    value field may be NULL. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out(ipmi_cmd_info_t *info,
 		      const char      *name,
 		      const char      *value);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_int(ipmi_cmd_info_t *info,
 			  const char      *name,
 			  int             value);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_double(ipmi_cmd_info_t *info,
 			     const char      *name,
 			     double          value);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_hex(ipmi_cmd_info_t *info,
 			  const char      *name,
 			  int             value);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_long(ipmi_cmd_info_t *info,
 			   const char      *name,
 			   long            value);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_binary(ipmi_cmd_info_t *info,
 			     const char      *name,
 			     const char      *value,
 			     unsigned int    len);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_unicode(ipmi_cmd_info_t *info,
 			      const char      *name,
 			      const char      *value,
 			      unsigned int    len);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_type(ipmi_cmd_info_t      *info,
 			   char                 *name,
 			   enum ipmi_str_type_e type,
 			   const char           *value,
 			   unsigned int         len);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_ip(ipmi_cmd_info_t *info,
 			 const char      *name,
 			 struct in_addr  *ip_addr);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_mac(ipmi_cmd_info_t *info,
 			  const char      *name,
 			  unsigned char   mac_addr[6]);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_bool(ipmi_cmd_info_t *info,
 			   const char      *name,
 			   int             value);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_time(ipmi_cmd_info_t *info,
 			   const char      *name,
 			   ipmi_time_t     value);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_out_timeout(ipmi_cmd_info_t *info,
 			      const char      *name,
 			      ipmi_timeout_t  value);
 
 /* Generate info for an event. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_event_out(ipmi_event_t    *event,
 			    ipmi_cmd_info_t *cmd_info);
 
@@ -268,39 +299,56 @@ void ipmi_cmdlang_event_out(ipmi_event_t    *event,
    When you start outputting data for a new thing, you should "down"
    to create a new nesting level.  When you are done, you should
    "up". */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_down(ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_up(ipmi_cmd_info_t *info);
 
 /* A cmd info structure is refcounted, if you save a pointer to it you
    must "get" it.  When you are done, you must "put" it.  It will be
    destroyed (and the done routine called) after the last user puts it. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_cmd_info_get(ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_cmd_info_put(ipmi_cmd_info_t *info);
 
 /* Helper functions */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_int(char *str, int *val, ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_double(char *str, double *val, ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_uchar(char *str, unsigned char *val,
 			    ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_user(char *str, int *val, ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_time(char *str, ipmi_time_t *val, ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_timeout(char *str, ipmi_timeout_t *val,
 			      ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_bool(char *str, int *val, ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_ip(char *str, struct in_addr *val,
 			 ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_mac(char *str, unsigned char val[6],
 			  ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_color(char *str, int *val, ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_threshold_ev(char                        *str,
 				   enum ipmi_thresh_e          *rthresh,
 				   enum ipmi_event_value_dir_e *rvalue_dir,
 				   enum ipmi_event_dir_e       *rdir,
 				   ipmi_cmd_info_t             *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_discrete_ev(char                  *str,
 				  int                   *roffset,
 				  enum ipmi_event_dir_e *rdir,
 				  ipmi_cmd_info_t       *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_get_threshold(char               *str,
 				enum ipmi_thresh_e *rthresh,
 				ipmi_cmd_info_t    *info);
@@ -308,7 +356,9 @@ void ipmi_cmdlang_get_threshold(char               *str,
 /* Call these to initialize and setup the command interpreter.  init
    should be called after the IPMI library proper is initialized, but
    before using it. */
+IPMI_DLL_PUBLIC
 int ipmi_cmdlang_init(os_handler_t *os_hnd);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_cleanup(void);
 
 
@@ -317,11 +367,13 @@ void ipmi_cmdlang_cleanup(void);
    all the data has been output.  Note that the refcounts work like
    normal, you get it at one, when it goes to zero the structure will
    be returned. */
+IPMI_DLL_PUBLIC
 ipmi_cmd_info_t *ipmi_cmdlang_alloc_event_info(void);
 
 typedef struct ipmi_cmdlang_event_s ipmi_cmdlang_event_t;
 
 /* Move to the first field. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_event_restart(ipmi_cmdlang_event_t *event);
 
 enum ipmi_cmdlang_out_types {
@@ -331,6 +383,7 @@ enum ipmi_cmdlang_out_types {
 };
 
 /* Returns true if successful, false if no more fields left. */
+IPMI_DLL_PUBLIC
 int ipmi_cmdlang_event_next_field(ipmi_cmdlang_event_t        *event,
 				  unsigned int                *level,
 				  enum ipmi_cmdlang_out_types *type,
@@ -344,21 +397,29 @@ int ipmi_cmdlang_event_next_field(ipmi_cmdlang_event_t        *event,
    name, etc) or NULL if none.  The location is the file and procedure
    where the error occurred.  The errstr is a descriptive string and
    errval is an IPMI error value to be printed. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_global_err(char *objstr,
 			     char *location,
 			     char *errstr,
 			     int  errval);
 
 /* Supplied by the user to report events. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_report_event(ipmi_cmdlang_event_t *event);
 
 /* In callbacks, you must use these to lock the cmd_info structure. */
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_lock(ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_cmdlang_unlock(ipmi_cmd_info_t *info);
 
+IPMI_DLL_PUBLIC
 int ipmi_cmdlang_get_argc(ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 char **ipmi_cmdlang_get_argv(ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 int ipmi_cmdlang_get_curr_arg(ipmi_cmd_info_t *info);
+IPMI_DLL_PUBLIC
 ipmi_cmdlang_t *ipmi_cmdinfo_get_cmdlang(ipmi_cmd_info_t *info);
 
 #ifdef __cplusplus

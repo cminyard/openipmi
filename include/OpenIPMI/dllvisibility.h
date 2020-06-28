@@ -1,13 +1,13 @@
 /*
- * ipmi_tcl.h
+ * deprecator.h
  *
- * MontaVista IPMI os handler interface for TCL.
+ * MontaVista IPMI deprecation defines
  *
  * Author: MontaVista Software, Inc.
  *         Corey Minyard <minyard@mvista.com>
  *         source@mvista.com
  *
- * Copyright 2006 MontaVista Software Inc.
+ * Copyright 2020 MontaVista Software Inc.
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -31,33 +31,32 @@
  *  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef OPENIPMI_TCL_H
-#define OPENIPMI_TCL_H
+#ifndef OpenIPMI_DLLVISIBILITY
+#define OpenIPMI_DLLVISIBILITY
 
-#include <OpenIPMI/dllvisibility.h>
-#include <OpenIPMI/os_handler.h>
-
-#ifdef __cplusplus
-extern "C" {
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef BUILDING_DLL
+    #ifdef __GNUC__
+      #define IPMI_DLL_PUBLIC __attribute__ ((dllexport))
+    #else
+      #define IPMI_DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #else
+    #ifdef __GNUC__
+      #define IPMI_DLL_PUBLIC __attribute__ ((dllimport))
+    #else
+      #define IPMI_DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #endif
+  #define IPMI_DLL_LOCAL
+#else
+  #if __GNUC__ >= 4
+    #define IPMI_DLL_PUBLIC __attribute__ ((visibility ("default")))
+    #define IPMI_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
+  #else
+    #define IPMI_DLL_PUBLIC
+    #define IPMI_DLL_LOCAL
+  #endif
 #endif
 
-/* Logs go to the standard tcl log hander, unless overridden by
-   set_log_handler in the os_handler. */
-
-/* Allocate and configure an OS handler. */
-IPMI_DLL_PUBLIC
-os_handler_t *ipmi_tcl_get_os_handler(int priority);
-
-/* This is a convenience log handler that allows the tcl stuff to be
-   used without having to link with tcl to get the log handler
-   information. */
-IPMI_DLL_PUBLIC
-void ipmi_tcl_set_log_handler(void (*hndlr)(const char *domain,
-					    const char *pfx,
-					    const char *msg));
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* OPENIPMI_TCL_H */
+#endif /* OpenIPMI_DLLVISIBILITY */

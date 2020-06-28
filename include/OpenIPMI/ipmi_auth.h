@@ -57,6 +57,8 @@
 #ifndef OPENIPMI_AUTH_H
 #define OPENIPMI_AUTH_H
 
+#include <OpenIPMI/dllvisibility.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -112,10 +114,12 @@ typedef struct ipmi_auth_s
 #define IPMI_AUTHTYPE_STRAIGHT	4
 #define IPMI_AUTHTYPE_OEM	5
 #define IPMI_AUTHTYPE_RMCP_PLUS	6
+IPMI_DLL_PUBLIC
 const char *ipmi_authtype_string(int authtype);
 
 /* This is a table of authentication algorithms. */
 #define MAX_IPMI_AUTHS		6
+IPMI_DLL_PUBLIC
 extern ipmi_auth_t ipmi_auths[MAX_IPMI_AUTHS];
 
 /* IPMI privilege levels */
@@ -124,6 +128,7 @@ extern ipmi_auth_t ipmi_auths[MAX_IPMI_AUTHS];
 #define IPMI_PRIVILEGE_OPERATOR		3
 #define IPMI_PRIVILEGE_ADMIN		4
 #define IPMI_PRIVILEGE_OEM		5
+IPMI_DLL_PUBLIC
 const char *ipmi_privilege_string(int privilege);
 
 
@@ -135,6 +140,7 @@ const char *ipmi_privilege_string(int privilege);
 #define IPMI_PRIV_SEND		2 /* Special send message handling needed. */
 #define IPMI_PRIV_BOOT		3 /* Special set system boot options handling.*/
 
+IPMI_DLL_PUBLIC
 int ipmi_cmd_permitted(unsigned char priv,
 		       unsigned char netfn,
 		       unsigned char cmd);

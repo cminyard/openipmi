@@ -33,6 +33,7 @@
 
 #ifndef OPENIPMI_SDR_H
 #define OPENIPMI_SDR_H
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 #include <stdint.h>
 
@@ -61,6 +62,7 @@ typedef struct ipmi_sdr_info_s ipmi_sdr_info_t;
    to do that.  If "sensor" is true, then this will fetch the "sensor"
    SDRs using GET DEVICE SDR.  If not, it will use GET SDR for
    fetching SDRs. */
+IPMI_DLL_PUBLIC
 int ipmi_sdr_info_alloc(ipmi_domain_t   *domain,
 			ipmi_mc_t       *mc,
 			unsigned int    lun,
@@ -68,10 +70,12 @@ int ipmi_sdr_info_alloc(ipmi_domain_t   *domain,
 			ipmi_sdr_info_t **new_sdrs);
 
 /* Remove all the SDRs, but don't destroy the SDR repository. */
+IPMI_DLL_PUBLIC
 void ipmi_sdr_clean_out_sdrs(ipmi_sdr_info_t *sdrs);
 
 /* Stop any timer operation; if the MC is in shutdown this should halt
    any running operations. */
+IPMI_DLL_PUBLIC
 void ipmi_sdr_cleanout_timer(ipmi_sdr_info_t *sdrs);
 
 /* Destroy an SDR.  Note that if the SDR is currently fetching SDRs,
@@ -79,6 +83,7 @@ void ipmi_sdr_cleanout_timer(ipmi_sdr_info_t *sdrs);
    destruction later.  You can supply a callback that, if not NULL,
    will be called when the sdr is destroyed. */
 typedef void (*ipmi_sdr_destroyed_t)(ipmi_sdr_info_t *sdrs, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_info_destroy(ipmi_sdr_info_t      *sdrs,
 			  ipmi_sdr_destroyed_t handler,
 			  void                 *cb_data);
@@ -91,20 +96,24 @@ typedef void (*ipmi_sdrs_fetched_t)(ipmi_sdr_info_t *sdrs,
 				    int             changed,
 				    unsigned int    count,
 				    void            *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_fetch(ipmi_sdr_info_t     *sdrs,
 		   ipmi_sdrs_fetched_t handler,
 		   void                *cb_data);
 
 /* Return the number of SDRs in the sdr repository. */
+IPMI_DLL_PUBLIC
 int ipmi_get_sdr_count(ipmi_sdr_info_t *sdr,
 		       unsigned int    *count);
 
 /* Find the SDR with the given record id. */
+IPMI_DLL_PUBLIC
 int ipmi_get_sdr_by_recid(ipmi_sdr_info_t *sdr,
 			  int             recid,
 			  ipmi_sdr_t      *return_sdr);
 
 /* Find the first SDR with the given type. */
+IPMI_DLL_PUBLIC
 int ipmi_get_sdr_by_type(ipmi_sdr_info_t *sdr,
 			 int             type,
 			 ipmi_sdr_t      *return_sdr);
@@ -112,12 +121,14 @@ int ipmi_get_sdr_by_type(ipmi_sdr_info_t *sdr,
 /* Find the SDR with the given index. The indexes are the internal
    array indexes for the SDR, this can be used to iterate through the
    SDRs. */
+IPMI_DLL_PUBLIC
 int ipmi_get_sdr_by_index(ipmi_sdr_info_t *sdr,
 			  int             index,
 			  ipmi_sdr_t      *return_sdr);
 
 /* Set an SDR's value.  This is primarily for the OEM SDR fixup code,
    so it can fix an SDR and write it back. */
+IPMI_DLL_PUBLIC
 int ipmi_set_sdr_by_index(ipmi_sdr_info_t *sdrs,
 			  int             index,
 			  ipmi_sdr_t      *sdr);
@@ -127,31 +138,44 @@ int ipmi_set_sdr_by_index(ipmi_sdr_info_t *sdrs,
    array_size will be set to the actual number of elements put into
    the array.  If the number of SDRs is larger than the supplied
    array_size, this will return E2BIG and do nothing. */
+IPMI_DLL_PUBLIC
 int ipmi_get_all_sdrs(ipmi_sdr_info_t *sdr,
 		      int             *array_size,
 		      ipmi_sdr_t      *array);
 
 /* Get various information from the IPMI SDR info commands. */
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_major_version(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_minor_version(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_overflow(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_update_mode(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_supports_delete_sdr(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_supports_partial_add_sdr(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_supports_reserve_sdr(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_supports_get_sdr_repository_allocation(ipmi_sdr_info_t *sdr,
 							int             *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_dynamic_population(ipmi_sdr_info_t *sdr, int *val);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_get_lun_has_sensors(ipmi_sdr_info_t *sdr,
 				 unsigned int    lun,
 				 int             *val);
 
 /* Append the SDR to the repository. */
+IPMI_DLL_PUBLIC
 int ipmi_sdr_add(ipmi_sdr_info_t *sdrs,
 		 ipmi_sdr_t      *sdr);
 
 /* Store the SDRs into the SDR repository. */
 typedef void (*ipmi_sdr_save_cb)(ipmi_sdr_info_t *sdrs, int err, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sdr_save(ipmi_sdr_info_t  *sdrs,
 		  ipmi_sdr_save_cb done,
 		  void             *cb_data);

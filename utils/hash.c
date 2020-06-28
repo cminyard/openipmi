@@ -48,6 +48,8 @@
  *      written permission.
  */
 
+#include <OpenIPMI/internal/ipmi_utils.h>
+
 /* FIXME - need a better hash value. */
 unsigned int
 ipmi_hash_pointer(void *ptr)

@@ -33,6 +33,7 @@
 
 #ifndef OPENIPMI_MC_H
 #define OPENIPMI_MC_H
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 #include <OpenIPMI/ipmi_sdr.h>
 #include <OpenIPMI/ipmi_bits.h>
@@ -46,18 +47,25 @@ extern "C" {
    put a non-IPMI system under OpenIPMI, and if you do the MCs won't
    be very useful.  You generally shouldn't need them anyway. */
 
+IPMI_DLL_PUBLIC
 ipmi_mcid_t ipmi_mc_convert_to_id(ipmi_mc_t *mc);
 typedef void (*ipmi_mc_ptr_cb)(ipmi_mc_t *mc, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_pointer_cb(ipmi_mcid_t    id,
 		       ipmi_mc_ptr_cb handler,
 		       void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_pointer_noseq_cb(ipmi_mcid_t    id,
 			     ipmi_mc_ptr_cb handler,
 			     void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_cmp_mc_id(ipmi_mcid_t id1, ipmi_mcid_t id2);
+IPMI_DLL_PUBLIC
 int ipmi_cmp_mc_id_noseq(ipmi_mcid_t id1, ipmi_mcid_t id2);
+IPMI_DLL_PUBLIC
 void ipmi_mc_id_set_invalid(ipmi_mcid_t *id);
 /* Is it the invalid MCID? */
+IPMI_DLL_PUBLIC
 int ipmi_mc_id_is_invalid(ipmi_mcid_t *id);
 
 
@@ -68,75 +76,106 @@ typedef void (*ipmi_mc_data_done_cb)(ipmi_mc_t *mc, int err, int value,
 
 /* Get the name of an MC. */
 #define IPMI_MC_NAME_LEN (IPMI_DOMAIN_NAME_LEN + 32)
+IPMI_DLL_PUBLIC
 int ipmi_mc_get_name(ipmi_mc_t *mc, char *name, int length);
 
 /* Return the domain for the given MC. */
+IPMI_DLL_PUBLIC
 ipmi_domain_t *ipmi_mc_get_domain(ipmi_mc_t *mc);
 
 /* Basic information about a MC.  */
+IPMI_DLL_PUBLIC
 int ipmi_mc_provides_device_sdrs(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_device_available(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_chassis_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_bridge_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_ipmb_event_generator_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_ipmb_event_receiver_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_fru_inventory_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_device_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sdr_repository_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sensor_device_support(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_device_id(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_device_revision(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_major_fw_revision(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_minor_fw_revision(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_major_version(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_minor_version(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_manufacturer_id(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_product_id(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 void ipmi_mc_aux_fw_revision(ipmi_mc_t *mc, unsigned char val[]);
 
 /* Get the GUID (if it is available).  Returns ENOSYS if the GUID is
    not available.  guid must point to 16 bytes of data. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_get_guid(ipmi_mc_t *mc, unsigned char *guid);
 
 /* Check to see if the MC is operational in the system.  If this is
    false, then the MC was referred to by an SDR, but it doesn't really
    exist. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_is_active(ipmi_mc_t *mc);
 
 /* Used to monitor when the MC goes active or inactive. */
 typedef void (*ipmi_mc_active_cb)(ipmi_mc_t *mc,
 				  int       active,
 				  void      *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_add_active_handler(ipmi_mc_t         *mc,
 			       ipmi_mc_active_cb handler,
 			       void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_remove_active_handler(ipmi_mc_t         *mc,
 				  ipmi_mc_active_cb handler,
 				  void              *cb_data);
 typedef void (*ipmi_mc_active_cl_cb)(ipmi_mc_active_cb handler,
 				     void              *handler_data,
 				     void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_add_active_handler_cl(ipmi_mc_t            *mc,
 				  ipmi_mc_active_cl_cb handler,
 				  void                 *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_remove_active_handler_cl(ipmi_mc_t            *mc,
 				     ipmi_mc_active_cl_cb handler,
 				     void                 *event_data);
 
 /* Used to tell when an MC goes "fully up" meaning that all its SDRs
    have been read, etc. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_add_fully_up_handler(ipmi_mc_t      *mc,
 				 ipmi_mc_ptr_cb handler,
 				 void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_remove_fully_up_handler(ipmi_mc_t      *mc,
 				    ipmi_mc_ptr_cb handler,
 				    void           *cb_data);
 typedef void (*ipmi_mc_fully_up_cl_cb)(ipmi_mc_ptr_cb handler,
 				       void           *handler_data,
 				       void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_add_fully_up_handler_cl(ipmi_mc_t              *mc,
 				    ipmi_mc_fully_up_cl_cb handler,
 				    void                   *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_remove_fully_up_handler_cl(ipmi_mc_t              *mc,
 				       ipmi_mc_fully_up_cl_cb handler,
 				       void                  *event_data);
@@ -158,11 +197,13 @@ int ipmi_mc_remove_fully_up_handler_cl(ipmi_mc_t              *mc,
 typedef void (*ipmi_mc_response_handler_t)(ipmi_mc_t  *src,
 					   ipmi_msg_t *msg,
 					   void       *rsp_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_send_command(ipmi_mc_t                  *mc,
 			 unsigned int               lun,
 			 const ipmi_msg_t           *cmd,
 			 ipmi_mc_response_handler_t rsp_handler,
 			 void                       *rsp_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_send_command_sideeff(ipmi_mc_t                  *mc,
 				 unsigned int               lun,
 				 const ipmi_msg_t           *cmd,
@@ -177,6 +218,7 @@ int ipmi_mc_send_command_sideeff(ipmi_mc_t                  *mc,
    really know what they are doing. */
 #define IPMI_MC_RESET_COLD 1
 #define IPMI_MC_RESET_WARM 2
+IPMI_DLL_PUBLIC
 int ipmi_mc_reset(ipmi_mc_t       *mc,
 		  int             reset_type,
 		  ipmi_mc_done_cb done,
@@ -186,7 +228,9 @@ int ipmi_mc_reset(ipmi_mc_t       *mc,
    value returned by the get function is a boolean telling whether
    events are enabled.  The "val" passed in to the set function is a
    boolean telling whether to turn events on (true) or off (false). */
+IPMI_DLL_PUBLIC
 int ipmi_mc_get_events_enable(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_set_events_enable(ipmi_mc_t       *mc,
 			      int             val,
 			      ipmi_mc_done_cb done,
@@ -207,9 +251,11 @@ int ipmi_mc_set_events_enable(ipmi_mc_t       *mc,
  * use this function except perhaps to ensure that events are on.
  * They should be on by default, anyway.
  */
+IPMI_DLL_PUBLIC
 int ipmi_mc_get_event_log_enable(ipmi_mc_t            *mc,
 				 ipmi_mc_data_done_cb done,
 				 void                 *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_set_event_log_enable(ipmi_mc_t       *mc,
 				 int             val,
 				 ipmi_mc_done_cb done,
@@ -218,6 +264,7 @@ int ipmi_mc_set_event_log_enable(ipmi_mc_t       *mc,
 /* Reread all the sensors for a given mc.  This will request the
    device SDRs for that mc (And only for that MC) and change the
    sensors as necessary. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_reread_sensors(ipmi_mc_t       *mc,
 			   ipmi_mc_done_cb done,
 			   void            *done_data);
@@ -225,13 +272,16 @@ int ipmi_mc_reread_sensors(ipmi_mc_t       *mc,
 /*
  * SEL support for the MC
  */
+IPMI_DLL_PUBLIC
 void ipmi_mc_set_sel_rescan_time(ipmi_mc_t *mc, unsigned int seconds);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_mc_get_sel_rescan_time(ipmi_mc_t *mc);
 
 /* Reread the sel.  When the hander is called, all the events in the
    SEL have been fetched into the local copy of the SEL (with the
    obvious caveat that this is a distributed system and other things
    may have come in after the read has finised). */
+IPMI_DLL_PUBLIC
 int ipmi_mc_reread_sel(ipmi_mc_t       *mc,
 		       ipmi_mc_done_cb handler,
 		       void            *cb_data);
@@ -241,6 +291,7 @@ typedef void (*sel_get_time_cb)(ipmi_mc_t     *mc,
 				int           err,
 				unsigned long time,
 				void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_get_current_sel_time(ipmi_mc_t       *mc,
 				 sel_get_time_cb handler,
 				 void            *cb_data);
@@ -249,6 +300,7 @@ int ipmi_mc_get_current_sel_time(ipmi_mc_t       *mc,
    dangerous to do, especially if you don't set it to the current
    time, as it can cause old events to be interpreted as new
    events on this and other systems. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_set_current_sel_time(ipmi_mc_t            *mc,
 				 const struct timeval *time,
 				 ipmi_mc_done_cb      handler,
@@ -261,6 +313,7 @@ typedef void (*ipmi_mc_add_event_done_cb)(ipmi_mc_t    *mc,
 					  unsigned int record_id,
 					  int          err,
 					  void         *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_add_event_to_sel(ipmi_mc_t                 *mc,
 			     ipmi_event_t              *event,
 			     ipmi_mc_add_event_done_cb handler,
@@ -268,6 +321,7 @@ int ipmi_mc_add_event_to_sel(ipmi_mc_t                 *mc,
 
 /* Allocate an event with the given data.  This is required so you can
    add it to the SEL. */
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_event_alloc(ipmi_mcid_t   mcid,
 			       unsigned int  record_id,
 			       unsigned int  type,
@@ -276,6 +330,7 @@ ipmi_event_t *ipmi_event_alloc(ipmi_mcid_t   mcid,
 			       unsigned int  data_len);
 
 typedef void (ipmi_mc_del_event_done_cb)(ipmi_mc_t *mc, int err, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_del_event(ipmi_mc_t                 *mc,
 		      ipmi_event_t              *event, 
 		      ipmi_mc_del_event_done_cb handler,
@@ -289,41 +344,62 @@ int ipmi_mc_del_event(ipmi_mc_t                 *mc,
    deletes if possible otherwise, etc.).  If you pass in NULL for
    last_event, it forces a clear of the SEL without checking anything.
    Very dangerous, events can be lost. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_clear(ipmi_mc_t                 *mc,
 		      ipmi_event_t              *last_event, 
 		      ipmi_mc_del_event_done_cb handler,
 		      void                      *cb_data);
 
 
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_mc_first_event(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_mc_last_event(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_mc_next_event(ipmi_mc_t *mc, const ipmi_event_t *event);
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_mc_prev_event(ipmi_mc_t *mc, const ipmi_event_t *event);
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_mc_event_by_recid(ipmi_mc_t *mc,
 				     unsigned int record_id);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_count(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_entries_used(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_major_version(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_minor_version(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_num_entries(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_free_bytes(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_overflow(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_supports_delete_sel(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_supports_partial_add_sel(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_supports_reserve_sel(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_supports_get_sel_allocation(ipmi_mc_t *mc);
+IPMI_DLL_PUBLIC
 int ipmi_mc_sel_get_last_addition_timestamp(ipmi_mc_t *mc);
 
 
 /* Get the MC's full IPMI address. */
+IPMI_DLL_PUBLIC
 void ipmi_mc_get_ipmi_address(ipmi_mc_t    *mc,
 			      ipmi_addr_t  *addr,
 			      unsigned int *addr_len);
 
 /* Get the IPMI slave address of the given MC. */
+IPMI_DLL_PUBLIC
 unsigned ipmi_mc_get_address(ipmi_mc_t *mc);
 
 /* Get the channel for the given MC. */
+IPMI_DLL_PUBLIC
 unsigned ipmi_mc_get_channel(ipmi_mc_t *mc);
 
 
@@ -343,6 +419,7 @@ typedef void (*ipmi_channel_info_cb)(ipmi_mc_t           *mc,
 				     int                 err,
 				     ipmi_channel_info_t *info,
 				     void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_channel_get_info(ipmi_mc_t            *mc,
 			     unsigned int         channel,
 			     ipmi_channel_info_cb handler,
@@ -352,12 +429,15 @@ int ipmi_mc_channel_get_info(ipmi_mc_t            *mc,
  * Allow the user to keep their own copy of the info data.  Note that
  * you should *NOT* free the info data you get from the get_info.
  */
+IPMI_DLL_PUBLIC
 ipmi_channel_info_t *ipmi_channel_info_copy(ipmi_channel_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_channel_info_free(ipmi_channel_info_t *info);
 
 /*
  * Extract various data from the channel.
  */
+IPMI_DLL_PUBLIC
 int ipmi_channel_info_get_channel(ipmi_channel_info_t *info,
 				  unsigned int        *channel);
 
@@ -376,7 +456,9 @@ int ipmi_channel_info_get_channel(ipmi_channel_info_t *info,
 #define IPMI_CHANNEL_MEDIUM_USB_v1	10
 #define IPMI_CHANNEL_MEDIUM_USB_v2	11
 #define IPMI_CHANNEL_MEDIUM_SYS_INTF	12
+IPMI_DLL_PUBLIC
 const char *ipmi_channel_medium_string(int val);
+IPMI_DLL_PUBLIC
 int ipmi_channel_info_get_medium(ipmi_channel_info_t *info,
 				 unsigned int        *medium);
 #define IPMI_CHANNEL_PROTOCOL_IPMB	1
@@ -387,7 +469,9 @@ int ipmi_channel_info_get_medium(ipmi_channel_info_t *info,
 #define IPMI_CHANNEL_PROTOCOL_BT_v10	7
 #define IPMI_CHANNEL_PROTOCOL_BT_v15	8
 #define IPMI_CHANNEL_PROTOCOL_TMODE	9
+IPMI_DLL_PUBLIC
 const char *ipmi_channel_protocol_string(int val);
+IPMI_DLL_PUBLIC
 int ipmi_channel_info_get_protocol_type(ipmi_channel_info_t *info,
 					unsigned int        *prot_type);
 
@@ -395,13 +479,17 @@ int ipmi_channel_info_get_protocol_type(ipmi_channel_info_t *info,
 #define IPMI_CHANNEL_SINGLE_SESSION	1
 #define IPMI_CHANNEL_MULTI_SESSION	2
 #define IPMI_CHANNEL_SESSION_BASED	3
+IPMI_DLL_PUBLIC
 const char *ipmi_channel_session_support_string(int val);
+IPMI_DLL_PUBLIC
 int ipmi_channel_info_get_session_support(ipmi_channel_info_t *info,
 					  unsigned int        *sup);
 /* Data is 3 bytes long */
+IPMI_DLL_PUBLIC
 int ipmi_channel_info_get_vendor_id(ipmi_channel_info_t *info,
 				    unsigned char       *data);
 /* Data is 2 bytes long */
+IPMI_DLL_PUBLIC
 int ipmi_channel_info_get_aux_info(ipmi_channel_info_t *info,
 				   unsigned char       *data);
 
@@ -414,11 +502,13 @@ typedef void (*ipmi_channel_access_cb)(ipmi_mc_t             *mc,
 				       int                   err,
 				       ipmi_channel_access_t *info,
 				       void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_channel_get_access(ipmi_mc_t              *mc,
 			       unsigned int           channel,
 			       enum ipmi_set_dest_e   dest,
 			       ipmi_channel_access_cb handler,
 			       void                   *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_channel_set_access(ipmi_mc_t             *mc,
 			       unsigned int           channel,
 			       enum ipmi_set_dest_e  dest,
@@ -430,42 +520,57 @@ int ipmi_mc_channel_set_access(ipmi_mc_t             *mc,
  * Allow the user to keep their own copy of the info data.  Note that
  * you should *NOT* free the info data you get from the get_access.
  */
+IPMI_DLL_PUBLIC
 ipmi_channel_access_t *ipmi_channel_access_copy(ipmi_channel_access_t *access);
+IPMI_DLL_PUBLIC
 void ipmi_channel_access_free(ipmi_channel_access_t *access);
 
 /*
  * Get and set various fields in the channel.
  */
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_get_channel(ipmi_channel_access_t *access,
 				    unsigned int          *channel);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_get_alerting_enabled(ipmi_channel_access_t *access,
 					     unsigned int          *enab);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_set_alerting_enabled(ipmi_channel_access_t *access,
 					     unsigned int          enab);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_get_per_msg_auth(ipmi_channel_access_t *access,
 					 unsigned int          *msg_auth);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_set_per_msg_auth(ipmi_channel_access_t *access,
 					 unsigned int          msg_auth);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_get_user_auth(ipmi_channel_access_t *access,
 				      unsigned int          *user_auth);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_set_user_auth(ipmi_channel_access_t *access,
 				      unsigned int          user_auth);
 #define IPMI_CHANNEL_ACCESS_MODE_DISABLED	0
 #define IPMI_CHANNEL_ACCESS_MODE_PRE_BOOT	1
 #define IPMI_CHANNEL_ACCESS_MODE_ALWAYS		2
 #define IPMI_CHANNEL_ACCESS_MODE_SHARED		3
+IPMI_DLL_PUBLIC
 const char *ipmi_channel_access_mode_string(int val);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_get_access_mode(ipmi_channel_access_t *access,
 					unsigned int          *access_mode);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_set_access_mode(ipmi_channel_access_t *access,
 					unsigned int          access_mode);
 /* See IPMI_PRIVILEGE_xxx for the values. */
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_get_priv_limit(ipmi_channel_access_t *access,
 				       unsigned int          *priv_limit);
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_set_priv_limit(ipmi_channel_access_t *access,
 				       unsigned int          priv_limit);
 /* Normally setting will only set the values you have changed.  This
    forces all the values to be set. */
+IPMI_DLL_PUBLIC
 int ipmi_channel_access_setall(ipmi_channel_access_t *access);
 
 /***********************************************************************
@@ -479,6 +584,7 @@ int ipmi_channel_access_setall(ipmi_channel_access_t *access);
    Note that this is not refcounted, it is held in existance by the
    sensor's refcount.  So don't keep this after the sensor pointer
    ceases to exist. */
+IPMI_DLL_PUBLIC
 ipmi_mc_t *ipmi_sensor_get_mc(ipmi_sensor_t *sensor);
 
 
@@ -493,9 +599,11 @@ ipmi_mc_t *ipmi_sensor_get_mc(ipmi_sensor_t *sensor);
    first time and are finished being processed.  Setting the handler
    to NULL disables it.  Note this only works for the first time, it
    will not be called on subsequent SDR and SEL reads and checks. */
+IPMI_DLL_PUBLIC
 int ipmi_mc_set_sdrs_first_read_handler(ipmi_mc_t      *mc,
 					ipmi_mc_ptr_cb handler,
 					void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_mc_set_sels_first_read_handler(ipmi_mc_t      *mc,
 					ipmi_mc_ptr_cb handler,
 					void           *cb_data);

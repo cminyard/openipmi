@@ -73,6 +73,8 @@
 #ifndef OPENIPMI_SOL_H
 #define OPENIPMI_SOL_H
 
+#include <OpenIPMI/dllvisibility.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -299,6 +301,7 @@ typedef void (*ipmi_sol_bmc_transmit_overrun_cb)(ipmi_sol_conn_t *conn,
  *				IPMI SoL connection structure.
  * @return	zero on success, or ENOMEM if memory allocation fails.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_create(ipmi_con_t      *ipmi,
 		    ipmi_sol_conn_t **sol_conn);
 
@@ -318,30 +321,38 @@ int ipmi_sol_create(ipmi_con_t      *ipmi,
  * @param [in] cb_data	The user-defined data to pass to the callback.
  * @return Zero on success, or a nonzero error code.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_register_connection_state_callback(ipmi_sol_conn_t *conn,
 					       ipmi_sol_connection_state_cb cb,
 						void            *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sol_deregister_connection_state_callback(ipmi_sol_conn_t *conn,
 					       ipmi_sol_connection_state_cb cb,
 						  void *cb_data);
 
+IPMI_DLL_PUBLIC
 int ipmi_sol_register_data_received_callback(ipmi_sol_conn_t *conn,
 					     ipmi_sol_data_received_cb cb,
 					     void            *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sol_deregister_data_received_callback(ipmi_sol_conn_t *conn,
 					       ipmi_sol_data_received_cb cb,
 					       void            *cb_data);
 
+IPMI_DLL_PUBLIC
 int ipmi_sol_register_break_detected_callback(ipmi_sol_conn_t *conn,
 					      ipmi_sol_break_detected_cb cb,
 					      void            *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sol_deregister_break_detected_callback(ipmi_sol_conn_t *conn,
 						ipmi_sol_break_detected_cb cb,
 						void            *cb_data);
 
+IPMI_DLL_PUBLIC
 int ipmi_sol_register_bmc_transmit_overrun_callback(ipmi_sol_conn_t *conn,
 					   ipmi_sol_bmc_transmit_overrun_cb cb,
 						    void            *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sol_deregister_bmc_transmit_overrun_callback(ipmi_sol_conn_t *conn,
 					   ipmi_sol_bmc_transmit_overrun_cb cb,
 						      void           *cb_data);
@@ -354,6 +365,7 @@ int ipmi_sol_deregister_bmc_transmit_overrun_callback(ipmi_sol_conn_t *conn,
  * @param [in] conn	The IPMI SoL connection to configure.
  * @param [in] timeout_usec	The timeout, in microseconds.
  */
+IPMI_DLL_PUBLIC
 void ipmi_sol_set_ACK_timeout(ipmi_sol_conn_t *conn, int timeout_usec);
 
 /**
@@ -364,6 +376,7 @@ void ipmi_sol_set_ACK_timeout(ipmi_sol_conn_t *conn, int timeout_usec);
  *
  * @return	The timeout
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_get_ACK_timeout(ipmi_sol_conn_t *conn);
 
 
@@ -373,6 +386,7 @@ int ipmi_sol_get_ACK_timeout(ipmi_sol_conn_t *conn);
  * @param [in] conn	The IPMI SoL connection to configure.
  * @param [in] retries	The number of retries before a packet is declared lost.
  */
+IPMI_DLL_PUBLIC
 void ipmi_sol_set_ACK_retries(ipmi_sol_conn_t *conn, int retries);
 
 /**
@@ -382,6 +396,7 @@ void ipmi_sol_set_ACK_retries(ipmi_sol_conn_t *conn, int retries);
  *
  * @return	The number of retries
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_get_ACK_retries(ipmi_sol_conn_t *conn);
 
 /**
@@ -392,6 +407,7 @@ int ipmi_sol_get_ACK_retries(ipmi_sol_conn_t *conn);
  * 					SoL packets.
  * @return	Zero on success, otherwise an error code.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_use_authentication(ipmi_sol_conn_t *conn,
 				    int             use_authentication);
 
@@ -402,6 +418,7 @@ int ipmi_sol_set_use_authentication(ipmi_sol_conn_t *conn,
  * @return	Nonzero iff the connection will attempt to use authentication
  *		for SoL packets.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_get_use_authentication(ipmi_sol_conn_t *conn);
 
 
@@ -413,6 +430,7 @@ int ipmi_sol_get_use_authentication(ipmi_sol_conn_t *conn);
  *				SoL packets.
  * @return	Zero on success, otherwise an error code.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_use_encryption(ipmi_sol_conn_t *conn, int use_encryption);
 
 /**
@@ -422,6 +440,7 @@ int ipmi_sol_set_use_encryption(ipmi_sol_conn_t *conn, int use_encryption);
  * @return	Nonzero iff the connection will attempt to use encryption
  *		for SoL packets.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_get_use_encryption(ipmi_sol_conn_t *conn);
 
 
@@ -433,6 +452,7 @@ int ipmi_sol_get_use_encryption(ipmi_sol_conn_t *conn);
  *			behavior during the SoL connection.
  * @return	Zero on success, otherwise an error code.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_shared_serial_alert_behavior(ipmi_sol_conn_t *conn,
 				      ipmi_sol_serial_alert_behavior behavior);
 
@@ -443,6 +463,7 @@ int ipmi_sol_set_shared_serial_alert_behavior(ipmi_sol_conn_t *conn,
  * @return	A value identifying the shared serial alert behavior that
  *		will be in force during the connection.
  */
+IPMI_DLL_PUBLIC
 ipmi_sol_serial_alert_behavior ipmi_sol_get_shared_serial_alert_behavior
 						      (ipmi_sol_conn_t *conn);
 
@@ -456,6 +477,7 @@ ipmi_sol_serial_alert_behavior ipmi_sol_get_shared_serial_alert_behavior
  * 			start of the SoL connection.
  * @return	Zero on success, otherwise an error code.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_deassert_CTS_DCD_DSR_on_connect(ipmi_sol_conn_t *conn,
 						 int             assert);
 
@@ -467,6 +489,7 @@ int ipmi_sol_set_deassert_CTS_DCD_DSR_on_connect(ipmi_sol_conn_t *conn,
  * @return	Nonzero iff the connection will deassert CTS, DCD and DSR upon
  *		connection.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_get_deassert_CTS_DCD_DSR_on_connect(ipmi_sol_conn_t *conn);
 
 
@@ -477,6 +500,7 @@ int ipmi_sol_get_deassert_CTS_DCD_DSR_on_connect(ipmi_sol_conn_t *conn);
  * @param [in] rate	The bit rate constant (IPMI_SOL_BIT_RATE_xxxxx)
  * @return	Zero on success, otherwise an error code.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_bit_rate(ipmi_sol_conn_t *conn, unsigned char rate);
 
 
@@ -486,6 +510,7 @@ int ipmi_sol_set_bit_rate(ipmi_sol_conn_t *conn, unsigned char rate);
  * @param [in] conn	The IPMI SoL connection to query.
  * @return		The bit rate that will be used (IPMI_SOL_BIT_RATE_xxxxx)
  */
+IPMI_DLL_PUBLIC
 unsigned char ipmi_sol_get_bit_rate(ipmi_sol_conn_t *conn);
 
 
@@ -509,6 +534,7 @@ unsigned char ipmi_sol_get_bit_rate(ipmi_sol_conn_t *conn);
  *		EINVAL if this handle is already connected.
  *		A nonzero IPMI error code on other failure.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_open(ipmi_sol_conn_t *conn);
 
 
@@ -525,6 +551,7 @@ int ipmi_sol_open(ipmi_sol_conn_t *conn);
  *			to hurry it along.
  *		A nonzero error code on other failure.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_close(ipmi_sol_conn_t *conn);
 
 /**
@@ -543,6 +570,7 @@ int ipmi_sol_close(ipmi_sol_conn_t *conn);
  *			to hurry it along.
  *		A nonzero error code on other failure.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_force_close_wsend(ipmi_sol_conn_t *conn, int rem_close);
 
 /**
@@ -558,6 +586,7 @@ int ipmi_sol_force_close_wsend(ipmi_sol_conn_t *conn, int rem_close);
  *		EINVAL if this handle was already closed.
  *		A nonzero IPMI error code on other failure.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_force_close(ipmi_sol_conn_t *conn);
 
 
@@ -569,6 +598,7 @@ int ipmi_sol_force_close(ipmi_sol_conn_t *conn);
  * @param [in] conn	The IPMI SoL connection to release.
  * @return	Zero on success, or a nonzero IPMI error code on failure.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_free(ipmi_sol_conn_t *conn);
 
 
@@ -598,6 +628,7 @@ int ipmi_sol_free(ipmi_sol_conn_t *conn);
  *		EINVAL	if a request is made to transmit zero bytes
  *		or a nonzero IPMI error code on failure.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_write(ipmi_sol_conn_t *conn,
 		   const void      *buf,
 		   int             count,
@@ -633,6 +664,7 @@ int ipmi_sol_release_nack(ipmi_sol_conn_t *conn);
  *		this request unless it is sent at the same time as a block of
  * 		data.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_send_break(ipmi_sol_conn_t *conn,
 			ipmi_sol_transmit_complete_cb cb,
 			void            *cb_data);
@@ -661,6 +693,7 @@ int ipmi_sol_send_break(ipmi_sol_conn_t *conn,
  *		this request unless it is sent at the same time as a block of
  * 		data.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t *conn,
 				int             asserted,
 				ipmi_sol_transmit_complete_cb cb,
@@ -682,6 +715,7 @@ int ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t *conn,
  *		this request unless it is sent at the same time as a block of
  * 		data.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t *conn,
 				  int             asserted,
 				  ipmi_sol_transmit_complete_cb cb,
@@ -706,6 +740,7 @@ int ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t *conn,
  *		this request unless it is sent at the same time as a block of
  * 		data.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_set_RI_asserted(ipmi_sol_conn_t *conn,
 			     int             asserted,
 			     ipmi_sol_transmit_complete_cb cb,
@@ -740,6 +775,7 @@ int ipmi_sol_set_RI_asserted(ipmi_sol_conn_t *conn,
  *		this request unless it is sent at the same time as a block of
  * 		data.
  */
+IPMI_DLL_PUBLIC
 int ipmi_sol_flush(ipmi_sol_conn_t *conn,
 		   int             queue_selectors,
 		   ipmi_sol_flush_complete_cb cb,

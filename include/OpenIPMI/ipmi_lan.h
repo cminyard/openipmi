@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_LAN_H
 #define OPENIPMI_LAN_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_addr.h>
 #include <OpenIPMI/ipmi_conn.h>
 #include <netinet/in.h>
@@ -78,6 +79,7 @@ typedef struct ipmi_lanp_parm_s
     void         *parm_data;
     unsigned int parm_data_len;
 } ipmi_lanp_parm_t;
+IPMI_DLL_PUBLIC
 int ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
 			unsigned int     num_parms,
 			os_handler_t     *handlers,
@@ -211,6 +213,7 @@ int ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
  *     user.  The user can use it for anything they like.
  *  new_con - The new connection is returned here.
  */
+IPMI_DLL_PUBLIC
 int ipmi_ip_setup_con(char         * const ip_addrs[],
 		      char         * const ports[],
 		      unsigned int num_ip_addrs,
@@ -226,6 +229,7 @@ int ipmi_ip_setup_con(char         * const ip_addrs[],
 
 /* This is the old version of the above call, it only works on IPv4
    addresses.  Its use is deprecated. */
+IPMI_DLL_PUBLIC
 int ipmi_lan_setup_con(struct in_addr *ip_addrs,
 		       int            *ports,
 		       unsigned int   num_ip_addrs,
@@ -242,6 +246,7 @@ int ipmi_lan_setup_con(struct in_addr *ip_addrs,
 /* Used to handle SNMP traps.  If the msg is NULL, that means that the
    trap sender didn't send enough information to handle the trap
    immediately, and the SEL needs to be scanned. */
+IPMI_DLL_PUBLIC
 int ipmi_lan_handle_external_event(const struct sockaddr *src_addr,
 				   const ipmi_msg_t      *msg,
 				   const unsigned char   *pet_ack);
@@ -324,6 +329,7 @@ typedef struct ipmi_payload_s
 		       unsigned char *tag);
 } ipmi_payload_t;
 
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_payload(unsigned int   payload_type,
 				ipmi_payload_t *payload);
 
@@ -331,6 +337,7 @@ int ipmi_rmcpp_register_payload(unsigned int   payload_type,
    (must be an OEM number) comes in with the iana and payload id or
    goes out with those values in the address.  The payload id is only
    used for payload type 2. */
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_oem_payload(unsigned int   payload_type,
 				    unsigned char  iana[3],
 				    unsigned int   payload_id,
@@ -359,54 +366,84 @@ int ipmi_rmcpp_register_oem_payload(unsigned int   payload_type,
    shutdown. */
 typedef struct ipmi_rmcpp_auth_s ipmi_rmcpp_auth_t;
 
+IPMI_DLL_PUBLIC
 uint32_t ipmi_rmcpp_auth_get_my_session_id(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 uint32_t ipmi_rmcpp_auth_get_mgsys_session_id(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 uint8_t ipmi_rmcpp_auth_get_role(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 const unsigned char *ipmi_rmcpp_auth_get_username(ipmi_rmcpp_auth_t *ainfo,
 						  unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_username_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 const unsigned char *ipmi_rmcpp_auth_get_password(ipmi_rmcpp_auth_t *ainfo,
 						  unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_password_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_auth_get_use_two_keys(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 const unsigned char *ipmi_rmcpp_auth_get_bmc_key(ipmi_rmcpp_auth_t *ainfo,
 						 unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_bmc_key_len(ipmi_rmcpp_auth_t *ainfo);
 
 /* From the get channel auth. */
+IPMI_DLL_PUBLIC
 const unsigned char *ipmi_rmcpp_auth_get_oem_iana(ipmi_rmcpp_auth_t *ainfo,
 						  unsigned int      *len);
+IPMI_DLL_PUBLIC
 unsigned char ipmi_rmcpp_auth_get_oem_aux(ipmi_rmcpp_auth_t *ainfo);
 
 /* Should be filled in by the auth algorithm. */
+IPMI_DLL_PUBLIC
 unsigned char *ipmi_rmcpp_auth_get_my_rand(ipmi_rmcpp_auth_t *ainfo,
 					   unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_my_rand_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 void ipmi_rmcpp_auth_set_my_rand_len(ipmi_rmcpp_auth_t *ainfo,
 				     unsigned int      length);
+IPMI_DLL_PUBLIC
 unsigned char *ipmi_rmcpp_auth_get_mgsys_rand(ipmi_rmcpp_auth_t *ainfo,
 					      unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_mgsys_rand_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 void ipmi_rmcpp_auth_set_mgsys_rand_len(ipmi_rmcpp_auth_t *ainfo,
 					unsigned int      length);
+IPMI_DLL_PUBLIC
 unsigned char *ipmi_rmcpp_auth_get_mgsys_guid(ipmi_rmcpp_auth_t *ainfo,
 					      unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_mgsys_guid_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 void ipmi_rmcpp_auth_set_mgsys_guid_len(ipmi_rmcpp_auth_t *ainfo,
 					unsigned int      length);
+IPMI_DLL_PUBLIC
 unsigned char *ipmi_rmcpp_auth_get_sik(ipmi_rmcpp_auth_t *ainfo,
 				       unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_sik_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 void ipmi_rmcpp_auth_set_sik_len(ipmi_rmcpp_auth_t *ainfo,
 				 unsigned int      length);
+IPMI_DLL_PUBLIC
 unsigned char *ipmi_rmcpp_auth_get_k1(ipmi_rmcpp_auth_t *ainfo,
 				      unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_k1_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 void ipmi_rmcpp_auth_set_k1_len(ipmi_rmcpp_auth_t *ainfo,
 				unsigned int      length);
+IPMI_DLL_PUBLIC
 unsigned char *ipmi_rmcpp_auth_get_k2(ipmi_rmcpp_auth_t *ainfo,
 				      unsigned int      *max_len);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_rmcpp_auth_get_k2_len(ipmi_rmcpp_auth_t *ainfo);
+IPMI_DLL_PUBLIC
 void ipmi_rmcpp_auth_set_k2_len(ipmi_rmcpp_auth_t *ainfo,
 				unsigned int      length);
 
@@ -436,10 +473,12 @@ typedef struct ipmi_rmcpp_authentication_s
 		      void                      *cb_data);
 } ipmi_rmcpp_authentication_t;
 
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_authentication(unsigned int                auth_num,
 				       ipmi_rmcpp_authentication_t *auth);
 
 /* Register an OEM auth algorithm, the auth_num must be in the OEM range. */
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_oem_authentication(unsigned int                auth_num,
 					   unsigned char               iana[3],
 					   ipmi_rmcpp_authentication_t *auth);
@@ -484,10 +523,12 @@ typedef struct ipmi_rmcpp_confidentiality_s
 
 } ipmi_rmcpp_confidentiality_t;
 
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_confidentiality(unsigned int                 conf_num,
 					ipmi_rmcpp_confidentiality_t *conf);
 
 /* Register an OEM conf algorithm, the conf_num must be in the OEM range. */
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_oem_confidentiality(unsigned int                  conf_num,
 					    unsigned char                 iana[3],
 					    ipmi_rmcpp_confidentiality_t *conf);
@@ -535,10 +576,12 @@ typedef struct ipmi_rmcpp_integrity_s
 
 } ipmi_rmcpp_integrity_t;
 
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_integrity(unsigned int           integ_num,
 				  ipmi_rmcpp_integrity_t *integ);
 
 /* Register an OEM integ algorithm, the integ_num must be in the OEM range. */
+IPMI_DLL_PUBLIC
 int ipmi_rmcpp_register_oem_integrity(unsigned int           integ_num,
 				      unsigned char          iana[3],
 				      ipmi_rmcpp_integrity_t *integ);
@@ -546,6 +589,7 @@ int ipmi_rmcpp_register_oem_integrity(unsigned int           integ_num,
 /* Authentication algorithms should use this to send messages.  Note
    that when yo use this interface, it will always set rspi->data4 to
    the address number, you must cast it with (long) rspi->data4. */
+IPMI_DLL_PUBLIC
 int ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
 				  int                   addr_num,
 				  ipmi_addr_t           *addr,
@@ -564,12 +608,15 @@ int ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
    be used for OEM connection code that needs to manage its own
    connections.  Note that the OEM code must make sure this is
    single-threaded. */
+IPMI_DLL_PUBLIC
 void i_ipmi_lan_call_con_change_handlers(ipmi_con_t   *ipmi,
 					int          err,
 					unsigned int port);
 
+IPMI_DLL_PUBLIC
 void i_ipmi_lan_con_change_lock(ipmi_con_t *ipmi);
 
+IPMI_DLL_PUBLIC
 void i_ipmi_lan_con_change_unlock(ipmi_con_t *ipmi);
 
 #ifdef __cplusplus

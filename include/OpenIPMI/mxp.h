@@ -77,6 +77,7 @@ extern "C" {
  *     user.  The user can use it for anything they like.
  *  new_con - The new connection is returned here.
  */
+IPMI_DLL_PUBLIC
 int mxp_lan_setup_con(struct in_addr            *ip_addrs,
 		      int                       *ports,
 		      unsigned int              num_ip_addrs,

@@ -56,6 +56,8 @@
 #ifndef OPENIPMI_MSGBITS_H
 #define OPENIPMI_MSGBITS_H
 
+#include <OpenIPMI/dllvisibility.h>
+
 #define MAX_IPMI_DATA_SIZE 36
 
 /*
@@ -271,6 +273,7 @@ extern "C" {
 /* Convert a netfn into a string.  You must pass a buffer in (32
    bytes is good) and the buffer length.  The string will be stored in
    that buffer and also returned. */
+IPMI_DLL_PUBLIC
 char *ipmi_get_netfn_string(unsigned int netfn,
 			    char         *buffer,
 			    unsigned int buf_len);
@@ -278,6 +281,7 @@ char *ipmi_get_netfn_string(unsigned int netfn,
 /* Convert a netfn/cmd into a string.  You must pass a buffer in (32
    bytes is good) and the buffer length.  The string will be stored in
    that buffer and also returned. */
+IPMI_DLL_PUBLIC
 char *ipmi_get_command_string(unsigned int netfn,
 			      unsigned int cmd,
 			      char         *buffer,

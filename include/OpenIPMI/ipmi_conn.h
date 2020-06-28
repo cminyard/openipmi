@@ -35,6 +35,7 @@
 #ifndef OPENIPMI_CONN_H
 #define OPENIPMI_CONN_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 #include <OpenIPMI/ipmi_addr.h>
 #include <OpenIPMI/os_handler.h>
@@ -112,25 +113,35 @@ typedef int (*ipmi_ll_con_register_stat_cb)(ipmi_ll_stat_info_t *info,
 					    void                **stat);
 typedef void (*ipmi_ll_con_unregister_stat_cb)(ipmi_ll_stat_info_t *info,
 					       void                *stat);
+IPMI_DLL_PUBLIC
 ipmi_ll_stat_info_t *ipmi_ll_con_alloc_stat_info(void);
+IPMI_DLL_PUBLIC
 void ipmi_ll_con_free_stat_info(ipmi_ll_stat_info_t *info);
+IPMI_DLL_PUBLIC
 void ipmi_ll_con_stat_info_set_adder(ipmi_ll_stat_info_t     *info,
 				     ipmi_ll_con_add_stat_cb adder);
+IPMI_DLL_PUBLIC
 void ipmi_ll_con_stat_info_set_register(ipmi_ll_stat_info_t          *info,
 					ipmi_ll_con_register_stat_cb reg);
+IPMI_DLL_PUBLIC
 void ipmi_ll_con_stat_info_set_unregister(ipmi_ll_stat_info_t            *info,
 					  ipmi_ll_con_unregister_stat_cb ureg);
+IPMI_DLL_PUBLIC
 void ipmi_ll_con_stat_call_adder(ipmi_ll_stat_info_t *info,
 				 void                *stat,
 				 int                 count);
+IPMI_DLL_PUBLIC
 int ipmi_ll_con_stat_call_register(ipmi_ll_stat_info_t *info,
 				   const char          *name,
 				   const char          *instance,
 				   void                **stat);
+IPMI_DLL_PUBLIC
 void ipmi_ll_con_stat_call_unregister(ipmi_ll_stat_info_t *info,
 				      void                *stat);
+IPMI_DLL_PUBLIC
 void ipmi_ll_con_stat_set_user_data(ipmi_ll_stat_info_t *info,
 				    void                *data);
+IPMI_DLL_PUBLIC
 void *ipmi_ll_con_stat_get_user_data(ipmi_ll_stat_info_t *info);
 
 /* Set this bit in the hacks if, even though the connection is to a
@@ -426,7 +437,9 @@ struct ipmi_con_s
 #define IPMI_CONN_NAME(c) (c->name ? c->name : "")
 
 /* Initialization code for the initialization the connection code. */
+IPMI_DLL_PUBLIC
 int i_ipmi_conn_init(os_handler_t *os_hnd);
+IPMI_DLL_PUBLIC
 void i_ipmi_conn_shutdown(void);
 
 
@@ -435,6 +448,7 @@ void i_ipmi_conn_shutdown(void);
 
 /* Handle a trap from an external SNMP source.  It returns 1 if the
    event was handled an zero if it was not. */
+IPMI_DLL_PUBLIC
 int ipmi_handle_snmp_trap_data(const void          *src_addr,
 			       unsigned int        src_addr_len,
 			       int                 src_addr_type,
@@ -460,25 +474,31 @@ typedef int (*ipmi_conn_oem_check)(ipmi_con_t               *conn,
 				   void                     *check_cb_data,
 				   ipmi_conn_oem_check_done done,
 				   void                     *done_cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_register_conn_oem_check(ipmi_conn_oem_check check,
 				 void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_deregister_conn_oem_check(ipmi_conn_oem_check check,
 				   void                *cb_data);
 /* Should be called by the connection code for any new connection. */
+IPMI_DLL_PUBLIC
 int ipmi_conn_check_oem_handlers(ipmi_con_t               *conn,
 				 ipmi_conn_oem_check_done done,
 				 void                     *cb_data);
 
 /* Generic message handling */
+IPMI_DLL_PUBLIC
 void ipmi_handle_rsp_item(ipmi_con_t            *ipmi,
 			  ipmi_msgi_t           *rspi,
 			  ipmi_ll_rsp_handler_t rsp_handler);
 
+IPMI_DLL_PUBLIC
 void ipmi_handle_rsp_item_copymsg(ipmi_con_t            *ipmi,
 				  ipmi_msgi_t           *rspi,
 				  const ipmi_msg_t      *msg,
 				  ipmi_ll_rsp_handler_t rsp_handler);
 
+IPMI_DLL_PUBLIC
 void ipmi_handle_rsp_item_copyall(ipmi_con_t            *ipmi,
 				  ipmi_msgi_t           *rspi,
 				  const ipmi_addr_t     *addr,
@@ -490,14 +510,19 @@ void ipmi_handle_rsp_item_copyall(ipmi_con_t            *ipmi,
    that if you set item->msg.data to a non-NULL value that is not
    item->data, the system will free it with ipmi_free_msg_item_data().
    So you should allocate it with ipmi_alloc_msg_item_data9). */
+IPMI_DLL_PUBLIC
 ipmi_msgi_t *ipmi_alloc_msg_item(void);
+IPMI_DLL_PUBLIC
 void ipmi_free_msg_item(ipmi_msgi_t *item);
+IPMI_DLL_PUBLIC
 void *ipmi_alloc_msg_item_data(unsigned int size);
+IPMI_DLL_PUBLIC
 void ipmi_free_msg_item_data(void *data);
 /* Move the data from the old message item to the new one, NULL-ing
    out the old item's data.  This will free the new_item's original
    data if necessary.  This will *not* copy the data items, just the
    address and message. */
+IPMI_DLL_PUBLIC
 void ipmi_move_msg_item(ipmi_msgi_t *new_item, ipmi_msgi_t *old_item);
 
 /*
@@ -527,20 +552,26 @@ typedef int (*ipmi_con_attr_init_cb)(ipmi_con_t *con, void *cb_data,
    more. */
 typedef void (*ipmi_con_attr_kill_cb)(void *cb_data, void *data);
 
+IPMI_DLL_PUBLIC
 int ipmi_con_register_attribute(ipmi_con_t            *con,
 				char                  *name,
 				ipmi_con_attr_init_cb init,
 				ipmi_con_attr_kill_cb destroy,
 				void                  *cb_data,
 				ipmi_con_attr_t       **attr);
+IPMI_DLL_PUBLIC
 int ipmi_con_find_attribute(ipmi_con_t      *con,
 			    char             *name,
 			    ipmi_con_attr_t **attr);
+IPMI_DLL_PUBLIC
 void *ipmi_con_attr_get_data(ipmi_con_attr_t *attr);
 /* You must call the put operation of every attribute returned by
    register or find. */
+IPMI_DLL_PUBLIC
 void ipmi_con_attr_put(ipmi_con_attr_t *attr);
+IPMI_DLL_PUBLIC
 int ipmi_con_attr_init(ipmi_con_t *con);
+IPMI_DLL_PUBLIC
 void ipmi_con_attr_cleanup(ipmi_con_t *con);
 
 #ifdef __cplusplus

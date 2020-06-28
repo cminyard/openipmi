@@ -59,6 +59,7 @@
 #include <stdarg.h>
 #include <sys/time.h>
 #include <OpenIPMI/ipmi_log.h>
+#include <OpenIPMI/dllvisibility.h>
 
 /************************************************************************
  * WARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNINGWARNING
@@ -350,7 +351,9 @@ struct os_handler_s
 };
 
 /* Only use these to allocate/free OS handlers. */
+IPMI_DLL_PUBLIC
 os_handler_t *ipmi_alloc_os_handler(void);
+IPMI_DLL_PUBLIC
 void ipmi_free_os_handler(os_handler_t *handler);
 
 /**********************************************************************
@@ -406,6 +409,7 @@ typedef struct os_handler_waiter_s os_handler_waiter_t;
 /* Allocate a factory to get waiters from.  This is the thing that
    owns the event loop threads (if you have them).  The event loop
    threads are allocated with thread_priority. */
+IPMI_DLL_PUBLIC
 int os_handler_alloc_waiter_factory(os_handler_t *os_hnd,
 				    unsigned int num_threads,
 				    int          thread_priority,
@@ -413,25 +417,31 @@ int os_handler_alloc_waiter_factory(os_handler_t *os_hnd,
 
 /* Free a waiter factory.  This will fail with EAGAIN if there are any
    waiters allocated from it that have not been freed. */
+IPMI_DLL_PUBLIC
 int os_handler_free_waiter_factory(os_handler_waiter_factory_t *factory);
 
 /* Allocate a waiter from the factory.  Returns NULL on failure. It is
    allocated with a use count of 1. */
+IPMI_DLL_PUBLIC
 os_handler_waiter_t *os_handler_alloc_waiter
   (os_handler_waiter_factory_t *factory);
 
 /* Free a waiter.  It cannot be waiting or an error is returned (EAGAIN). */
+IPMI_DLL_PUBLIC
 int os_handler_free_waiter(os_handler_waiter_t *waiter);
 
 /* Increment the use count of the waiter. */
+IPMI_DLL_PUBLIC
 void os_handler_waiter_use(os_handler_waiter_t *waiter);
 
 /* Decrement the use count of the waiter.  When the usecount reaches
    zero the waiter will return. */
+IPMI_DLL_PUBLIC
 void os_handler_waiter_release(os_handler_waiter_t *waiter);
 
 /* Wait for the waiter's use count to reach zero.  If timeout is
    non-NULL, it will wait up to that amount of time. */
+IPMI_DLL_PUBLIC
 int os_handler_waiter_wait(os_handler_waiter_t *waiter,
 			   struct timeval      *timeout);
 
@@ -440,6 +450,7 @@ int os_handler_waiter_wait(os_handler_waiter_t *waiter,
  * system again.  It basically removes the built-in OS handler
  * used for memory allocation so it can be re-assigned.
  */
+IPMI_DLL_PUBLIC
 void os_handler_global_shutdown(void);
 
 #ifdef __cplusplus

@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_UI_H
 #define OPENIPMI_UI_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/selector.h>
@@ -44,11 +45,15 @@ extern "C" {
 
 extern os_handler_t ipmi_ui_cb_handlers;
 
+IPMI_DLL_PUBLIC
 int ipmi_ui_init(os_handler_t *os_hnd, int full_screen);
+IPMI_DLL_PUBLIC
 void ipmi_ui_shutdown(void);
 
+IPMI_DLL_PUBLIC
 void ipmi_ui_set_first_domain(ipmi_domain_id_t fdomain_id);
 
+IPMI_DLL_PUBLIC
 void ipmi_ui_setup_done(ipmi_domain_t *mc,
 			int           err,
 			unsigned int  conn_num,

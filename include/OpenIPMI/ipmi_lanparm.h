@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_LANPARM_H
 #define OPENIPMI_LANPARM_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 
 #ifdef __cplusplus
@@ -54,11 +55,13 @@ typedef void (*ipmi_lanparm_ptr_cb)(ipmi_lanparm_t *lanparm,
 				    void           *cb_data);
 
 /* Allocate a LANPARM. */
+IPMI_DLL_PUBLIC
 int ipmi_lanparm_alloc(ipmi_mc_t      *mc,
 		       unsigned int   channel,
 		       ipmi_lanparm_t **new_lanparm);
 
 /* Destroy a LANPARM. */
+IPMI_DLL_PUBLIC
 int ipmi_lanparm_destroy(ipmi_lanparm_t       *lanparm,
 			 ipmi_lanparm_done_cb handler,
 			 void                 *cb_data);
@@ -68,17 +71,23 @@ int ipmi_lanparm_destroy(ipmi_lanparm_t       *lanparm,
    recommended.  This is primarily here to help reference-tracking
    garbage collection systems like what is in Perl to be able to
    automatically destroy lanparms when they are done. */
+IPMI_DLL_PUBLIC
 void ipmi_lanparm_ref(ipmi_lanparm_t *lanparm);
+IPMI_DLL_PUBLIC
 void ipmi_lanparm_deref(ipmi_lanparm_t *lanparm);
 
+IPMI_DLL_PUBLIC
 void ipmi_lanparm_iterate_lanparms(ipmi_domain_t       *domain,
 				   ipmi_lanparm_ptr_cb handler,
 				   void                *cb_data);
 
+IPMI_DLL_PUBLIC
 ipmi_mcid_t ipmi_lanparm_get_mc_id(ipmi_lanparm_t *lanparm);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanparm_get_channel(ipmi_lanparm_t *lanparm);
 
 #define IPMI_LANPARM_NAME_LEN 64
+IPMI_DLL_PUBLIC
 int ipmi_lanparm_get_name(ipmi_lanparm_t *lanparm, char *name, int length);
 
 
@@ -93,6 +102,7 @@ typedef void (*ipmi_lanparm_get_cb)(ipmi_lanparm_t    *lanparm,
 				    unsigned char     *data,
 				    unsigned int      data_len,
 				    void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_lanparm_get_parm(ipmi_lanparm_t      *lanparm,
 			  unsigned int        parm,
 			  unsigned int        set,
@@ -101,6 +111,7 @@ int ipmi_lanparm_get_parm(ipmi_lanparm_t      *lanparm,
 			  void                *cb_data);
 
 /* Set the parameter value in the LANPARM to the given data. */
+IPMI_DLL_PUBLIC
 int ipmi_lanparm_set_parm(ipmi_lanparm_t       *lanparm,
 			  unsigned int         parm,
 			  unsigned char        *data,
@@ -155,6 +166,7 @@ typedef void (*ipmi_lan_get_config_cb)(ipmi_lanparm_t    *lanparm,
 				       int               err,
 				       ipmi_lan_config_t *config,
 				       void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_lan_get_config(ipmi_lanparm_t         *lanparm,
 			ipmi_lan_get_config_cb done,
 			void                   *cb_data);
@@ -164,6 +176,7 @@ int ipmi_lan_get_config(ipmi_lanparm_t         *lanparm,
    a copy is made of the configuration, so you are free to do whatever
    you like with it after this.  Note that this unlocks the config, so
    it cannot be used for future set operations. */
+IPMI_DLL_PUBLIC
 int ipmi_lan_set_config(ipmi_lanparm_t       *lanparm,
 			ipmi_lan_config_t    *config,
 			ipmi_lanparm_done_cb done,
@@ -171,12 +184,14 @@ int ipmi_lan_set_config(ipmi_lanparm_t       *lanparm,
 
 /* Clear the lock on a LAN.  If the LAN config is non-NULL, then it's
    lock is also cleared. */
+IPMI_DLL_PUBLIC
 int ipmi_lan_clear_lock(ipmi_lanparm_t       *lanparm,
 			ipmi_lan_config_t    *lanc,
 			ipmi_lanparm_done_cb done,
 			void                 *cb_data);
 
 /* Free a LAN config. */
+IPMI_DLL_PUBLIC
 void ipmi_lan_free_config(ipmi_lan_config_t *config);
 
 /*
@@ -209,6 +224,7 @@ enum ipmi_lanconf_val_type_e { IPMI_LANCONFIG_INT, IPMI_LANCONFIG_BOOL,
    the data will not be filled in (except for index, which must always
    be present).  That lets you get the value type without getting the
    data, for instance. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_val(ipmi_lan_config_t *lanc,
 			   unsigned int      parm,
 			   const char        **name,
@@ -219,6 +235,7 @@ int ipmi_lanconfig_get_val(ipmi_lan_config_t *lanc,
 			   unsigned int      *dval_len);
   /* Set a value in the lan config.  You must know ahead of time the
      actual value type and set the proper one. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_val(ipmi_lan_config_t *lanc,
 			   unsigned int      parm,
 			   int               index,
@@ -234,20 +251,26 @@ int ipmi_lanconfig_set_val(ipmi_lan_config_t *lanc,
    enumeration value, or -1 if val is the last or past the last
    enumeration value.  If this returns 0, val will be set to the
    string value for the enumeration. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_enum_val(unsigned int parm, int val, int *nval,
 			    const char **sval);
 /* Sometimes array indexes may be enumerations.  This allows the user
    to detect if a specific parm's array index is an enumeration, and
    to get the enumeration values.  */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_enum_idx(unsigned int parm, int idx, const char **sval);
 /* Free data from ipmi_lanconfig_get_val(). */
+IPMI_DLL_PUBLIC
 void ipmi_lanconfig_data_free(void *data);
 /* Convert a string to a lanconfig parm number.  Returns -1 if the
    string is invalid. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_str_to_parm(char *name);
 /* Convert the parm to a string name. */
+IPMI_DLL_PUBLIC
 const char *ipmi_lanconfig_parm_to_str(unsigned int parm);
 /* Get the type of a specific parm. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_parm_to_type(unsigned int                 parm,
 				enum ipmi_lanconf_val_type_e *valtype);
 
@@ -257,14 +280,21 @@ int ipmi_lanconfig_parm_to_type(unsigned int                 parm,
    error. */
 
 /* Supported authentication types. This is read-only. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_support_auth_oem(ipmi_lan_config_t *lanc);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_support_auth_straight(ipmi_lan_config_t *lanc);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_support_auth_md5(ipmi_lan_config_t *lanc);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_support_auth_md2(ipmi_lan_config_t *lanc);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_support_auth_none(ipmi_lan_config_t *lanc);
 
 /* Various IP-related information. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_ip_addr_source(ipmi_lan_config_t *lanc);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_ip_addr_source(ipmi_lan_config_t *lanc,
 				      unsigned int      val);
 
@@ -272,243 +302,323 @@ int ipmi_lanconfig_set_ip_addr_source(ipmi_lan_config_t *lanc,
    that this is *not* the value returned from the config, it is one
    more than the value, so it is the actual number of alert
    destinations (including the volatile destination 0). */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_num_alert_destinations(ipmi_lan_config_t *c);
 
 
 /* Everything else below returns an error. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_ipv4_ttl(ipmi_lan_config_t *lanc,
 				unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_ipv4_ttl(ipmi_lan_config_t *lanc,
 				unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_ipv4_flags(ipmi_lan_config_t *lanc,
 				  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_ipv4_flags(ipmi_lan_config_t *lanc,
 				  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_ipv4_precedence(ipmi_lan_config_t *lanc,
 				       unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_ipv4_precedence(ipmi_lan_config_t *lanc,
 				       unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_ipv4_tos(ipmi_lan_config_t *lanc,
 				unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_ipv4_tos(ipmi_lan_config_t *lanc,
 				unsigned int      val);
 
 /* Authorization enables for the various authentication levels. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_enable_auth_oem(ipmi_lan_config_t *lanc,
 				       unsigned int      user,
 				       unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_enable_auth_straight(ipmi_lan_config_t *lanc,
 					    unsigned int      user,
 					    unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_enable_auth_md5(ipmi_lan_config_t *lanc,
 				       unsigned int      user,
 				       unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_enable_auth_md2(ipmi_lan_config_t *lanc,
 				       unsigned int      user,
 				       unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_enable_auth_none(ipmi_lan_config_t *lanc,
 					unsigned int      user,
 					unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_enable_auth_oem(ipmi_lan_config_t *lanc,
 				       unsigned int      user,
 				       unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_enable_auth_straight(ipmi_lan_config_t *lanc,
 					    unsigned int      user,
 					    unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_enable_auth_md5(ipmi_lan_config_t *lanc,
 				       unsigned int      user,
 				       unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_enable_auth_md2(ipmi_lan_config_t *lanc,
 				       unsigned int      user,
 				       unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_enable_auth_none(ipmi_lan_config_t *lanc,
 					unsigned int      user,
 					unsigned int      val);
 
 /* Addressing for the BMC. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_ip_addr(ipmi_lan_config_t *lanc,
 			       unsigned char     *data,
 			       unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_ip_addr(ipmi_lan_config_t *lanc,
 			       unsigned char     *data,
 			       unsigned int      data_len);
 
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_mac_addr(ipmi_lan_config_t *lanc,
 				unsigned char     *data,
 				unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_mac_addr(ipmi_lan_config_t *lanc,
 				unsigned char     *data,
 				unsigned int      data_len);
 
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_subnet_mask(ipmi_lan_config_t *lanc,
 				   unsigned char     *data,
 				   unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_subnet_mask(ipmi_lan_config_t *lanc,
 				   unsigned char     *data,
 				   unsigned int      data_len);
 
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_primary_rmcp_port(ipmi_lan_config_t *lanc,
 					 unsigned char     *data,
 					 unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_primary_rmcp_port(ipmi_lan_config_t *lanc,
 					 unsigned char     *data,
 					 unsigned int      data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_port_rmcp_primary(ipmi_lan_config_t *lanc,
 					 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_port_rmcp_primary(ipmi_lan_config_t *lanc,
 					 unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_secondary_rmcp_port(ipmi_lan_config_t *lanc,
 					   unsigned char     *data,
 					   unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_secondary_rmcp_port(ipmi_lan_config_t *lanc,
 					   unsigned char     *data,
 					   unsigned int      data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_port_rmcp_secondary(ipmi_lan_config_t *lanc,
 					   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_port_rmcp_secondary(ipmi_lan_config_t *lanc,
 					   unsigned int      val);
 
 /* Control of ARP-ing.  These are optional and so may return errors. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_bmc_generated_arps(ipmi_lan_config_t *lanc,
 					  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_bmc_generated_arps(ipmi_lan_config_t *lanc,
 					  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_bmc_generated_garps(ipmi_lan_config_t *lanc,
 					   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_bmc_generated_garps(ipmi_lan_config_t *lanc,
 					   unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_garp_interval(ipmi_lan_config_t *lanc,
 				     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_garp_interval(ipmi_lan_config_t *lanc,
 				     unsigned int      val);
 
 /* Gateway handling */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_default_gateway_ip_addr(ipmi_lan_config_t *lanc,
 					       unsigned char     *data,
 					       unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_default_gateway_ip_addr(ipmi_lan_config_t *lanc,
 					       unsigned char     *data,
 					       unsigned int      data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_default_gateway_mac_addr(ipmi_lan_config_t *lanc,
 						unsigned char     *data,
 						unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_default_gateway_mac_addr(ipmi_lan_config_t *lanc,
 						unsigned char     *data,
 						unsigned int      data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_backup_gateway_ip_addr(ipmi_lan_config_t *lanc,
 					      unsigned char     *data,
 					      unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_backup_gateway_ip_addr(ipmi_lan_config_t *lanc,
 					      unsigned char     *data,
 					      unsigned int      data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_backup_gateway_mac_addr(ipmi_lan_config_t *lanc,
 					       unsigned char     *data,
 					       unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_backup_gateway_mac_addr(ipmi_lan_config_t *lanc,
 					       unsigned char     *data,
 					       unsigned int      data_len);
 
 /* The community string for SNMP traps sent. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_community_string(ipmi_lan_config_t *lanc,
 					unsigned char     *data,
 					unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_community_string(ipmi_lan_config_t *lanc,
 					unsigned char     *data,
 					unsigned int      data_len);
 
 /* Everthing else is part of the LAN Alert destination table and is
    addressed on a per-destination basis. */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_alert_ack(ipmi_lan_config_t *lanc,
 				 unsigned int      dest,
 				 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_alert_ack(ipmi_lan_config_t *lanc,
 				 unsigned int      dest,
 				 unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_dest_type(ipmi_lan_config_t *lanc,
 				 unsigned int      dest,
 				 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_dest_type(ipmi_lan_config_t *lanc,
 				 unsigned int      dest,
 				 unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_alert_retry_interval(ipmi_lan_config_t *lanc,
 					    unsigned int      dest,
 					    unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_alert_retry_interval(ipmi_lan_config_t *lanc,
 					    unsigned int      dest,
 					    unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_max_alert_retries(ipmi_lan_config_t *lanc,
 					 unsigned int      dest,
 					 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_max_alert_retries(ipmi_lan_config_t *lanc,
 					 unsigned int      dest,
 					 unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_dest_format(ipmi_lan_config_t *lanc,
 				   unsigned int      dest,
 				   unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_dest_format(ipmi_lan_config_t *lanc,
 				   unsigned int      dest,
 				   unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_gw_to_use(ipmi_lan_config_t *lanc,
 				 unsigned int      dest,
 				 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_gw_to_use(ipmi_lan_config_t *lanc,
 				 unsigned int      dest,
 				 unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_dest_ip_addr(ipmi_lan_config_t *lanc,
 				    unsigned int      dest,
 				    unsigned char     *data,
 				    unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_dest_ip_addr(ipmi_lan_config_t *lanc,
 				    unsigned int      dest,
 				    unsigned char     *data,
 				    unsigned int      data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_dest_mac_addr(ipmi_lan_config_t *lanc,
 				     unsigned int      dest,
 				     unsigned char     *data,
 				     unsigned int      *data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_dest_mac_addr(ipmi_lan_config_t *lanc,
 				     unsigned int      dest,
 				     unsigned char     *data,
 				     unsigned int      data_len);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_dest_vlan_tag_type(ipmi_lan_config_t *lanc,
 					  unsigned int      dest,
 					  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_dest_vlan_tag_type(ipmi_lan_config_t *lanc,
 					  unsigned int      dest,
 					  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_dest_vlan_tag(ipmi_lan_config_t *lanc,
 				     unsigned int      dest,
 				     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_dest_vlan_tag(ipmi_lan_config_t *lanc,
 				     unsigned int      dest,
 				     unsigned int      val);
 
 /* VLAN support */
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_vlan_id(ipmi_lan_config_t *lanc,
 			       unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_vlan_id(ipmi_lan_config_t *lanc,
 			       unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_vlan_id_enable(ipmi_lan_config_t *lanc,
 				      unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_vlan_id_enable(ipmi_lan_config_t *lanc,
 				      unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_vlan_priority(ipmi_lan_config_t *lanc,
 				     unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_vlan_priority(ipmi_lan_config_t *lanc,
 				     unsigned int      val);
 
 /* Cipher Suites */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_lanconfig_get_num_cipher_suites(ipmi_lan_config_t *lanc);
 					   
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_cipher_suite_entry(ipmi_lan_config_t *lanc,
 					  unsigned int      entry,
 					  unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_cipher_suite_entry(ipmi_lan_config_t *lanc,
 					  unsigned int      entry,
 					  unsigned int      val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_get_max_priv_for_cipher_suite(ipmi_lan_config_t *lanc,
 						 unsigned int      entry,
 						 unsigned int      *val);
+IPMI_DLL_PUBLIC
 int ipmi_lanconfig_set_max_priv_for_cipher_suite(ipmi_lan_config_t *lanc,
 						 unsigned int      entry,
 						 unsigned int      val);

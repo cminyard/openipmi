@@ -35,6 +35,7 @@
 #ifndef OPENIPMI_PET_H
 #define OPENIPMI_PET_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 
 #ifdef __cplusplus
@@ -77,6 +78,7 @@ typedef void (*ipmi_pet_done_cb)(ipmi_pet_t *pet, int err, void *cb_data);
  * cannot run SNMP software that receives traps and an IPMI PET at
  * the same time on the same machine.
  */
+IPMI_DLL_PUBLIC
 int ipmi_pet_create(ipmi_domain_t    *domain,
 		    unsigned int     connection,
 		    unsigned int     channel,
@@ -94,6 +96,7 @@ int ipmi_pet_create(ipmi_domain_t    *domain,
  * Like the previous call, but takes an MC instead of a domain and
  * channel.
  */
+IPMI_DLL_PUBLIC
 int ipmi_pet_create_mc(ipmi_mc_t        *mc,
 		       unsigned int     channel,
 		       struct in_addr   ip_addr,
@@ -108,6 +111,7 @@ int ipmi_pet_create_mc(ipmi_mc_t        *mc,
 
 /* Destroy a PET.  Note that if you destroy all PETs, this will result
    in the SNMP trap UDP port being closed. */
+IPMI_DLL_PUBLIC
 int ipmi_pet_destroy(ipmi_pet_t       *pet,
 		     ipmi_pet_done_cb done,
 		     void             *cb_data);
@@ -117,28 +121,40 @@ int ipmi_pet_destroy(ipmi_pet_t       *pet,
    recommended.  This is primarily here to help reference-tracking
    garbage collection systems like what is in Perl to be able to
    automatically destroy pets when they are done. */
+IPMI_DLL_PUBLIC
 void ipmi_pet_ref(ipmi_pet_t *pet);
+IPMI_DLL_PUBLIC
 void ipmi_pet_deref(ipmi_pet_t *pet);
 
 /* Get the "name" for the PET.  Returns the length of the string
    (minus the closing \0).  PET names are auto-assigned. */
 #define IPMI_PET_NAME_LEN 64
+IPMI_DLL_PUBLIC
 int ipmi_pet_get_name(ipmi_pet_t *pet, char *name, int len);
 
 /* Iterate through all the PETs. */
 typedef void (*ipmi_pet_ptr_cb)(ipmi_pet_t *pet, void *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_pet_iterate_pets(ipmi_domain_t   *domain,
 			   ipmi_pet_ptr_cb handler,
 			   void            *cb_data);
 
+IPMI_DLL_PUBLIC
 ipmi_mcid_t ipmi_pet_get_mc_id(ipmi_pet_t *pet);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pet_get_channel(ipmi_pet_t *pet);
+IPMI_DLL_PUBLIC
 struct in_addr *ipmi_pet_get_ip_addr(ipmi_pet_t *pet, struct in_addr *ip_addr);
+IPMI_DLL_PUBLIC
 unsigned char *ipmi_pet_get_mac_addr(ipmi_pet_t    *pet,
 				     unsigned char mac_addr[6]);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pet_get_eft_sel(ipmi_pet_t *pet);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pet_get_policy_num(ipmi_pet_t *pet);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pet_get_apt_sel(ipmi_pet_t *pet);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_pet_get_lan_dest_sel(ipmi_pet_t *pet);
 
 #ifdef __cplusplus

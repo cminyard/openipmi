@@ -35,6 +35,7 @@
 #define OPENIPMIIF_H
 
 #include <time.h>
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 #include <OpenIPMI/ipmi_bits.h>
 #include <OpenIPMI/os_handler.h>
@@ -58,6 +59,7 @@ extern "C" {
 
 /* Return the version number (ie "1.2.7") of the OpenIPMI library in
    use. */
+IPMI_DLL_PUBLIC
 char *ipmi_openipmi_version(void);
 
 
@@ -134,55 +136,79 @@ char *ipmi_openipmi_version(void);
 /* This ipmi_xxx_id_set_invalid() functions set the passed in domain
    id to an invalid value that is always the same and guaranteed to be
    invalid. */
+IPMI_DLL_PUBLIC
 ipmi_domain_id_t ipmi_domain_convert_to_id(ipmi_domain_t *domain);
 typedef void (*ipmi_domain_ptr_cb)(ipmi_domain_t *domain, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_pointer_cb(ipmi_domain_id_t   id,
 			   ipmi_domain_ptr_cb handler,
 			   void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_cmp_domain_id(ipmi_domain_id_t id1, ipmi_domain_id_t id2);
+IPMI_DLL_PUBLIC
 void ipmi_domain_id_set_invalid(ipmi_domain_id_t *id);
+IPMI_DLL_PUBLIC
 int ipmi_domain_id_is_invalid(const ipmi_domain_id_t *id);
 
+IPMI_DLL_PUBLIC
 ipmi_entity_id_t ipmi_entity_convert_to_id(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_cmp_entity_id(ipmi_entity_id_t id1, ipmi_entity_id_t id2);
 typedef void (*ipmi_entity_ptr_cb)(ipmi_entity_t *entity, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_pointer_cb(ipmi_entity_id_t   id,
 			   ipmi_entity_ptr_cb handler,
 			   void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_find_id(ipmi_domain_id_t domain_id,
 			int entity_id, int entity_instance,
 			int channel, int slave_address,
 			ipmi_entity_id_t *id);
+IPMI_DLL_PUBLIC
 int ipmi_cmp_entity_id(ipmi_entity_id_t id1, ipmi_entity_id_t id2);
+IPMI_DLL_PUBLIC
 void ipmi_entity_id_set_invalid(ipmi_entity_id_t *id);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_is_invalid(const ipmi_entity_id_t *id);
 
+IPMI_DLL_PUBLIC
 ipmi_sensor_id_t ipmi_sensor_convert_to_id(ipmi_sensor_t *sensor);
 typedef void (*ipmi_sensor_ptr_cb)(ipmi_sensor_t *sensor, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_pointer_cb(ipmi_sensor_id_t   id,
 			   ipmi_sensor_ptr_cb handler,
 			   void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_cmp_sensor_id(ipmi_sensor_id_t id1, ipmi_sensor_id_t id2);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_find_id(ipmi_domain_id_t domain_id,
 			int entity_id, int entity_instance,
 			int channel, int slave_address,
 			char *id_name,
 			ipmi_sensor_id_t *id);
+IPMI_DLL_PUBLIC
 void ipmi_sensor_id_set_invalid(ipmi_sensor_id_t *id);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_is_invalid(const ipmi_sensor_id_t *id);
 
+IPMI_DLL_PUBLIC
 ipmi_control_id_t ipmi_control_convert_to_id(ipmi_control_t *control);
 typedef void (*ipmi_control_ptr_cb)(ipmi_control_t *control, void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_pointer_cb(ipmi_control_id_t   id,
 			    ipmi_control_ptr_cb handler,
 			    void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_cmp_control_id(ipmi_control_id_t id1, ipmi_control_id_t id2);
+IPMI_DLL_PUBLIC
 int ipmi_control_find_id(ipmi_domain_id_t domain_id,
 			 int entity_id, int entity_instance,
 			 int channel, int slave_address,
 			 char *id_name,
 			 ipmi_control_id_t *id);
+IPMI_DLL_PUBLIC
 void ipmi_control_id_set_invalid(ipmi_control_id_t *id);
+IPMI_DLL_PUBLIC
 int ipmi_control_id_is_invalid(const ipmi_control_id_t *id);
 
 
@@ -196,12 +222,14 @@ int ipmi_control_id_is_invalid(const ipmi_control_id_t *id);
 typedef void (*ipmi_domain_cb)(ipmi_domain_t *domain, int err, void *cb_data);
 
 /* Iterate through all the domains. */
+IPMI_DLL_PUBLIC
 void ipmi_domain_iterate_domains(ipmi_domain_ptr_cb handler,
 				 void               *cb_data);
 
 /* Get the "name" for the domain.  Returns the length of the string
    (minus the closing \0). */
 #define IPMI_DOMAIN_NAME_LEN 32
+IPMI_DLL_PUBLIC
 int ipmi_domain_get_name(ipmi_domain_t *domain, char *name, int length);
 
 /* Domains come in different flavors.  It might be useful to know the
@@ -215,12 +243,15 @@ enum ipmi_domain_type
     IPMI_DOMAIN_TYPE_ATCA,
     IPMI_DOMAIN_TYPE_ATCA_BLADE /* A local blade domain on an ATCA system */
 };
+IPMI_DLL_PUBLIC
 enum ipmi_domain_type ipmi_domain_get_type(ipmi_domain_t *domain);
+IPMI_DLL_PUBLIC
 const char *ipmi_domain_get_type_string(enum ipmi_domain_type dtype);
 
 /* Return the system GUID for the domain.  The guid must point to an
    array of 16 characters.  Returns ENOSYS if the domain didn't have a
    GUID. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_get_guid(ipmi_domain_t *domain, unsigned char *guid);
 
 /* Add and remove a function to be called when the connection or port
@@ -248,9 +279,11 @@ typedef void (*ipmi_domain_con_cb)(ipmi_domain_t *domain,
 				   unsigned int  port_num,
 				   int           still_connected,
 				   void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_connect_change_handler(ipmi_domain_t      *domain,
 					   ipmi_domain_con_cb handler,
 					   void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_connect_change_handler(ipmi_domain_t      *domain,
 					      ipmi_domain_con_cb handler,
 					      void               *cb_data);
@@ -259,15 +292,18 @@ int ipmi_domain_remove_connect_change_handler(ipmi_domain_t      *domain,
 typedef void (*ipmi_domain_con_cl_cb)(ipmi_domain_con_cb handler,
 				      void               *handler_val,
 				      void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_connect_change_handler_cl(ipmi_domain_t         *domain,
 					      ipmi_domain_con_cl_cb handler,
 					      void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_connect_change_handler_cl(ipmi_domain_t         *domain,
 						 ipmi_domain_con_cl_cb handler,
 						 void                  *cb_data);
 
 /* Scan a set of addresses on the bmc for mcs.  This can be used by OEM
    code to add an MC if it senses that one has become present. */
+IPMI_DLL_PUBLIC
 int ipmi_start_ipmb_mc_scan(ipmi_domain_t  *domain,
 			    int            channel,
 			    unsigned int   start_addr,
@@ -276,6 +312,7 @@ int ipmi_start_ipmb_mc_scan(ipmi_domain_t  *domain,
 			    void           *cb_data);
 
 /* Rescan every channel in the domain. */
+IPMI_DLL_PUBLIC
 void ipmi_domain_start_full_ipmb_scan(ipmi_domain_t *domain);
 
 /* Register a handler to be called when an MC is added to the domain
@@ -284,9 +321,11 @@ typedef void (*ipmi_domain_mc_upd_cb)(enum ipmi_update_e op,
 				      ipmi_domain_t      *domain,
 				      ipmi_mc_t          *mc,
 				      void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_mc_updated_handler(ipmi_domain_t         *domain,
 				       ipmi_domain_mc_upd_cb handler,
 				       void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_mc_updated_handler(ipmi_domain_t         *domain,
 					  ipmi_domain_mc_upd_cb handler,
 					  void                  *cb_data);
@@ -295,9 +334,11 @@ int ipmi_domain_remove_mc_updated_handler(ipmi_domain_t         *domain,
 typedef void (*ipmi_domain_mc_upd_cl_cb)(ipmi_domain_mc_upd_cb handler,
 					 void                  *handler_data,
 					 void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_mc_updated_handler_cl(ipmi_domain_t            *domain,
 					  ipmi_domain_mc_upd_cl_cb handler,
 					  void                     *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_mc_updated_handler_cl(ipmi_domain_t            *domain,
 					     ipmi_domain_mc_upd_cl_cb handler,
 					     void                    *cb_data);
@@ -306,9 +347,11 @@ int ipmi_domain_remove_mc_updated_handler_cl(ipmi_domain_t            *domain,
 typedef void (*ipmi_domain_iterate_mcs_cb)(ipmi_domain_t *domain,
 					   ipmi_mc_t     *mc,
 					   void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_iterate_mcs(ipmi_domain_t              *domain,
 			    ipmi_domain_iterate_mcs_cb handler,
 			    void                       *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_iterate_mcs_rev(ipmi_domain_t              *domain,
 				ipmi_domain_iterate_mcs_cb handler,
 				void                       *cb_data);
@@ -318,6 +361,7 @@ int ipmi_domain_iterate_mcs_rev(ipmi_domain_t              *domain,
 typedef int (*ipmi_addr_response_handler_t)(ipmi_domain_t *domain,
 					    ipmi_msgi_t   *rspi);
 int
+IPMI_DLL_PUBLIC
 ipmi_send_command_addr(ipmi_domain_t                *domain,
 		       const ipmi_addr_t            *addr,
 		       unsigned int                 addr_len,
@@ -326,6 +370,7 @@ ipmi_send_command_addr(ipmi_domain_t                *domain,
 		       void                         *rsp_data1,
 		       void                         *rsp_data2);
 int
+IPMI_DLL_PUBLIC
 ipmi_send_command_addr_sideeff(ipmi_domain_t                *domain,
 			       const ipmi_addr_t            *addr,
 			       unsigned int                 addr_len,
@@ -336,6 +381,7 @@ ipmi_send_command_addr_sideeff(ipmi_domain_t                *domain,
 
 /* Rescan the entities for possible presence changes.  "force" causes
    a full rescan even if nothing on an entity has changed. */
+IPMI_DLL_PUBLIC
 int ipmi_detect_domain_presence_changes(ipmi_domain_t *domain, int force);
 
 
@@ -347,8 +393,10 @@ int ipmi_detect_domain_presence_changes(ipmi_domain_t *domain, int force);
    currently default to 10 seconds.  You need to set this depending on
    how fast you need to know if events have come in.  If you set this
    value to zero, it will turn off SEL scanning. */
+IPMI_DLL_PUBLIC
 void ipmi_domain_set_sel_rescan_time(ipmi_domain_t *domain,
 				     unsigned int  seconds);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_domain_get_sel_rescan_time(ipmi_domain_t *domain);
 
 /* The IPMB rescan timer is the time between scans of the IPMB bus to
@@ -357,8 +405,10 @@ unsigned int ipmi_domain_get_sel_rescan_time(ipmi_domain_t *domain);
    timer depends on how fast you need to know if new devices have
    appeared, and if your system has proprietary extensions to detect
    insertion of devices more quickly.  */
+IPMI_DLL_PUBLIC
 void ipmi_domain_set_ipmb_rescan_time(ipmi_domain_t *domain,
 				      unsigned int  seconds);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_domain_get_ipmb_rescan_time(ipmi_domain_t *domain);
 
 /* Events come in this format. */
@@ -372,10 +422,12 @@ typedef void (*ipmi_event_handler_cb)(ipmi_domain_t *domain,
    events that are not sent to a sensor, so if you get a system
    software event or an event from a sensor the software doesn't know
    about, this handler will get it. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_event_handler(ipmi_domain_t           *domain,
 				  ipmi_event_handler_cb   handler,
 				  void                    *event_data);
 /* Deregister an event handler. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_event_handler(ipmi_domain_t           *domain,
 				     ipmi_event_handler_cb   handler,
 				     void                    *event_data);
@@ -384,20 +436,25 @@ int ipmi_domain_remove_event_handler(ipmi_domain_t           *domain,
 typedef void (*ipmi_event_handler_cl_cb)(ipmi_event_handler_cb handler,
 					 void                  *handler_data,
 					 void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_event_handler_cl(ipmi_domain_t            *domain,
 				     ipmi_event_handler_cl_cb handler,
 				     void                     *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_event_handler_cl(ipmi_domain_t            *domain,
 					ipmi_event_handler_cl_cb handler,
 					void                     *event_data);
 
 /* Globally enable or disable events on the domain's interfaces. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_enable_events(ipmi_domain_t *domain);
+IPMI_DLL_PUBLIC
 int ipmi_domain_disable_events(ipmi_domain_t *domain);
 
 /* This is the old domain event deleter.  Since events now carry with
    them more useful information, there is no need for this any more,
    but it still works. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_del_event(ipmi_domain_t  *domain,
 			  ipmi_event_t   *event,
 			  ipmi_domain_cb done_handler,
@@ -410,15 +467,20 @@ int ipmi_domain_del_event(ipmi_domain_t  *domain,
    in "event" and return the next or previous event in "event".  Note
    that you must free any events returned with this using
    ipmi_event_free(). */
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_domain_first_event(ipmi_domain_t *domain);
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_domain_last_event(ipmi_domain_t *domain);
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_domain_next_event(ipmi_domain_t *domain,
 				     const ipmi_event_t *p);
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_domain_prev_event(ipmi_domain_t *domain,
 				     const ipmi_event_t *n);
 
 /* Return the number of non-deleted entries in the local copy of the
    SEL. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_sel_count(ipmi_domain_t *domain,
 			  unsigned int  *count);
 
@@ -426,11 +488,13 @@ int ipmi_domain_sel_count(ipmi_domain_t *domain,
    If there are deleted event in the local copy of the SEL, they are
    not necessarily deleted from the real SEL, so this takes that into
    account. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_sel_entries_used(ipmi_domain_t *domain,
 				 unsigned int  *count);
 
 /* Force rereading all the SELs in the domain.  The handler will be
    called after they are all reread. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_reread_sels(ipmi_domain_t  *domain,
 			    ipmi_domain_cb handler,
 			    void           *cb_data);
@@ -444,9 +508,11 @@ typedef void (*ipmi_domain_entity_cb)(enum ipmi_update_e op,
 
 /* Add and remove and entity update handler.  This interface allows
    multiple handlers to be registered. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_entity_update_handler(ipmi_domain_t         *domain,
 					  ipmi_domain_entity_cb handler,
 					  void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_entity_update_handler(ipmi_domain_t         *domain,
 					     ipmi_domain_entity_cb handler,
 					     void                  *cb_data);
@@ -455,9 +521,11 @@ int ipmi_domain_remove_entity_update_handler(ipmi_domain_t         *domain,
 typedef void (*ipmi_domain_entity_cl_cb)(ipmi_domain_entity_cb handler,
 					 void                  *handler_data,
 					 void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_entity_update_handler_cl(ipmi_domain_t            *domain,
 					     ipmi_domain_entity_cl_cb handler,
 					     void                    *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_entity_update_handler_cl(ipmi_domain_t          *domain,
 					     ipmi_domain_entity_cl_cb handler,
 					     void                    *cb_data);
@@ -467,6 +535,7 @@ int ipmi_domain_remove_entity_update_handler_cl(ipmi_domain_t          *domain,
    is happening. */
 typedef void (*ipmi_entities_iterate_entity_cb)(ipmi_entity_t *entity,
 						void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_iterate_entities(ipmi_domain_t                   *domain,
 				 ipmi_entities_iterate_entity_cb handler,
 				 void                            *cb_data);
@@ -474,35 +543,42 @@ int ipmi_domain_iterate_entities(ipmi_domain_t                   *domain,
 /* Store all the information I have locally into the SDR repository.
    This is a moderately dangerous operation, as it can wipe out your
    SDR repository if you are not careful. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_store_entities(ipmi_domain_t  *domain,
 			       ipmi_domain_cb done,
 			       void           *cb_data);
 
 /* Returns if the domain thinks it has a connection up. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_con_up(ipmi_domain_t *domain);
 
 /*
  * Returns true if the domain has finished coming up, false if not.
  */
+IPMI_DLL_PUBLIC
 int ipmi_domain_is_fully_up(ipmi_domain_t *domain);
 
 /* Iterate through the connections on a domain. */
 typedef void (*ipmi_connection_ptr_cb)(ipmi_domain_t *domain, int conn,
 				       void *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_domain_iterate_connections(ipmi_domain_t          *domain,
 				     ipmi_connection_ptr_cb handler,
 				     void                   *cb_data);
 
 /* Attempt to activate a given connection. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_activate_connection(ipmi_domain_t *domain,
 				    unsigned int  connection);
 
 /* Returns if a connection is active. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_is_connection_active(ipmi_domain_t *domain,
 				     unsigned int  connection,
 				     unsigned int  *active);
 
 /* Is the connection up? */
+IPMI_DLL_PUBLIC
 int ipmi_domain_is_connection_up(ipmi_domain_t *domain,
 				 unsigned int  connection,
 				 unsigned int  *up);
@@ -511,11 +587,13 @@ int ipmi_domain_is_connection_up(ipmi_domain_t *domain,
    ports (ie, multiple IP addresses to the same BMC, whereas a
    separate connection is a connection to a different BMC); these
    functions let you check their status. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_num_connection_ports(ipmi_domain_t *domain,
 				     unsigned int  connection,
 				     unsigned int  *ports);
 
 /* Is a specific port in the connection up? */
+IPMI_DLL_PUBLIC
 int ipmi_domain_is_connection_port_up(ipmi_domain_t *domain,
 				      unsigned int  connection,
 				      unsigned int  port,
@@ -525,6 +603,7 @@ int ipmi_domain_is_connection_port_up(ipmi_domain_t *domain,
    interface-type dependent.  The length of "info" is passed in
    info_len, that returns the number of chars that would have been
    used, even if "info" was not long enough to hold it. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_get_port_info(ipmi_domain_t *domain,
 			      unsigned int  connection,
 			      unsigned int  port,
@@ -532,10 +611,12 @@ int ipmi_domain_get_port_info(ipmi_domain_t *domain,
 			      int           *info_len);
 
 /* Get the args for a domain's connection. */
+IPMI_DLL_PUBLIC
 ipmi_args_t *ipmi_domain_get_connection_args(ipmi_domain_t *domain,
 					     unsigned int  connection);
 
 /* Get the reported connection type for the connection. */
+IPMI_DLL_PUBLIC
 char *ipmi_domain_get_connection_type(ipmi_domain_t *domain,
 				      unsigned int  connection);
 
@@ -543,6 +624,7 @@ char *ipmi_domain_get_connection_type(ipmi_domain_t *domain,
    The usecount of the connection is incremented.  NULL is returned if
    the connection is invalid or the connection does not support
    usecounts. */
+IPMI_DLL_PUBLIC
 ipmi_con_t *ipmi_domain_get_connection(ipmi_domain_t *domain,
 				       unsigned int  connection);
 
@@ -557,6 +639,7 @@ typedef void (*ipmi_stat_cb)(ipmi_domain_t *domain, ipmi_domain_stat_t *stat,
 /* Create a new statistic or return an existing one if the name and
    instance already exists.  You must put() the statistic when you are
    done with it. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_stat_register(ipmi_domain_t      *domain,
 			      const char         *name,
 			      const char         *instance,
@@ -564,31 +647,39 @@ int ipmi_domain_stat_register(ipmi_domain_t      *domain,
 
 /* Find a statistic by name and instance.  You must put() the
    statistic when you are done with it. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_find_stat(ipmi_domain_t      *domain,
 			  const char         *name,
 			  const char         *instance,
 			  ipmi_domain_stat_t **stat);
 
 /* Say you are done with a statistic. */
+IPMI_DLL_PUBLIC
 void ipmi_domain_stat_put(ipmi_domain_stat_t *stat);
 
 /* Increment the value of a statistic by the given amount.  Negative
    values are ok. */
+IPMI_DLL_PUBLIC
 void ipmi_domain_stat_add(ipmi_domain_stat_t *stat, int amount);
 
 /* Get the value of the statistic. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_domain_stat_get(ipmi_domain_stat_t *stat);
 
 /* Atomically get the value of the statistic and set it to zero. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_domain_stat_get_and_zero(ipmi_domain_stat_t *stat);
 
 /* Get the name and instance of the statistic.  DON'T CHANGE THESE! */
+IPMI_DLL_PUBLIC
 const char *ipmi_domain_stat_get_name(ipmi_domain_stat_t *stat);
+IPMI_DLL_PUBLIC
 const char *ipmi_domain_stat_get_instance(ipmi_domain_stat_t *stat);
 
 /* Iterate through all the statistics.  This will get and put the stat
    for you, you should not put the stat (unless you make your own
    copy). */
+IPMI_DLL_PUBLIC
 void ipmi_domain_stat_iterate(ipmi_domain_t *domain,
 			      const char    *name,
 			      const char    *instance,
@@ -613,6 +704,7 @@ void ipmi_domain_stat_iterate(ipmi_domain_t *domain,
 
 /* Copy an event.  If you need to keep your own local copy of an event
    (to delete later, for instance) you should use this. */
+IPMI_DLL_PUBLIC
 ipmi_event_t *ipmi_event_dup(ipmi_event_t *event);
 
 /* When you are done with an event, you should free it.  This frees up
@@ -620,17 +712,20 @@ ipmi_event_t *ipmi_event_dup(ipmi_event_t *event);
    system event event.  Note that you must delete every event you
    duplicate. Note that this does *NOT* remove the event from the
    event log, you have to call ipmi_event_delete() for that. */
+IPMI_DLL_PUBLIC
 void ipmi_event_free(ipmi_event_t *event);
 
 /* When you are done with an event, you should delete it.  This
    removes the event from the local event queue and removes it from
    the external system event log. */
+IPMI_DLL_PUBLIC
 int ipmi_event_delete(ipmi_event_t   *event,
 		      ipmi_domain_cb done_handler,
 		      void           *cb_data);
 
 /* Return the management controller that "owns" the event (where the
    event is stored, *not* the mc that generated the event). */
+IPMI_DLL_PUBLIC
 ipmi_mcid_t ipmi_event_get_mcid(const ipmi_event_t *event);
 
 /* Return the sensor id the event is associated with.  Returns an
@@ -639,28 +734,34 @@ ipmi_mcid_t ipmi_event_get_mcid(const ipmi_event_t *event);
    event came from (fetched with ipmi_event_get_mcid()) and is only
    used for software ID based events.  You may pass in NULL if you
    don't care about software ID based events. */
+IPMI_DLL_PUBLIC
 ipmi_sensor_id_t ipmi_event_get_generating_sensor_id(ipmi_domain_t *domain,
 						     ipmi_mc_t     *sel_mc,
 						     const ipmi_event_t *event);
 
 /* Return a unique (in the MC) record identifier for the event. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_event_get_record_id(const ipmi_event_t *event);
 
 #define OPENIPMI_OEM_EVENT_START	0x10000
 /* Return the event type.  Normal IPMI events should be in the
    000-0xff range.  Other events should start at
    OPENIPMI_OEM_EVENT_START and higher.*/
+IPMI_DLL_PUBLIC
 unsigned int ipmi_event_get_type(const ipmi_event_t *event);
 
 /* Get the timestamp for the event.  This will be IPMI_INVALID_TIME if
    the timestamp is invalid. */
+IPMI_DLL_PUBLIC
 ipmi_time_t ipmi_event_get_timestamp(const ipmi_event_t *event);
 
 /* Get the length of the data attached to the event. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_event_get_data_len(const ipmi_event_t *event);
 
 /* Copy some of the data attached to the event, starting at the given
    offset to an array.  Copy "len" bytes. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_event_get_data(const ipmi_event_t *event,
 				 unsigned char      *data,
 				 unsigned int       offset,
@@ -712,13 +813,18 @@ typedef int (*ipmi_sensor_discrete_event_cb)(
     void                  *cb_data,
     ipmi_event_t          *event);
 
+IPMI_DLL_PUBLIC
 ipmi_event_handlers_t *ipmi_event_handlers_alloc(void);
+IPMI_DLL_PUBLIC
 void ipmi_event_handlers_free(ipmi_event_handlers_t *handlers);
+IPMI_DLL_PUBLIC
 void ipmi_event_handlers_set_threshold(ipmi_event_handlers_t         *handlers,
 				       ipmi_sensor_threshold_event_cb handler);
+IPMI_DLL_PUBLIC
 void ipmi_event_handlers_set_discrete(ipmi_event_handlers_t         *handlers,
 				      ipmi_sensor_discrete_event_cb handler);
 
+IPMI_DLL_PUBLIC
 int ipmi_event_call_handler(ipmi_domain_t         *domain,
 			    ipmi_event_handlers_t *handlers,
 			    ipmi_event_t          *event,
@@ -736,6 +842,7 @@ int ipmi_event_call_handler(ipmi_domain_t         *domain,
 typedef void (*ipmi_entity_iterate_child_cb)(ipmi_entity_t *ent,
 					     ipmi_entity_t *child,
 					     void          *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_entity_iterate_children(ipmi_entity_t                *ent,
 				  ipmi_entity_iterate_child_cb handler,
 				  void                         *cb_data);
@@ -745,6 +852,7 @@ void ipmi_entity_iterate_children(ipmi_entity_t                *ent,
 typedef void (*ipmi_entity_iterate_parent_cb)(ipmi_entity_t *ent,
 					      ipmi_entity_t *parent,
 					      void          *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_entity_iterate_parents(ipmi_entity_t                 *ent,
 				 ipmi_entity_iterate_parent_cb handler,
 				 void                          *cb_data);
@@ -753,6 +861,7 @@ void ipmi_entity_iterate_parents(ipmi_entity_t                 *ent,
 typedef void (*ipmi_entity_iterate_sensor_cb)(ipmi_entity_t *ent,
 					      ipmi_sensor_t *sensor,
 					      void          *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_entity_iterate_sensors(ipmi_entity_t                 *ent,
 				 ipmi_entity_iterate_sensor_cb handler,
 				 void                          *cb_data);
@@ -761,6 +870,7 @@ void ipmi_entity_iterate_sensors(ipmi_entity_t                 *ent,
 typedef void (*ipmi_entity_iterate_control_cb)(ipmi_entity_t  *ent,
 					       ipmi_control_t *control,
 					       void           *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_entity_iterate_controls(ipmi_entity_t                  *ent,
 				  ipmi_entity_iterate_control_cb handler,
 				  void                           *cb_data);
@@ -778,9 +888,11 @@ typedef int (*ipmi_entity_presence_change_cb)(ipmi_entity_t *entity,
 					      int           present,
 					      void          *cb_data,
 					      ipmi_event_t  *event);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_presence_handler(ipmi_entity_t                  *ent,
 				     ipmi_entity_presence_change_cb handler,
 				     void                           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_presence_handler
 (ipmi_entity_t                  *ent,
  ipmi_entity_presence_change_cb handler,
@@ -791,9 +903,11 @@ typedef void (*ipmi_entity_presence_cl_cb)
        (ipmi_entity_presence_change_cb handler,
 	void                           *handler_data,
 	void                           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_presence_handler_cl(ipmi_entity_t              *entity,
 					ipmi_entity_presence_cl_cb handler,
 					void                      *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_presence_handler_cl(ipmi_entity_t              *entity,
 					   ipmi_entity_presence_cl_cb handler,
 					   void                   *event_data);
@@ -802,13 +916,16 @@ int ipmi_entity_remove_presence_handler_cl(ipmi_entity_t              *entity,
    then it will only do this if OpenIPMI has some reason to think the
    presence has changed.  If "force" is non-zero, it will force OpenIPMI
    to detect the current presence of the entity. */
+IPMI_DLL_PUBLIC
 int ipmi_detect_entity_presence_change(ipmi_entity_t *entity, int force);
 
 /* Handlers that are called after an entity becomes present when all
    the data for the entity is fetched. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_fully_up_handler(ipmi_entity_t      *ent,
 				     ipmi_entity_ptr_cb handler,
 				     void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_fully_up_handler(ipmi_entity_t      *ent,
 					ipmi_entity_ptr_cb handler,
 					void               *cb_data);
@@ -817,9 +934,11 @@ int ipmi_entity_remove_fully_up_handler(ipmi_entity_t      *ent,
 typedef void (*ipmi_entity_fully_up_cl_cb)(ipmi_entity_ptr_cb handler,
 					   void               *handler_data,
 					   void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_fully_up_handler_cl(ipmi_entity_t              *entity,
 					ipmi_entity_fully_up_cl_cb handler,
 					void                      *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_fully_up_handler_cl(ipmi_entity_t              *entity,
 					   ipmi_entity_fully_up_cl_cb handler,
 					   void                   *event_data);
@@ -835,9 +954,11 @@ int ipmi_entity_remove_fully_up_handler_cl(ipmi_entity_t              *entity,
  */
 typedef int (*ipmi_entity_presence_detect_cb)(ipmi_entity_t *entity,
 					      void *handler_data);
+IPMI_DLL_PUBLIC
 void ipmi_entity_set_presence_detector(ipmi_entity_t *entity,
 				       ipmi_entity_presence_detect_cb handler,
 				       void *handler_data);
+IPMI_DLL_PUBLIC
 void ipmi_entity_detector_done(ipmi_entity_t *entity,
 			       int present);
   
@@ -854,6 +975,7 @@ enum ipmi_dlr_type_e { IPMI_ENTITY_UNKNOWN = 0,
 
 /* The entity type.  Depending on the return value from this,
    different field will be valid as marked below. */
+IPMI_DLL_PUBLIC
 enum ipmi_dlr_type_e ipmi_entity_get_type(ipmi_entity_t *ent);
 
 /* These are valid for all entities. */
@@ -862,73 +984,114 @@ enum ipmi_dlr_type_e ipmi_entity_get_type(ipmi_entity_t *ent);
    number of characters in the string put into name.  The length is the
    length of the "name" array. */
 #define IPMI_ENTITY_NAME_LEN (IPMI_DOMAIN_NAME_LEN + 32)
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_name(ipmi_entity_t *entity, char *name, int length);
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_is_fru(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 ipmi_domain_t *ipmi_entity_get_domain(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_entity_id(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_entity_instance(ipmi_entity_t *ent);
 /* If the entity instance is 0x60 or greater, then the channel and
    address are also important since the entity is device-relative. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_device_channel(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_device_address(ipmi_entity_t *ent);
 
 /* Return the FRU for this entity, or NULL if it doesn't have one
    or the fetch has not completed. */
+IPMI_DLL_PUBLIC
 ipmi_fru_t *ipmi_entity_get_fru(ipmi_entity_t *ent);
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_presence_sensor_always_there(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_is_child(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_is_parent(ipmi_entity_t *ent);
 
 /* Valid for all entities except unknown. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_channel(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_lun(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_oem(ipmi_entity_t *ent);
 
 /* Valid for FRU and Generic */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_access_address(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_private_bus_id(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_device_type(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_device_modifier(ipmi_entity_t *ent);
 
 /* Valid for MC and Generic */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_slave_address(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_mc_id(ipmi_entity_t *ent, ipmi_mcid_t *mc_id);
 
 /* Valid for FRU only. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_is_logical_fru(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_fru_device_id(ipmi_entity_t *ent);
 
 /* Valid for MC only */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_ACPI_system_power_notify_required(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_ACPI_device_power_notify_required(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_controller_logs_init_agent_errors(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_log_init_agent_errors_accessing(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_global_init(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_device(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_bridge(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_IPMB_event_generator(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_IPMB_event_receiver(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_FRU_inventory_device(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_SEL_device(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_SDR_repository_device(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_sensor_device(ipmi_entity_t *ent);
 
 /* Valid for Generic only */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_address_span(ipmi_entity_t *ent);
 
 /* Get the string name for the entity ID. */
+IPMI_DLL_PUBLIC
 const char *ipmi_entity_get_entity_id_string(ipmi_entity_t *ent);
 
 /* The ID from the SDR. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_id_length(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 enum ipmi_str_type_e ipmi_entity_get_id_type(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_id(ipmi_entity_t *ent, char *id, int length);
 
 /* This can be set bo OEM code to register the "slot number" an entity
    is in.  This returns ENOSYS if the entity does not have a slot number
    associated with it. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_physical_slot_num(ipmi_entity_t *ent,
 				      unsigned int *slot_num);
 
@@ -936,7 +1099,9 @@ int ipmi_entity_get_physical_slot_num(ipmi_entity_t *ent,
    dynamically, so an "_id_" function is provided, too, that takes an
    entity id as well as an entity.  Note that this call returns an
    error can fail if the entity has ceased to exist. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_is_present(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_is_present(ipmi_entity_id_t id, int *present);
 
 /* A generic callback for entities. */
@@ -963,9 +1128,11 @@ typedef void (*ipmi_entity_time_cb)(ipmi_entity_t  *ent,
 typedef void (*ipmi_entity_fru_cb)(enum ipmi_update_e op,
 				   ipmi_entity_t      *ent,
 				   void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_fru_update_handler(ipmi_entity_t     *ent,
 				       ipmi_entity_fru_cb handler,
 				       void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_fru_update_handler(ipmi_entity_t     *ent,
 					  ipmi_entity_fru_cb handler,
 					  void              *cb_data);
@@ -984,9 +1151,11 @@ typedef void (*ipmi_entity_fru_werr_cb)(enum ipmi_update_werr_e op,
 					int                     err,
 					ipmi_entity_t           *ent,
 					void                    *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_fru_update_werr_handler(ipmi_entity_t      *ent,
 				       ipmi_entity_fru_werr_cb handler,
 				       void                    *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_fru_update_werr_handler(ipmi_entity_t           *ent,
 					       ipmi_entity_fru_werr_cb handler,
 					       void                    *cb_data);
@@ -996,9 +1165,11 @@ int ipmi_entity_remove_fru_update_werr_handler(ipmi_entity_t           *ent,
 typedef void (*ipmi_entity_fru_cl_cb)(ipmi_entity_fru_cb handler,
 				      void               *handler_data,
 				      void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_fru_update_handler_cl(ipmi_entity_t         *entity,
 					  ipmi_entity_fru_cl_cb handler,
 					  void                  *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_fru_update_handler_cl(ipmi_entity_t         *entity,
 					     ipmi_entity_fru_cl_cb handler,
 					     void                 *event_data);
@@ -1007,9 +1178,11 @@ int ipmi_entity_remove_fru_update_handler_cl(ipmi_entity_t         *entity,
 typedef void (*ipmi_entity_fru_werr_cl_cb)(ipmi_entity_fru_werr_cb handler,
 					   void               *handler_data,
 					   void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_fru_update_werr_handler_cl(ipmi_entity_t         *entity,
 					  ipmi_entity_fru_werr_cl_cb handler,
 					  void                  *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_fru_update_werr_handler_cl(ipmi_entity_t         *entity,
 					     ipmi_entity_fru_werr_cl_cb handler,
 					     void                 *event_data);
@@ -1024,9 +1197,11 @@ typedef void (*ipmi_entity_sensor_cb)(enum ipmi_update_e op,
 				      ipmi_entity_t      *ent,
 				      ipmi_sensor_t      *sensor,
 				      void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_sensor_update_handler(ipmi_entity_t         *ent,
 					  ipmi_entity_sensor_cb handler,
 					  void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_sensor_update_handler(ipmi_entity_t         *ent,
 					     ipmi_entity_sensor_cb handler,
 					     void                  *cb_data);
@@ -1035,9 +1210,11 @@ int ipmi_entity_remove_sensor_update_handler(ipmi_entity_t         *ent,
 typedef void (*ipmi_entity_sensor_cl_cb)(ipmi_entity_sensor_cb handler,
 					 void                  *handler_data,
 					 void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_sensor_update_handler_cl(ipmi_entity_t            *entity,
 					     ipmi_entity_sensor_cl_cb handler,
 					     void                 *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_sensor_update_handler_cl
 (ipmi_entity_t            *entity,
  ipmi_entity_sensor_cl_cb handler,
@@ -1052,9 +1229,11 @@ typedef void (*ipmi_entity_control_cb)(enum ipmi_update_e op,
 				       ipmi_entity_t      *ent,
 				       ipmi_control_t     *control,
 				       void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_control_update_handler(ipmi_entity_t          *ent,
 					   ipmi_entity_control_cb handler,
 					   void                   *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_control_update_handler(ipmi_entity_t          *ent,
 					      ipmi_entity_control_cb handler,
 					      void                   *cb_data);
@@ -1063,9 +1242,11 @@ int ipmi_entity_remove_control_update_handler(ipmi_entity_t          *ent,
 typedef void (*ipmi_entity_control_cl_cb)(ipmi_entity_control_cb handler,
 					  void                   *handler_data,
 					  void                   *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_control_update_handler_cl(ipmi_entity_t            *entity,
 					     ipmi_entity_control_cl_cb handler,
 					     void                 *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_control_update_handler_cl
 (ipmi_entity_t             *entity,
  ipmi_entity_control_cl_cb handler,
@@ -1116,15 +1297,18 @@ enum ipmi_hot_swap_states {
 };
 
 /* Get a string name for the hot swap state. */
+IPMI_DLL_PUBLIC
 const char *ipmi_hot_swap_state_name(enum ipmi_hot_swap_states state);
 
 /* Does the entity implement a hot-swap state machine? */
+IPMI_DLL_PUBLIC
 int ipmi_entity_hot_swappable(ipmi_entity_t *ent);
 
 /* If this returns true and the entity is hot-swappable, then it
    supports managed hot swap.  If this returns false and the entity is
    hot-swappable, it supports only the not-present and active hot-swap
    states and the changes cannot be managed. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_supports_managed_hot_swap(ipmi_entity_t *ent);
 
 /* Register to receive the hot-swap state when it changes.  the
@@ -1140,9 +1324,11 @@ typedef int (*ipmi_entity_hot_swap_cb)(ipmi_entity_t             *ent,
 				       enum ipmi_hot_swap_states curr_state,
 				       void                      *cb_data,
 				       ipmi_event_t              *event);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_hot_swap_handler(ipmi_entity_t           *ent,
 				     ipmi_entity_hot_swap_cb handler,
 				     void                    *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_hot_swap_handler(ipmi_entity_t           *ent,
 					ipmi_entity_hot_swap_cb handler,
 					void                    *cb_data);
@@ -1151,9 +1337,11 @@ int ipmi_entity_remove_hot_swap_handler(ipmi_entity_t           *ent,
 typedef void (*ipmi_entity_hot_swap_cl_cb)(ipmi_entity_hot_swap_cb handler,
 					   void                  *handler_data,
 					   void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_add_hot_swap_handler_cl(ipmi_entity_t              *entity,
 					ipmi_entity_hot_swap_cl_cb handler,
 					void                      *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_remove_hot_swap_handler_cl(ipmi_entity_t              *entity,
 					   ipmi_entity_hot_swap_cl_cb handler,
 					   void                   *event_data);
@@ -1163,6 +1351,7 @@ typedef void (*ipmi_entity_hot_swap_state_cb)(ipmi_entity_t             *ent,
 					      int                       err,
 					      enum ipmi_hot_swap_states state,
 					      void                   *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_hot_swap_state(ipmi_entity_t                 *ent,
 				   ipmi_entity_hot_swap_state_cb handler,
 				   void                          *cb_data);
@@ -1178,18 +1367,24 @@ int ipmi_entity_get_hot_swap_state(ipmi_entity_t                 *ent,
    the user must call the activate or deactivate routines below to
    push it out of those states.  Otherwise, the timeout is the time in
    nanoseconds for the operation. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_supports_auto_activate_time(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_auto_activate_time(ipmi_entity_t       *ent,
 				       ipmi_entity_time_cb handler,
 				       void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_auto_activate_time(ipmi_entity_t  *ent,
 				       ipmi_timeout_t auto_act,
 				       ipmi_entity_cb done,
 				       void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_supports_auto_deactivate_time(ipmi_entity_t *ent);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_auto_deactivate_time(ipmi_entity_t       *ent,
 					 ipmi_entity_time_cb handler,
 					 void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_auto_deactivate_time(ipmi_entity_t  *ent,
 					 ipmi_timeout_t auto_deact,
 					 ipmi_entity_cb done,
@@ -1199,6 +1394,7 @@ int ipmi_entity_set_auto_deactivate_time(ipmi_entity_t  *ent,
    state, if possible. If the entity does not support this operation,
    this will return ENOSYS and you can move straight from INACTIVE to
    ACTIVE state by calling ipmi_entity_activate. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_activation_requested(ipmi_entity_t  *ent,
 					 ipmi_entity_cb done,
 					 void           *cb_data);
@@ -1208,65 +1404,82 @@ int ipmi_entity_set_activation_requested(ipmi_entity_t  *ent,
    ipmi_entity_set_activation_requested() returns ENOSYS), or from
    ACTIVATION_REQUESTED to ACTIVE.  Deactivate will cause a transition
    from DEACTIVATION_REQUESTED or ACTIVE to INACTIVE. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_activate(ipmi_entity_t  *ent,
 			 ipmi_entity_cb done,
 			 void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_deactivate(ipmi_entity_t  *ent,
 			   ipmi_entity_cb done,
 			   void           *cb_data);
 
 /* Check the state of hot-swap for the entity. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_check_hot_swap_state(ipmi_entity_t *ent);
 
 /* It seems like a bad idea to directly modify the hot-swap indicators
    and requesters.  But, HPI provides it, so we have to have it for
    that. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_hot_swap_indicator(ipmi_entity_t      *ent,
 				       ipmi_entity_val_cb handler,
 				       void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_hot_swap_indicator(ipmi_entity_t  *ent,
 				       int            val,
 				       ipmi_entity_cb done,
 				       void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_hot_swap_requester(ipmi_entity_t      *ent,
 				       ipmi_entity_val_cb handler,
 				       void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_get_hot_swap_indicator(ipmi_entity_id_t   id,
 					  ipmi_entity_val_cb handler,
 					  void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_set_hot_swap_indicator(ipmi_entity_id_t id,
 					  int              val,
 					  ipmi_entity_cb   done,
 					  void             *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_get_hot_swap_requester(ipmi_entity_id_t   id,
 					  ipmi_entity_val_cb handler,
 					  void               *cb_data);
 
 
 /* Entity ID based versions of some of the above calls. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_get_hot_swap_state(ipmi_entity_id_t              id,
 				      ipmi_entity_hot_swap_state_cb handler,
 				      void                          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_get_auto_activate_time(ipmi_entity_id_t    id,
 					  ipmi_entity_time_cb handler,
 					  void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_set_auto_activate_time(ipmi_entity_id_t  id,
 					  ipmi_timeout_t    auto_act,
 					  ipmi_entity_cb    done,
 					  void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_get_auto_deactivate_time(ipmi_entity_id_t    id,
 					    ipmi_entity_time_cb handler,
 					    void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_set_auto_deactivate_time(ipmi_entity_id_t id,
 					    ipmi_timeout_t   auto_deact,
 					    ipmi_entity_cb   done,
 					    void             *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_activate(ipmi_entity_id_t id,
 			    ipmi_entity_cb   done,
 			    void             *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_deactivate(ipmi_entity_id_t id,
 			      ipmi_entity_cb   done,
 			      void             *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_entity_id_check_hot_swap_state(ipmi_entity_id_t id);
 
 
@@ -1285,10 +1498,12 @@ int ipmi_entity_id_check_hot_swap_state(ipmi_entity_id_t id);
    the event means that is will manage the event (delete it when it is
    time).  If no sensor handles the event, then it will be delivered
    to the "main" unhandled event handler for the domain. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_add_threshold_event_handler(
     ipmi_sensor_t                  *sensor,
     ipmi_sensor_threshold_event_cb handler,
     void                           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_remove_threshold_event_handler(
     ipmi_sensor_t                  *sensor,
     ipmi_sensor_threshold_event_cb handler,
@@ -1299,10 +1514,12 @@ typedef void (*ipmi_sensor_threshold_event_cl_cb)
        (ipmi_sensor_threshold_event_cb handler,
 	void                           *handler_data,
 	void                           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_add_threshold_event_handler_cl
 (ipmi_sensor_t                     *sensor,
  ipmi_sensor_threshold_event_cl_cb handler,
  void                              *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_remove_threshold_event_handler_cl
 (ipmi_sensor_t                     *sensor,
  ipmi_sensor_threshold_event_cl_cb handler,
@@ -1318,10 +1535,12 @@ int ipmi_sensor_remove_threshold_event_handler_cl
    event (delete it when it is time).  If no sensor handles the event,
    then it will be delivered to the "main" unhandled event handler for
    the domain. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_add_discrete_event_handler(
     ipmi_sensor_t                 *sensor,
     ipmi_sensor_discrete_event_cb handler,
     void                          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_remove_discrete_event_handler(
     ipmi_sensor_t                 *sensor,
     ipmi_sensor_discrete_event_cb handler,
@@ -1332,10 +1551,12 @@ typedef void (*ipmi_sensor_discrete_event_cl_cb)
        (ipmi_sensor_discrete_event_cb handler,
 	void                          *handler_data,
 	void                          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_add_discrete_event_handler_cl
 (ipmi_sensor_t                    *sensor,
  ipmi_sensor_discrete_event_cl_cb handler,
  void                             *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_remove_discrete_event_handler_cl
 (ipmi_sensor_t                    *sensor,
  ipmi_sensor_discrete_event_cl_cb handler,
@@ -1349,35 +1570,50 @@ typedef struct ipmi_event_state_s ipmi_event_state_t;
 
 /* Return the size of an event state data structure, so you can
    allocate your own and copy them. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_event_state_size(void);
+IPMI_DLL_PUBLIC
 void ipmi_copy_event_state(ipmi_event_state_t *dest, ipmi_event_state_t *src);
 
 /* Routines to init, clear, set, and query values in the event state. */
+IPMI_DLL_PUBLIC
 void ipmi_event_state_init(ipmi_event_state_t *events);
+IPMI_DLL_PUBLIC
 void ipmi_event_state_set_events_enabled(ipmi_event_state_t *events, int val);
+IPMI_DLL_PUBLIC
 int ipmi_event_state_get_events_enabled(ipmi_event_state_t *events);
+IPMI_DLL_PUBLIC
 void ipmi_event_state_set_scanning_enabled(ipmi_event_state_t *events,int val);
+IPMI_DLL_PUBLIC
 int ipmi_event_state_get_scanning_enabled(ipmi_event_state_t *events);
+IPMI_DLL_PUBLIC
 void ipmi_event_state_set_busy(ipmi_event_state_t *events, int val);
+IPMI_DLL_PUBLIC
 int ipmi_event_state_get_busy(ipmi_event_state_t *events);
+IPMI_DLL_PUBLIC
 void ipmi_threshold_event_clear(ipmi_event_state_t          *events,
 				enum ipmi_thresh_e          threshold,
 				enum ipmi_event_value_dir_e value_dir,
 				enum ipmi_event_dir_e       dir);
+IPMI_DLL_PUBLIC
 void ipmi_threshold_event_set(ipmi_event_state_t          *events,
 			      enum ipmi_thresh_e          threshold,
 			      enum ipmi_event_value_dir_e value_dir,
 			      enum ipmi_event_dir_e       dir);
+IPMI_DLL_PUBLIC
 int ipmi_is_threshold_event_set(ipmi_event_state_t          *events,
 				enum ipmi_thresh_e          threshold,
 				enum ipmi_event_value_dir_e value_dir,
 				enum ipmi_event_dir_e       dir);
+IPMI_DLL_PUBLIC
 void ipmi_discrete_event_clear(ipmi_event_state_t    *events,
 			       int                   event_offset,
 			       enum ipmi_event_dir_e dir);
+IPMI_DLL_PUBLIC
 void ipmi_discrete_event_set(ipmi_event_state_t    *events,
 			     int                   event_offset,
 			     enum ipmi_event_dir_e dir);
+IPMI_DLL_PUBLIC
 int ipmi_is_discrete_event_set(ipmi_event_state_t    *events,
 			       int                   event_offset,
 			       enum ipmi_event_dir_e dir);
@@ -1391,6 +1627,7 @@ typedef void (*ipmi_sensor_done_cb)(ipmi_sensor_t *sensor,
    given in the "states" parameter.  This will first enable the
    events/thresholds that are set, then disable the events/thresholds
    that are not set. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_set_event_enables(ipmi_sensor_t         *sensor,
 				  ipmi_event_state_t    *states,
 				  ipmi_sensor_done_cb   done,
@@ -1401,6 +1638,7 @@ int ipmi_sensor_set_event_enables(ipmi_sensor_t         *sensor,
    It will, however, set the "events_enabled" flag and the
    "scanning_enabled" flag for the sensor to the value in the states
    parameter. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_enable_events(ipmi_sensor_t         *sensor,
 			      ipmi_event_state_t    *states,
 			      ipmi_sensor_done_cb   done,
@@ -1411,6 +1649,7 @@ int ipmi_sensor_enable_events(ipmi_sensor_t         *sensor,
    It will, however, set the "events_enabled" flag and the
    "scanning_enabled" flag for the sensor to the value in the states
    parameter. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_disable_events(ipmi_sensor_t         *sensor,
 			       ipmi_event_state_t    *states,
 			       ipmi_sensor_done_cb   done,
@@ -1421,6 +1660,7 @@ typedef void (*ipmi_sensor_event_enables_cb)(ipmi_sensor_t      *sensor,
 					     int                err,
 					     ipmi_event_state_t *states,
 					     void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_event_enables(ipmi_sensor_t                *sensor,
 				  ipmi_sensor_event_enables_cb done,
 				  void                         *cb_data);
@@ -1432,6 +1672,7 @@ int ipmi_sensor_get_event_enables(ipmi_sensor_t                *sensor,
    from it.  If global_enable is set, all events are enabled and the
    state is ignored (and may be NULL).  Otherwise, the events set in
    the state are enabled. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_rearm(ipmi_sensor_t       *sensor,
 		      int                 global_enable,
 		      ipmi_event_state_t  *state,
@@ -1447,6 +1688,7 @@ typedef void (*ipmi_sensor_hysteresis_cb)
       unsigned int  positive_hysteresis,
       unsigned int  negative_hysteresis,
       void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_hysteresis(ipmi_sensor_t             *sensor,
 			       ipmi_sensor_hysteresis_cb done,
 			       void                      *cb_data);
@@ -1454,6 +1696,7 @@ int ipmi_sensor_get_hysteresis(ipmi_sensor_t             *sensor,
 /* Set the hysteresis values for the given sensor.
    FIXME - these are currently the raw values, how do I handle the
    cooked values?  There doesn't seem to be an easy way to calculate them. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_set_hysteresis(ipmi_sensor_t       *sensor,
 			       unsigned int        positive_hysteresis,
 			       unsigned int        negative_hysteresis,
@@ -1463,7 +1706,9 @@ int ipmi_sensor_set_hysteresis(ipmi_sensor_t       *sensor,
 /* Get the sensor's Owner ID, and the LUN and sensor number for the sensor,
    as viewed from its management controller.  These are really kind of
    internal but are required for CIM mappings. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_owner(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_num(ipmi_sensor_t *sensor,
 			int           *lun,
 			int           *num);
@@ -1472,14 +1717,20 @@ int ipmi_sensor_get_num(ipmi_sensor_t *sensor,
    number of characters in the string put into name.  The length is the
    length of the "name" array. */
 #define IPMI_SENSOR_NAME_LEN (IPMI_ENTITY_NAME_LEN + 34)
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_name(ipmi_sensor_t *sensor, char *name, int length);
 
 /* Strings for various values for a sensor.  We put them in here, and
    they will be the correct strings even for OEM values. */
+IPMI_DLL_PUBLIC
 const char *ipmi_sensor_get_sensor_type_string(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 const char *ipmi_sensor_get_event_reading_type_string(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 const char *ipmi_sensor_get_rate_unit_string(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 const char *ipmi_sensor_get_base_unit_string(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 const char *ipmi_sensor_get_modifier_unit_string(ipmi_sensor_t *sensor);
 
 /* This call is a little different from the other string calls.  For a
@@ -1487,49 +1738,70 @@ const char *ipmi_sensor_get_modifier_unit_string(ipmi_sensor_t *sensor);
    return the string associated with the reading.  This way, OEM
    sensors can supply their own strings as necessary for the various
    offsets. */
+IPMI_DLL_PUBLIC
 const char *ipmi_sensor_reading_name_string(ipmi_sensor_t *sensor, int offset);
 
 /* Get the entity the sensor is hooked to. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_entity_id(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_entity_instance(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 ipmi_entity_t *ipmi_sensor_get_entity(ipmi_sensor_t *sensor);
 
 /* Information about a sensor from it's SDR.  These are things that
    are specified by IPMI, see the spec for more details. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_init_scanning(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_init_events(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_init_thresholds(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_init_hysteresis(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_init_type(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_init_pu_events(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_init_pu_scanning(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_ignore_if_no_entity(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_supports_auto_rearm(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_THRESHOLD_ACCESS_SUPPORT_xxx */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_threshold_access(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_HYSTERESIS_SUPPORT_xxx */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_hysteresis_support(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_EVENT_SUPPORT_xxx */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_event_support(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_SENSOR_TYPE_xxx */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_type(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_EVENT_READING_TYPE_xxx */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_event_reading_type(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_SENSOR_DIRECTION_xxx */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_direction(ipmi_sensor_t *sensor);
 
 /* Returns if the sensor can be read (either reading or states,
    depending on the sensor type).  Event-only sensors and sensors with
    system software ID owners cannot be read. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_is_readable(ipmi_sensor_t *sensor);
 
 /* Sets "val" to if an event is supported for this particular sensor. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_threshold_event_supported(
     ipmi_sensor_t               *sensor,
     enum ipmi_thresh_e          event,
@@ -1538,69 +1810,93 @@ int ipmi_sensor_threshold_event_supported(
     int                         *val);
 
 /* Sets "val" to if a specific threshold can be set. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_threshold_settable(ipmi_sensor_t      *sensor,
 				   enum ipmi_thresh_e threshold,
 				   int                *val);
 
 /* Sets "val" to if a specific threshold can be read. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_threshold_readable(ipmi_sensor_t      *sensor,
 				   enum ipmi_thresh_e threshold,
 				   int                *val);
 
 /* Sets "val" to if a specific threshold has its reading returned when
    reading the value of the threshold sensor. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_threshold_reading_supported(ipmi_sensor_t      *sensor,
 					    enum ipmi_thresh_e thresh,
 					    int                *val);
 
 /* Sets "val" to if the specific offset can send an event for the
    given direction. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_discrete_event_supported(ipmi_sensor_t         *sensor,
 					 int                   offset,
 					 enum ipmi_event_dir_e dir,
 					 int                   *val);
 
 /* Sets "val" to if the specific event can be read (is supported). */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_discrete_event_readable(ipmi_sensor_t *sensor,
 					int           event,
 					int           *val);
 
 /* Returns IPMI_RATE_UNIT_xxx */
+IPMI_DLL_PUBLIC
 enum ipmi_rate_unit_e ipmi_sensor_get_rate_unit(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_MODIFIER_UNIT_xxx */
+IPMI_DLL_PUBLIC
 enum ipmi_modifier_unit_use_e ipmi_sensor_get_modifier_unit_use(
     ipmi_sensor_t *sensor);
 
 /* Returns if the value is a percentage. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_percentage(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_UNIT_TYPE_xxx */
+IPMI_DLL_PUBLIC
 enum ipmi_unit_type_e ipmi_sensor_get_base_unit(ipmi_sensor_t *sensor);
 
 /* Returns IPMI_UNIT_TYPE_xxx */
+IPMI_DLL_PUBLIC
 enum ipmi_unit_type_e ipmi_sensor_get_modifier_unit(ipmi_sensor_t *sensor);
 
 /* Sensor reading information from the SDR. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_tolerance(ipmi_sensor_t *sensor,
 			      int           val,
 			      double        *tolerance);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_accuracy(ipmi_sensor_t *sensor, int val, double *accuracy);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_normal_min_specified(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_normal_max_specified(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_nominal_reading_specified(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_nominal_reading(ipmi_sensor_t *sensor,
 				    double *nominal_reading);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_normal_max(ipmi_sensor_t *sensor, double *normal_max);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_normal_min(ipmi_sensor_t *sensor, double *normal_min);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_max(ipmi_sensor_t *sensor, double *sensor_max);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_sensor_min(ipmi_sensor_t *sensor, double *sensor_min);
 
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_oem1(ipmi_sensor_t *sensor);
 
 /* The ID string from the SDR. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_id_length(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 enum ipmi_str_type_e ipmi_sensor_get_id_type(ipmi_sensor_t *sensor);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_id(ipmi_sensor_t *sensor, char *id, int length);
 
 
@@ -1610,16 +1906,20 @@ typedef struct ipmi_thresholds_s ipmi_thresholds_t;
 
 /* Return the size of a threshold data structure, so you can allocate
    your own and copy them. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_thresholds_size(void);
+IPMI_DLL_PUBLIC
 void ipmi_copy_thresholds(ipmi_thresholds_t *dest, ipmi_thresholds_t *src);
 
 /* Clear out all the thresholds. */
+IPMI_DLL_PUBLIC
 int ipmi_thresholds_init(ipmi_thresholds_t *th);
 
 /* Set a threshold and make it valid in the thresholds data structure.
    If sensor is non-null, it verifies that the given threshold can be
    set for the sensor.  Note that this does not actually set the
    threshold in the real sensor, just in the "th" data structure. */
+IPMI_DLL_PUBLIC
 int ipmi_threshold_set(ipmi_thresholds_t  *th,
 		       ipmi_sensor_t      *sensor,
 		       enum ipmi_thresh_e threshold,
@@ -1628,16 +1928,19 @@ int ipmi_threshold_set(ipmi_thresholds_t  *th,
    Returns an error if the threshold is not set.  This does not
    actually get the threshold from the real sensor, it get the local
    value in the "th" data structure. */
+IPMI_DLL_PUBLIC
 int ipmi_threshold_get(ipmi_thresholds_t  *th,
 		       enum ipmi_thresh_e threshold,
 		       double             *value);
 
 		       
 /* Return the default threshold settings for a sensor. */
+IPMI_DLL_PUBLIC
 int ipmi_get_default_sensor_thresholds(ipmi_sensor_t     *sensor,
 				       ipmi_thresholds_t *th);
 
 /* Set the thresholds for the given sensor. */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_set_thresholds(ipmi_sensor_t       *sensor,
 			       ipmi_thresholds_t   *thresholds,
 			       ipmi_sensor_done_cb done,
@@ -1648,6 +1951,7 @@ typedef void (*ipmi_sensor_thresholds_cb)(ipmi_sensor_t     *sensor,
 					  int               err,
 					  ipmi_thresholds_t *th,
 					  void              *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_thresholds(ipmi_sensor_t             *sensor,
 			       ipmi_sensor_thresholds_cb done,
 			       void                      *cb_data);
@@ -1659,33 +1963,46 @@ typedef struct ipmi_states_s ipmi_states_t;
 
 /* Get the size of ipmi_states_t, so you can allocate your own and
    copy them. */
+IPMI_DLL_PUBLIC
 unsigned int ipmi_states_size(void);
+IPMI_DLL_PUBLIC
 void ipmi_copy_states(ipmi_states_t *dest, ipmi_states_t *src);
 
 /* Various global values in the states value.  See the IPMI "Get
    Sensor Readings" command in the IPMI spec for details on the
    meanings of these. */
+IPMI_DLL_PUBLIC
 int ipmi_is_event_messages_enabled(ipmi_states_t *states);
+IPMI_DLL_PUBLIC
 int ipmi_is_sensor_scanning_enabled(ipmi_states_t *states);
+IPMI_DLL_PUBLIC
 int ipmi_is_initial_update_in_progress(ipmi_states_t *states);
 
 /* Use to tell if a discrete offset is set in the states. */
+IPMI_DLL_PUBLIC
 int ipmi_is_state_set(ipmi_states_t *states,
 		      int           state_num);
 
 /* Use to tell if a threshold is out of range in a threshold sensor. */
+IPMI_DLL_PUBLIC
 int ipmi_is_threshold_out_of_range(ipmi_states_t      *states,
 				   enum ipmi_thresh_e thresh);
 
 /* The following functions allow you to create and modify your own
    states structure. */
+IPMI_DLL_PUBLIC
 void ipmi_init_states(ipmi_states_t *states);
+IPMI_DLL_PUBLIC
 void ipmi_set_event_messages_enabled(ipmi_states_t *states, int val);
+IPMI_DLL_PUBLIC
 void ipmi_set_sensor_scanning_enabled(ipmi_states_t *states, int val);
+IPMI_DLL_PUBLIC
 void ipmi_set_initial_update_in_progress(ipmi_states_t *states, int val);
+IPMI_DLL_PUBLIC
 void ipmi_set_state(ipmi_states_t *states,
 		    int           state_num,
 		    int           val);
+IPMI_DLL_PUBLIC
 void ipmi_set_threshold_out_of_range(ipmi_states_t      *states,
 				     enum ipmi_thresh_e thresh,
 				     int                val);
@@ -1699,6 +2016,7 @@ typedef void (*ipmi_sensor_reading_cb)(ipmi_sensor_t             *sensor,
 				       double                    val,
 				       ipmi_states_t             *states,
 				       void                      *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_reading(ipmi_sensor_t          *sensor,
 			    ipmi_sensor_reading_cb done,
 			    void                   *cb_data);
@@ -1709,6 +2027,7 @@ typedef void (*ipmi_sensor_states_cb)(ipmi_sensor_t *sensor,
 				      int           err,
 				      ipmi_states_t *states,
 				      void          *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_get_states(ipmi_sensor_t         *sensor,
 			   ipmi_sensor_states_cb done,
 			   void                  *cb_data);
@@ -1716,44 +2035,55 @@ int ipmi_sensor_get_states(ipmi_sensor_t         *sensor,
 
 /* These are convenience functions that take a sensor id, not a
    sensor, and set/get remote values from the sensor */
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_set_event_enables(ipmi_sensor_id_t      sensor_id,
 				     ipmi_event_state_t    *states,
 				     ipmi_sensor_done_cb   done,
 				     void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_enable_events(ipmi_sensor_id_t      sensor_id,
 				 ipmi_event_state_t    *states,
 				 ipmi_sensor_done_cb   done,
 				 void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_disable_events(ipmi_sensor_id_t      sensor_id,
 				  ipmi_event_state_t    *states,
 				  ipmi_sensor_done_cb   done,
 				  void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_get_event_enables(ipmi_sensor_id_t             sensor_id,
 				     ipmi_sensor_event_enables_cb done,
 				     void                         *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_rearm(ipmi_sensor_id_t    sensor_id,
 			 int                 global_enable,
 			 ipmi_event_state_t  *state,
 			 ipmi_sensor_done_cb done,
 			 void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_get_hysteresis(ipmi_sensor_id_t          sensor_id,
 				  ipmi_sensor_hysteresis_cb done,
 				  void                      *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_set_hysteresis(ipmi_sensor_id_t    sensor_id,
 				  unsigned int        positive_hysteresis,
 				  unsigned int        negative_hysteresis,
 				  ipmi_sensor_done_cb done,
 				  void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_set_thresholds(ipmi_sensor_id_t    sensor_id,
 				  ipmi_thresholds_t   *thresholds,
 				  ipmi_sensor_done_cb done,
 				  void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_get_thresholds(ipmi_sensor_id_t          sensor_id,
 				  ipmi_sensor_thresholds_cb done,
 				  void                      *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_get_reading(ipmi_sensor_id_t       sensor_id,
 			       ipmi_sensor_reading_cb done,
 			       void                   *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_get_states(ipmi_sensor_id_t      sensor_id,
 			      ipmi_sensor_states_cb done,
 			      void                  *cb_data);
@@ -1775,27 +2105,41 @@ int ipmi_sensor_id_get_states(ipmi_sensor_id_t      sensor_id,
    number of characters in the string put into name.  The length is the
    length of the "name" array. */
 #define IPMI_CONTROL_NAME_LEN (IPMI_DOMAIN_NAME_LEN + 34)
+IPMI_DLL_PUBLIC
 int ipmi_control_get_name(ipmi_control_t *sensor, char *name, int length);
 
 /* The type of control.  Returns something in the form IPMI_CONTROL_xxx */
+IPMI_DLL_PUBLIC
 int ipmi_control_get_type(ipmi_control_t *control);
 
+IPMI_DLL_PUBLIC
 int ipmi_control_get_id_length(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 enum ipmi_str_type_e ipmi_control_get_id_type(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_id(ipmi_control_t *control, char *id, int length);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_entity_id(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_entity_instance(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 int ipmi_control_is_settable(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 int ipmi_control_is_readable(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 ipmi_entity_t *ipmi_control_get_entity(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 const char *ipmi_control_get_type_string(ipmi_control_t *control);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_ignore_if_no_entity(ipmi_control_t *control);
 
 /* Returns true if the control can generate events upon change, and
    false if not. */
+IPMI_DLL_PUBLIC
 int ipmi_control_has_events(ipmi_control_t *control);
 
 /* Get the number of values the control supports. */
+IPMI_DLL_PUBLIC
 int ipmi_control_get_num_vals(ipmi_control_t *control);
 
 
@@ -1809,6 +2153,7 @@ typedef void (*ipmi_control_op_cb)(ipmi_control_t *control,
  support more than one element, the array passed in to "val" must
  match the number of elements the control supports.  All the
  elements will be set simultaneously. */
+IPMI_DLL_PUBLIC
 int ipmi_control_set_val(ipmi_control_t     *control,
 			 int                *val,
 			 ipmi_control_op_cb handler,
@@ -1821,6 +2166,7 @@ typedef void (*ipmi_control_val_cb)(ipmi_control_t *control,
 				    int            err,
 				    int            *val,
 				    void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_val(ipmi_control_t      *control,
 			 ipmi_control_val_cb handler,
 			 void                *cb_data);
@@ -1842,9 +2188,11 @@ typedef int (*ipmi_control_val_event_cb)(ipmi_control_t *control,
 					 int            *vals,
 					 void           *cb_data,
 					 ipmi_event_t   *event);
+IPMI_DLL_PUBLIC
 int ipmi_control_add_val_event_handler(ipmi_control_t            *control,
 				       ipmi_control_val_event_cb handler,
 				       void                      *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_remove_val_event_handler(ipmi_control_t            *control,
 					  ipmi_control_val_event_cb handler,
 					  void                      *cb_data);
@@ -1854,10 +2202,12 @@ typedef void (*ipmi_control_val_event_cl_cb)
        (ipmi_control_val_event_cb handler,
 	void                           *handler_data,
 	void                           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_add_val_event_handler_cl
 (ipmi_control_t               *control,
  ipmi_control_val_event_cl_cb handler,
  void                         *event_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_remove_val_event_handler_cl
 (ipmi_control_t               *control,
  ipmi_control_val_event_cl_cb handler,
@@ -1884,20 +2234,25 @@ int ipmi_control_remove_val_event_handler_cl
    ipmi_control_get_light() function.  Otherwise you set it with the
    normal set_control command and use the transitions functions to get
    what the LED can do. */
+IPMI_DLL_PUBLIC
 int ipmi_control_light_set_with_setting(ipmi_control_t *control);
 
 /* Allows detecting if a setting light supports a specific color. */
+IPMI_DLL_PUBLIC
 int ipmi_control_light_is_color_sup(ipmi_control_t *control,
 				    int            light_num,
 				    unsigned int   color);
 
 /* Allows detecting if a setting light supports local control. */
+IPMI_DLL_PUBLIC
 int ipmi_control_light_has_loc_ctrl(ipmi_control_t *control,
 				    int            light_num);
 
 /* Old interfaces, only works with light number zero.  Don't use this. */
+IPMI_DLL_PUBLIC
 int ipmi_control_light_is_color_supported(ipmi_control_t *control,
 					  unsigned int   color);
+IPMI_DLL_PUBLIC
 int ipmi_control_light_has_local_control(ipmi_control_t *control);
 
 
@@ -1909,35 +2264,48 @@ int ipmi_control_light_has_local_control(ipmi_control_t *control);
    Local control is a state that some LED support where the target
    system has control of the LED. */
 typedef struct ipmi_light_setting_s ipmi_light_setting_t;
+IPMI_DLL_PUBLIC
 unsigned int ipmi_light_setting_get_count(ipmi_light_setting_t *setting);
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_in_local_control(ipmi_light_setting_t *setting,
 					int                  num,
 					int                  *lc);
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_set_local_control(ipmi_light_setting_t *setting,
 					 int                  num,
 					 int                  lc);
 
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_get_color(ipmi_light_setting_t *setting, int num,
 				 int *color);
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_set_color(ipmi_light_setting_t *setting, int num,
 				 int color);
 /* Times are in milliseconds. */
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_get_on_time(ipmi_light_setting_t *setting, int num,
 				   int *time);
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_set_on_time(ipmi_light_setting_t *setting, int num,
 				   int time);
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_get_off_time(ipmi_light_setting_t *setting, int num,
 				    int *time);
+IPMI_DLL_PUBLIC
 int ipmi_light_setting_set_off_time(ipmi_light_setting_t *setting, int num,
 				    int time);
+IPMI_DLL_PUBLIC
 ipmi_light_setting_t *ipmi_alloc_light_settings(unsigned int count);
+IPMI_DLL_PUBLIC
 void ipmi_free_light_settings(ipmi_light_setting_t *settings);
+IPMI_DLL_PUBLIC
 ipmi_light_setting_t *ipmi_light_settings_dup(ipmi_light_setting_t *settings);
 
 
 /* Set and get the light's settings.  Note that the settings value you
    get is freed by the system, if you want to keep it around you must
    duplicate it. */
+IPMI_DLL_PUBLIC
 int ipmi_control_set_light(ipmi_control_t       *control,
 			   ipmi_light_setting_t *settings,
 			   ipmi_control_op_cb   handler,
@@ -1946,6 +2314,7 @@ typedef void (*ipmi_light_settings_cb)(ipmi_control_t       *control,
 				       int                  err,
 				       ipmi_light_setting_t *settings,
 				       void                 *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_light(ipmi_control_t         *control,
 			   ipmi_light_settings_cb handler,
 			   void                   *cb_data);
@@ -1976,15 +2345,19 @@ int ipmi_control_get_light(ipmi_control_t         *control,
    black with a time of 100 and the second is red with a value of 900.
    Value 4 has one transition with a red color.
  */
+IPMI_DLL_PUBLIC
 int ipmi_control_get_num_light_values(ipmi_control_t *control,
 				      unsigned int   light);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_num_light_transitions(ipmi_control_t *control,
 					   unsigned int   light,
 					   unsigned int   value);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_light_color(ipmi_control_t *control,
 				 unsigned int   light,
 				 unsigned int   value,
 				 unsigned int   transition);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_light_color_time(ipmi_control_t *control,
 				      unsigned int   light,
 				      unsigned int   value,
@@ -2003,14 +2376,17 @@ typedef void (*ipmi_control_identifier_val_cb)(ipmi_control_t *control,
 					       unsigned char  *val,
 					       int            length,
 					       void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_identifier_get_val(ipmi_control_t                 *control,
 				    ipmi_control_identifier_val_cb handler,
 				    void                           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_identifier_set_val(ipmi_control_t     *control,
 				    unsigned char      *val,
 				    int                length,
 				    ipmi_control_op_cb handler,
 				    void               *cb_data);
+IPMI_DLL_PUBLIC
 unsigned int ipmi_control_identifier_get_max_length(ipmi_control_t *control);
 
 
@@ -2018,10 +2394,12 @@ unsigned int ipmi_control_identifier_get_max_length(ipmi_control_t *control);
    support multiple elements, and have their own setting function. */
 /* Get the dimensions of the display device.  This assumes a square, which
    is usually (but maybe not always) a good assumption. */
+IPMI_DLL_PUBLIC
 void ipmi_control_get_display_dimensions(ipmi_control_t *control,
 					 unsigned int   *columns,
 					 unsigned int   *rows);
 
+IPMI_DLL_PUBLIC
 int ipmi_control_set_display_string(ipmi_control_t     *control,
 				    unsigned int       start_row,
 				    unsigned int       start_column,
@@ -2036,6 +2414,7 @@ typedef void (*ipmi_control_str_cb)(ipmi_control_t *control,
 				    char           *str,
 				    unsigned int   len,
 				    void           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_get_display_string(ipmi_control_t      *control,
 				    unsigned int        start_row,
 				    unsigned int        start_column,
@@ -2045,17 +2424,21 @@ int ipmi_control_get_display_string(ipmi_control_t      *control,
 
 /* These are convenience functions that take a control id, not a
    control, and set/get remote values from the control. */
+IPMI_DLL_PUBLIC
 int ipmi_control_id_set_val(ipmi_control_id_t  control_id,
 			    int                *val,
 			    ipmi_control_op_cb handler,
 			    void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_id_get_val(ipmi_control_id_t   control_id,
 			    ipmi_control_val_cb handler,
 			    void                *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_id_identifier_get_val
 (ipmi_control_id_t              control_id,
  ipmi_control_identifier_val_cb handler,
  void                           *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_control_id_identifier_set_val(ipmi_control_id_t  control_id,
 				       unsigned char      *val,
 				       int                length,
@@ -2090,6 +2473,7 @@ typedef struct ipmi_open_option_s
 	void *pval;
     };
 } ipmi_open_option_t;
+IPMI_DLL_PUBLIC
 int ipmi_open_domain(const char         *name,
 		     ipmi_con_t         *con[],
 		     unsigned int       num_con,
@@ -2167,6 +2551,7 @@ int ipmi_open_domain(const char         *name,
    with the connections, any outstanding responses will be lost, etc.
    All slave MC's will be closed when this is closed. */
 typedef void (*ipmi_domain_close_done_cb)(void *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_close(ipmi_domain_t             *domain,
 		      ipmi_domain_close_done_cb close_done,
 		      void                      *cb_data);
@@ -2176,8 +2561,10 @@ int ipmi_domain_close(ipmi_domain_t             *domain,
 typedef void (*ipmi_domain_change_cb)(ipmi_domain_t      *domain,
 				      enum ipmi_update_e op,
 				      void               *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_domain_change_handler(ipmi_domain_change_cb handler,
 					  void                  *cb_data);
+IPMI_DLL_PUBLIC
 int ipmi_domain_remove_domain_change_handler(ipmi_domain_change_cb handler,
 					     void                  *cb_data);
 
@@ -2186,10 +2573,12 @@ int ipmi_domain_remove_domain_change_handler(ipmi_domain_change_cb handler,
    and set the valid arguments for any connection type. */
 
 /* Allocate an args object for the given connection type. */
+IPMI_DLL_PUBLIC
 int ipmi_args_alloc(char *con_type, ipmi_args_t **args);
 
 /* Returns the type (smi, lan, etc) of the connextion.  Returns a
    static string (should not be freed). */
+IPMI_DLL_PUBLIC
 const char *ipmi_args_get_type(ipmi_args_t *args);
 
 /* The following lets you discover the valid fields in an args array.
@@ -2209,6 +2598,7 @@ const char *ipmi_args_get_type(ipmi_args_t *args);
    If the first character of the help field is "*", then the value is
    required, otherwise it is optional.  If the next character is '!',
    then it is a password. */
+IPMI_DLL_PUBLIC
 int ipmi_args_get_val(ipmi_args_t  *args,
 		      unsigned int argnum,
 		      const char   **name,
@@ -2224,34 +2614,42 @@ int ipmi_args_get_val(ipmi_args_t  *args,
    values for an enum.  There may be other interpretation behind a
    string value (such as an integer), so setting the value may fail if
    the semantics are incorrect. */
+IPMI_DLL_PUBLIC
 int ipmi_args_set_val(ipmi_args_t  *args,
 		      unsigned int argnum,
 		      const char   *name,
 		      const char   *value);
 
 /* Used to free the string returned as a value from ipmi_args_get_val(). */
+IPMI_DLL_PUBLIC
 void ipmi_args_free_str(ipmi_args_t *args, char *str);
 
 /* Create a new copy of the arguments */
+IPMI_DLL_PUBLIC
 ipmi_args_t *ipmi_args_copy(ipmi_args_t *args);
 
 /* Returns true if the argument has all the info to form a connection,
    false if not.  The argnum of the first argument with a problem is
    returned in argnum if false is returned. */
+IPMI_DLL_PUBLIC
 int ipmi_args_validate(ipmi_args_t *args, int *argnum);
 
 /* This must be called before calling any other IPMI functions.  It
    sets a mutex and mutex operations for the smi.  You must provide
    an OS handler to use for the system. */
+IPMI_DLL_PUBLIC
 int ipmi_init(os_handler_t *handler);
 
 /* This will clean up all the memory associated with IPMI. */
+IPMI_DLL_PUBLIC
 void ipmi_shutdown(void);
 
 /* Parse a possible option, returns EINVAL if the option is not valid. */
+IPMI_DLL_PUBLIC
 int ipmi_parse_options(ipmi_open_option_t *option,
 		       char               *arg);
 /* Help text for the options available from the above command */
+IPMI_DLL_PUBLIC
 const char *ipmi_parse_options_help(void);
 
 /* Parse the arguments and extract a connection.  curr_arg should be
@@ -2263,6 +2661,7 @@ const char *ipmi_parse_options_help(void);
    that had the error.  You must use ipmi_free_args() to free the
    value returned in iargs.  Note that this is the old version and you
    really should not use it.  Use ipmi_parse_args2(). */
+IPMI_DLL_PUBLIC
 int ipmi_parse_args(int         *curr_arg,
 		    int         arg_count,
 		    char        * const *args,
@@ -2288,12 +2687,14 @@ int ipmi_parse_args(int         *curr_arg,
    addresses, detecting failures, switching between
    addresses, and other fault-tolerant things.  It does this
    transparently to the user. */
+IPMI_DLL_PUBLIC
 int ipmi_parse_args2(int         *curr_arg,
 		     int         arg_count,
 		     char        * const *args,
 		     ipmi_args_t **iargs);
 
 /* Free an argument structure. */
+IPMI_DLL_PUBLIC
 void ipmi_free_args(ipmi_args_t *args);
 
 /* Iterate the help for all registered connection types (smi, lan,
@@ -2301,9 +2702,11 @@ void ipmi_free_args(ipmi_args_t *args);
    connection types, as each name is retuned in the name field. */
 typedef void (*ipmi_iter_help_cb)(const char *name, const char *help,
 				  void *cb_data);
+IPMI_DLL_PUBLIC
 void ipmi_parse_args_iter_help(ipmi_iter_help_cb help_cb, void *cb_data);
 
 /* Set up a connection from an argument structure. */
+IPMI_DLL_PUBLIC
 int ipmi_args_setup_con(ipmi_args_t  *args,
 			os_handler_t *handlers,
 			void         *user_data,
@@ -2320,16 +2723,19 @@ struct ipmi_domain_con_change_s;
 typedef struct ipmi_domain_con_change_s ipmi_domain_con_change_t
      IPMI_TYPE_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_domain_add_con_change_handler(ipmi_domain_t            *domain,
 				       ipmi_domain_con_cb       handler,
 				       void                     *cb_data,
 				       struct ipmi_domain_con_change_s **id)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 void ipmi_domain_remove_con_change_handler
 (ipmi_domain_t            *domain,
  struct ipmi_domain_con_change_s *id)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_init_domain(ipmi_con_t               *con[],
 		     unsigned int             num_con,
 		     ipmi_domain_con_cb       con_change_handler,
@@ -2342,11 +2748,13 @@ struct ipmi_event_handler_id_s;
 typedef struct ipmi_event_handler_id_s ipmi_event_handler_id_t
      IPMI_TYPE_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_register_for_events(ipmi_domain_t           *domain,
 			     ipmi_event_handler_cb   handler,
 			     void                    *event_data,
 			     struct ipmi_event_handler_id_s **id)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_deregister_for_events(ipmi_domain_t           *domain,
 			       struct ipmi_event_handler_id_s *id)
      IPMI_FUNC_DEPRECATED;
@@ -2365,6 +2773,7 @@ typedef ipmi_sensor_threshold_event_handler_nd_cb
   ipmi_sensor_threshold_event_handler_cb
   IPMI_TYPE_DEPRECATED;;
 
+IPMI_DLL_PUBLIC
 int ipmi_sensor_threshold_set_event_handler
 (ipmi_sensor_t                             *sensor,
  ipmi_sensor_threshold_event_handler_nd_cb handler,
@@ -2382,13 +2791,14 @@ typedef void (*ipmi_sensor_discrete_event_handler_nd_cb)(
 typedef ipmi_sensor_discrete_event_handler_nd_cb
   ipmi_sensor_discrete_event_handler_cb
   IPMI_TYPE_DEPRECATED;;
-int
-ipmi_sensor_discrete_set_event_handler(
+IPMI_DLL_PUBLIC
+int ipmi_sensor_discrete_set_event_handler(
     ipmi_sensor_t                            *sensor,
     ipmi_sensor_discrete_event_handler_nd_cb handler,
     void                                     *cb_data)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_domain_set_entity_update_handler(ipmi_domain_t         *domain,
 					  ipmi_domain_entity_cb handler,
 					  void                  *cb_data)
@@ -2400,26 +2810,31 @@ typedef void (*ipmi_entity_presence_nd_cb)(ipmi_entity_t *entity,
 					   ipmi_event_t  *event);
 typedef ipmi_entity_presence_nd_cb ipmi_entity_presence_cb
   IPMI_TYPE_DEPRECATED ;
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_presence_handler(ipmi_entity_t              *ent,
 				     ipmi_entity_presence_nd_cb handler,
 				     void                       *cb_data)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_sensor_update_handler(ipmi_entity_t         *ent,
 					  ipmi_entity_sensor_cb handler,
 					  void                  *cb_data)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_control_update_handler(ipmi_entity_t          *ent,
 					   ipmi_entity_control_cb handler,
 					   void                   *cb_data)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_set_fru_update_handler(ipmi_entity_t     *ent,
 				       ipmi_entity_fru_cb handler,
 				       void              *cb_data)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_sensor_threshold_assertion_event_supported(
     ipmi_sensor_t               *sensor,
     enum ipmi_thresh_e          threshold,
@@ -2427,6 +2842,7 @@ int ipmi_sensor_threshold_assertion_event_supported(
     int                         *val)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_sensor_threshold_deassertion_event_supported(
     ipmi_sensor_t               *sensor,
     enum ipmi_thresh_e          threshold,
@@ -2434,16 +2850,19 @@ int ipmi_sensor_threshold_deassertion_event_supported(
     int                         *val)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_sensor_discrete_assertion_event_supported(ipmi_sensor_t *sensor,
 						   int           event,
 						   int           *val)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_sensor_discrete_deassertion_event_supported(ipmi_sensor_t *sensor,
 						     int           event,
 						     int           *val)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_control_get_num_light_settings(ipmi_control_t *control,
 					unsigned int   light)
      IPMI_FUNC_DEPRECATED;
@@ -2453,40 +2872,48 @@ typedef void (*ipmi_event_enables_get_cb)(ipmi_sensor_t      *sensor,
 					  ipmi_event_state_t *states,
 					  void               *cb_data)
      IPMI_TYPE_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_events_enable_get(ipmi_sensor_t                *sensor,
 				  ipmi_sensor_event_enables_cb done,
 				  void                         *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_events_disable(ipmi_sensor_t         *sensor,
 			       ipmi_event_state_t    *states,
 			       ipmi_sensor_done_cb   done,
 			       void                  *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_events_enable(ipmi_sensor_t         *sensor,
 			      ipmi_event_state_t    *states,
 			      ipmi_sensor_done_cb   done,
 			      void                  *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_events_enable_set(ipmi_sensor_t         *sensor,
 				  ipmi_event_state_t    *states,
 				  ipmi_sensor_done_cb   done,
 				  void                  *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_events_enable_set(ipmi_sensor_id_t      sensor_id,
 				     ipmi_event_state_t    *states,
 				     ipmi_sensor_done_cb   done,
 				     void                  *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_events_enable(ipmi_sensor_id_t      sensor_id,
 				 ipmi_event_state_t    *states,
 				 ipmi_sensor_done_cb   done,
 				 void                  *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_events_disable(ipmi_sensor_id_t      sensor_id,
 				  ipmi_event_state_t    *states,
 				  ipmi_sensor_done_cb   done,
 				  void                  *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_events_enable_get(ipmi_sensor_id_t             sensor_id,
 				     ipmi_sensor_event_enables_cb done,
 				     void                         *cb_data)
@@ -2497,6 +2924,7 @@ typedef void (*ipmi_states_read_cb)(ipmi_sensor_t *sensor,
 				    ipmi_states_t *states,
 				    void          *cb_data)
      IPMI_TYPE_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_states_get(ipmi_sensor_t         *sensor,
 		    ipmi_sensor_states_cb done,
 		    void                  *cb_data)
@@ -2509,10 +2937,12 @@ typedef void (*ipmi_reading_done_cb)(ipmi_sensor_t             *sensor,
 				     ipmi_states_t             *states,
 				     void                      *cb_data)
      IPMI_TYPE_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_reading_get(ipmi_sensor_t          *sensor,
 		     ipmi_sensor_reading_cb done,
 		     void                   *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_thresholds_set(ipmi_sensor_t       *sensor,
 			ipmi_thresholds_t   *thresholds,
 			ipmi_sensor_done_cb done,
@@ -2523,24 +2953,29 @@ typedef void (*ipmi_thresh_get_cb)(ipmi_sensor_t     *sensor,
 				   ipmi_thresholds_t *th,
 				   void              *cb_data)
      IPMI_TYPE_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_thresholds_get(ipmi_sensor_t             *sensor,
 			ipmi_sensor_thresholds_cb done,
 			void                      *cb_data)
      IPMI_FUNC_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_thresholds_set(ipmi_sensor_id_t    sensor_id,
 				  ipmi_thresholds_t   *thresholds,
 				  ipmi_sensor_done_cb done,
 				  void                *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_thresholds_get(ipmi_sensor_id_t          sensor_id,
 				  ipmi_sensor_thresholds_cb done,
 				  void                      *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_reading_get(ipmi_sensor_id_t       sensor_id,
 			       ipmi_sensor_reading_cb done,
 			       void                   *cb_data)
      IPMI_FUNC_DEPRECATED;
+IPMI_DLL_PUBLIC
 int ipmi_sensor_id_states_get(ipmi_sensor_id_t      sensor_id,
 			      ipmi_sensor_states_cb done,
 			      void                  *cb_data)
@@ -2552,6 +2987,7 @@ typedef void (*ipmi_hysteresis_get_cb)(ipmi_sensor_t *sensor,
 				       void          *cb_data)
      IPMI_TYPE_DEPRECATED;
 
+IPMI_DLL_PUBLIC
 int ipmi_close_connection(ipmi_domain_t             *domain,
 			  ipmi_domain_close_done_cb close_done,
 			  void                      *cb_data)
@@ -2575,192 +3011,259 @@ int ipmi_close_connection(ipmi_domain_t             *domain,
    Also, when fetching the string, you must set the max_len variable
    to the maximum length of the returned data.  The actual length
    copied into the output string is returned in max_len. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_internal_use_version(ipmi_entity_t *entity,
 					 unsigned char *version);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_internal_use_length(ipmi_entity_t *entity,
 					unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_internal_use_data(ipmi_entity_t *entity,
 				      unsigned char *data,
 				      unsigned int  *max_len);
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_version(ipmi_entity_t *entity,
 					 unsigned char *version);
+IPMI_DLL_PUBLIC
 int  ipmi_entity_get_chassis_info_type(ipmi_entity_t *entity,
 				       unsigned char *type);
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_part_number_len(ipmi_entity_t *entity,
 						 unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_part_number_type(ipmi_entity_t        *entity,
 						  enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_part_number(ipmi_entity_t *entity,
 					     char          *str,
 					     unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_serial_number_len(ipmi_entity_t *entity,
 						   unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_serial_number_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_serial_number(ipmi_entity_t *entity,
 					       char          *str,
 					       unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_custom_len(ipmi_entity_t *entity,
 					    unsigned int  num,
 					    unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_custom_type(ipmi_entity_t        *entity,
 					     unsigned int         num,
 					     enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_chassis_info_custom(ipmi_entity_t *entity,
 					unsigned int  num,
 					char          *str,
 					unsigned int  *strlen);
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_version(ipmi_entity_t *entity,
 				       unsigned char *version);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_lang_code(ipmi_entity_t *entity,
 					 unsigned char *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_mfg_time(ipmi_entity_t *fru,
 					time_t        *time);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_manufacturer_len(ipmi_entity_t *entity,
 						      unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_manufacturer_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_manufacturer(ipmi_entity_t *entity,
 						  char          *str,
 						  unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_product_name_len(ipmi_entity_t *entity,
 						      unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_product_name_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_product_name(ipmi_entity_t *entity,
 						  char          *str,
 						  unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_serial_number_len(ipmi_entity_t *entity,
 						       unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_serial_number_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_serial_number(ipmi_entity_t *entity,
 						   char          *str,
 						   unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_part_number_len(ipmi_entity_t   *entity,
 						  unsigned int *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_part_number_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_board_part_number(ipmi_entity_t *entity,
 						 char          *str,
 						 unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_fru_file_id_len(ipmi_entity_t *entity,
 					       unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_fru_file_id_type(ipmi_entity_t        *entity,
 						enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_fru_file_id(ipmi_entity_t *entity,
 					   char          *str,
 					   unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_custom_len(ipmi_entity_t *entity,
 					  unsigned int  num,
 					  unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_custom_type(ipmi_entity_t        *entity,
 					   unsigned int         num,
 					   enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_board_info_custom(ipmi_entity_t *entity,
 				      unsigned int  num,
 				      char          *str,
 				      unsigned int  *strlen);
 
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_version(ipmi_entity_t *entity,
 					 unsigned char *version);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_lang_code(ipmi_entity_t *entity,
 					   unsigned char *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_manufacturer_name_len(ipmi_entity_t *entity,
 						       unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_manufacturer_name_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_manufacturer_name(ipmi_entity_t *entity,
 						   char          *str,
 						   unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_name_len(ipmi_entity_t *entity,
 						  unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_name_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_name(ipmi_entity_t *entity,
 					      char          *str,
 					      unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_part_model_number_len
   (ipmi_entity_t *entity,
    unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_part_model_number_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_part_model_number
   (ipmi_entity_t *entity,
    char          *str,
    unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_version_len(ipmi_entity_t *entity,
 						     unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_version_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_version(ipmi_entity_t *entity,
 						 char          *str,
 						 unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_serial_number_len
   (ipmi_entity_t *entity,
    unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_serial_number_type
   (ipmi_entity_t        *entity,
    enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_product_serial_number(ipmi_entity_t *entity,
 						       char          *str,
 						       unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_asset_tag_len(ipmi_entity_t *entity,
 					       unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_asset_tag_type(ipmi_entity_t        *entity,
 						enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_asset_tag(ipmi_entity_t *entity,
 					   char          *str,
 					   unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_fru_file_id_len(ipmi_entity_t *entity,
 						 unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_fru_file_id_type(ipmi_entity_t        *entity,
 						  enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_fru_file_id(ipmi_entity_t *entity,
 					     char          *str,
 					     unsigned int  *strlen);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_custom_len(ipmi_entity_t *entity,
 					    unsigned int  num,
 					    unsigned int  *length);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_custom_type(ipmi_entity_t        *entity,
 					     unsigned int         num,
 					     enum ipmi_str_type_e *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_product_info_custom(ipmi_entity_t *entity,
 					unsigned int  num,
 					char          *str,
 					unsigned int  *strlen);
 
+IPMI_DLL_PUBLIC
 unsigned int ipmi_entity_get_num_multi_records(ipmi_entity_t *entity);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_multi_record_type(ipmi_entity_t *entity,
 				      unsigned int  num,
 				      unsigned char *type);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_multi_record_format_version(ipmi_entity_t *entity,
 						unsigned int  num,
 						unsigned char *ver);
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_multi_record_data_len(ipmi_entity_t *entity,
 					  unsigned int  num,
 					  unsigned int  *len);
 /* Note that length is a in/out parameter, you must set the length to
    the length of the buffer and the function will set it tot he actual
    length. */
+IPMI_DLL_PUBLIC
 int ipmi_entity_get_multi_record_data(ipmi_entity_t *entity,
 				      unsigned int  num,
 				      unsigned char *data,
 				      unsigned int  *length);
 
 /* For OpenHPI to find when bus scans complete. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_set_bus_scan_handler(ipmi_domain_t  *domain,
 				     ipmi_domain_cb handler,
 				     void           *cb_data);
@@ -2770,10 +3273,12 @@ int ipmi_domain_set_bus_scan_handler(ipmi_domain_t  *domain,
    requirements, generally you should do this dynamically.  There is
    only one handler, and it will only be called when the main SDR
    repository is first read. */
+IPMI_DLL_PUBLIC
 int ipmi_domain_set_main_SDRs_read_handler(ipmi_domain_t  *domain,
 					   ipmi_domain_cb handler,
 					   void           *cb_data);
 
+IPMI_DLL_PUBLIC
 int ipmi_discrete_event_readable(ipmi_sensor_t *sensor,
 				 int           event,
 				 int           *val)
