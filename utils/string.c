@@ -489,7 +489,7 @@ ipmi_set_device_string2(const char           *input,
 	in_len = 63;
 
     if (type == IPMI_ASCII_STR) {
-	if (options && IPMI_STRING_OPTION_8BIT_ONLY)
+	if (options & IPMI_STRING_OPTION_8BIT_ONLY)
 	    bsize = 2;
 	else {
 	    for (i=0; i<in_len; i++) {
