@@ -51,6 +51,8 @@
 static FILE *outfile;
 static char *outfname = NULL;
 
+static int ascii_encoding_8_bit = 0;
+
 static void
 out_err(int err)
 {
@@ -1473,8 +1475,12 @@ ipmi_compile_sdr(FILE *f, unsigned int type,
 		err = get_delim_str(&tokptr, &sval, errstr);
 		if (err)
 		    goto out_err;
-		ipmi_set_device_string(sval, IPMI_ASCII_STR, strlen(sval),
-				       str, 0, &out_len);
+		if (!ascii_encoding_8_bit)
+			ipmi_set_device_string2(sval, IPMI_ASCII_STR, strlen(sval),
+						str, 0, &out_len, IPMI_STRING_OPTION_NONE);
+		else
+			ipmi_set_device_string2(sval, IPMI_ASCII_STR, strlen(sval),
+						str, 0, &out_len, IPMI_STRING_OPTION_8BIT_ONLY);
 		free(sval);
 		if (out_len > 1) {
 		    unsigned char *newsdr = realloc(sdr, sdr_len + out_len - 1);
@@ -1951,7 +1957,7 @@ static char *progname;
 static void
 help(void)
 {
-    fprintf(stderr, "%s [-r] [-o <outfile>] [-d] <input file>\n", progname);
+    fprintf(stderr, "%s [-r] [-8] [-o <outfile>] [-d] <input file>\n", progname);
     exit(1);
 }
 
@@ -1975,6 +1981,8 @@ main(int argc, char *argv[])
 	    break;
 	if (strcmp(argv[argn], "-r") == 0) {
 	    outraw = 1;
+	} else if (strcmp(argv[argn], "-8") == 0) {
+	    ascii_encoding_8_bit = 1;
 	} else if (strcmp(argv[argn], "-d") == 0) {
 	    decompile = 1;
 	} else if (strcmp(argv[argn], "-o") == 0) {
