@@ -475,6 +475,8 @@ ipmi_init(os_handler_t *handler)
     ipmi_malloc_log = ipmi_log;
 
     con_type_list = locked_list_alloc(handler);
+    if (!con_type_list)
+	return ENOMEM;
 
     rv = i_ipmi_conn_init(handler);
     if (rv)
