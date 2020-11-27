@@ -7083,14 +7083,17 @@ i_ipmi_lan_shutdown(void)
 	ipmi_destroy_lock(fd_list_lock);
 	fd_list_lock = NULL;
     }
-    while (fd_list.next != &fd_list) {
-	lan_fd_t *e = fd_list.next;
-	e->next->prev = e->prev;
-	e->prev->next = e->next;
-	lan_os_hnd->remove_fd_to_wait_for(lan_os_hnd, e->fd_wait_id);
-	close(e->fd);
-	ipmi_destroy_lock(e->con_lock);
-	ipmi_mem_free(e);
+    if (fd_list.next) {
+	while (fd_list.next != &fd_list) {
+	    lan_fd_t *e = fd_list.next;
+	    e->next->prev = e->prev;
+	    e->prev->next = e->next;
+	    lan_os_hnd->remove_fd_to_wait_for(lan_os_hnd, e->fd_wait_id);
+	    close(e->fd);
+	    ipmi_destroy_lock(e->con_lock);
+	    ipmi_mem_free(e);
+	}
+	memset(&fd_list, 0, sizeof(fd_list));
     }
     while (fd_free_list) {
 	lan_fd_t *e = fd_free_list;
@@ -7103,14 +7106,17 @@ i_ipmi_lan_shutdown(void)
 	ipmi_destroy_lock(fd6_list_lock);
 	fd6_list_lock = NULL;
     }
-    while (fd6_list.next != &fd6_list) {
-	lan_fd_t *e = fd6_list.next;
-	e->next->prev = e->prev;
-	e->prev->next = e->next;
-	lan_os_hnd->remove_fd_to_wait_for(lan_os_hnd, e->fd_wait_id);
-	close(e->fd);
-	ipmi_destroy_lock(e->con_lock);
-	ipmi_mem_free(e);
+    if (fd6_list.next) {
+	while (fd6_list.next != &fd6_list) {
+	    lan_fd_t *e = fd6_list.next;
+	    e->next->prev = e->prev;
+	    e->prev->next = e->next;
+	    lan_os_hnd->remove_fd_to_wait_for(lan_os_hnd, e->fd_wait_id);
+	    close(e->fd);
+	    ipmi_destroy_lock(e->con_lock);
+	    ipmi_mem_free(e);
+	}
+	memset(&fd6_list, 0, sizeof(fd6_list));
     }
     while (fd6_free_list) {
 	lan_fd_t *e = fd6_free_list;
