@@ -586,13 +586,21 @@ i_ipmi_conn_init(os_handler_t *os_hnd)
 
     if (!oem_conn_handlers) {
 	oem_conn_handlers = locked_list_alloc(os_hnd);
-	if (!oem_conn_handlers)
+	if (!oem_conn_handlers) {
+	    ipmi_destroy_lock(oem_conn_handlers_lock);
+	    oem_conn_handlers_lock = NULL;
 	    return ENOMEM;
+	}
     }
     if (!oem_handlers) {
 	oem_handlers = locked_list_alloc(os_hnd);
-	if (!oem_handlers)
+	if (!oem_handlers) {
+	    locked_list_destroy(oem_conn_handlers);
+	    oem_conn_handlers = NULL;
+	    ipmi_destroy_lock(oem_conn_handlers_lock);
+	    oem_conn_handlers_lock = NULL;
 	    return ENOMEM;
+	}
     }
     return 0;
 }
