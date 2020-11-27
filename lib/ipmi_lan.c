@@ -6983,22 +6983,12 @@ i_ipmi_lan_init(os_handler_t *os_hnd)
     int rv;
     int i;
 
-    rv = ipmi_create_global_lock(&lan_list_lock);
-    if (rv)
-	return rv;
-
-    rv = ipmi_create_global_lock(&fd_list_lock);
-    if (rv)
-	return rv;
     memset(&fd_list, 0, sizeof(fd_list));
     fd_list.next = &fd_list;
     fd_list.prev = &fd_list;
     fd_list.cons_in_use = MAX_CONS_PER_FD;
 
 #ifdef PF_INET6
-    rv = ipmi_create_global_lock(&fd6_list_lock);
-    if (rv)
-	return rv;
     memset(&fd6_list, 0, sizeof(fd6_list));
     fd6_list.next = &fd6_list;
     fd6_list.prev = &fd6_list;
@@ -7013,6 +7003,20 @@ i_ipmi_lan_init(os_handler_t *os_hnd)
 	lan_ip_list[i].prev = &(lan_ip_list[i]);
 	lan_ip_list[i].lan = NULL;
     }
+
+    rv = ipmi_create_global_lock(&lan_list_lock);
+    if (rv)
+	return rv;
+
+    rv = ipmi_create_global_lock(&fd_list_lock);
+    if (rv)
+	return rv;
+
+#ifdef PF_INET6
+    rv = ipmi_create_global_lock(&fd6_list_lock);
+    if (rv)
+	return rv;
+#endif
 
     rv = ipmi_create_global_lock(&lan_payload_lock);
     if (rv)

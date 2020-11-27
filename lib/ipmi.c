@@ -505,10 +505,10 @@ ipmi_init(os_handler_t *handler)
     if (rv)
 	goto out_err;
 
-    lan_initialized = 1;
-
     i_ipmi_domain_init();
     i_ipmi_mc_init();
+
+    lan_initialized = 1;
 
     rv = i_ipmi_rakp_init();
     if (rv)
@@ -580,8 +580,8 @@ ipmi_shutdown(void)
     i_ipmi_mc_shutdown();
     i_ipmi_domain_shutdown();
 
-    i_ipmi_lan_shutdown();
  shutdown_lan:
+    i_ipmi_lan_shutdown();
 #ifdef HAVE_OPENIPMI_SMI
     i_ipmi_smi_shutdown();
 #endif
