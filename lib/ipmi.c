@@ -479,8 +479,10 @@ ipmi_init(os_handler_t *handler)
 	return ENOMEM;
 
     rv = i_ipmi_conn_init(handler);
-    if (rv)
+    if (rv) {
+	locked_list_destroy(con_type_list);
 	return rv;
+    }
 
     ipmi_initialized = 1;
 
