@@ -458,6 +458,8 @@ void i_ipmi_sol_shutdown(void);
 static locked_list_t *con_type_list;
 static int ipmi_initialized;
 static int lan_initialized;
+static int domain_initialized;
+static int mc_initialized;
 
 int
 ipmi_init(os_handler_t *handler)
@@ -505,10 +507,19 @@ ipmi_init(os_handler_t *handler)
     if (rv)
 	goto out_err;
 
-    i_ipmi_domain_init();
-    i_ipmi_mc_init();
-
     lan_initialized = 1;
+
+    rv = i_ipmi_domain_init();
+    if (rv)
+	goto out_err;
+
+    domain_initialized = 1;
+
+    rv = i_ipmi_mc_init();
+    if (rv)
+	goto out_err;
+
+    mc_initialized = 1;
 
     rv = i_ipmi_rakp_init();
     if (rv)
@@ -564,6 +575,12 @@ ipmi_shutdown(void)
     if (!lan_initialized)
 	goto shutdown_lan;
     lan_initialized = 0;
+    if (!domain_initialized)
+	goto shutdown_domain;
+    domain_initialized = 0;
+    if (!mc_initialized)
+	goto shutdown_mc;
+    mc_initialized = 0;
 
     ipmi_oem_atca_conn_shutdown();
     ipmi_oem_atca_shutdown();
@@ -577,7 +594,9 @@ ipmi_shutdown(void)
     i_ipmi_fru_spd_decoder_shutdown();
     i_ipmi_normal_fru_shutdown();
     i_ipmi_fru_shutdown();
+ shutdown_mc:
     i_ipmi_mc_shutdown();
+ shutdown_domain:
     i_ipmi_domain_shutdown();
 
  shutdown_lan:

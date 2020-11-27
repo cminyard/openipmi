@@ -6351,17 +6351,21 @@ i_ipmi_domain_init(void)
 	return ENOMEM;
 
     domain_change_handlers = locked_list_alloc(ipmi_get_global_os_handler());
-    if (!domain_change_handlers)
+    if (!domain_change_handlers) {
+	locked_list_destroy(mc_oem_handlers);
 	return ENOMEM;
+    }
 
     domains_list = locked_list_alloc(ipmi_get_global_os_handler());
     if (!domains_list) {
 	locked_list_destroy(domain_change_handlers);
+	locked_list_destroy(mc_oem_handlers);
 	return ENOMEM;
     }
 
     oem_handlers = alloc_ilist();
     if (!oem_handlers) {
+	locked_list_destroy(mc_oem_handlers);
 	locked_list_destroy(domain_change_handlers);
 	locked_list_destroy(domains_list);
 	domains_list = NULL;
@@ -6370,6 +6374,7 @@ i_ipmi_domain_init(void)
 
     rv = ipmi_create_global_lock(&domains_lock);
     if (rv) {
+	locked_list_destroy(mc_oem_handlers);
 	locked_list_destroy(domain_change_handlers);
 	locked_list_destroy(domains_list);
 	domains_list = NULL;
@@ -6386,6 +6391,9 @@ i_ipmi_domain_init(void)
 void
 i_ipmi_domain_shutdown(void)
 {
+    if (!domains_initialized)
+	return;
+
     domains_initialized = 0;
 
     locked_list_destroy(domain_change_handlers);
