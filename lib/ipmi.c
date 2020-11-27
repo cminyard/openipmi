@@ -457,6 +457,7 @@ void i_ipmi_sol_shutdown(void);
 
 static locked_list_t *con_type_list;
 static int ipmi_initialized;
+static int lan_initialized;
 
 int
 ipmi_init(os_handler_t *handler)
@@ -503,6 +504,8 @@ ipmi_init(os_handler_t *handler)
     rv = i_ipmi_lan_init(handler);
     if (rv)
 	goto out_err;
+
+    lan_initialized = 1;
 
     i_ipmi_domain_init();
     i_ipmi_mc_init();
@@ -558,25 +561,31 @@ ipmi_shutdown(void)
     if (! ipmi_initialized)
 	return;
 
+    if (!lan_initialized)
+	goto shutdown_lan;
+    lan_initialized = 0;
+
+    ipmi_oem_atca_conn_shutdown();
+    ipmi_oem_atca_shutdown();
+    ipmi_oem_intel_shutdown();
+    ipmi_oem_kontron_conn_shutdown();
     i_ipmi_rakp_shutdown();
     i_ipmi_aes_cbc_shutdown();
     i_ipmi_hmac_shutdown();
     i_ipmi_md5_shutdown();
     i_ipmi_sol_shutdown();
+    i_ipmi_fru_spd_decoder_shutdown();
+    i_ipmi_normal_fru_shutdown();
+    i_ipmi_fru_shutdown();
+    i_ipmi_mc_shutdown();
+    i_ipmi_domain_shutdown();
+
     i_ipmi_lan_shutdown();
+ shutdown_lan:
 #ifdef HAVE_OPENIPMI_SMI
     i_ipmi_smi_shutdown();
 #endif
-    ipmi_oem_atca_shutdown();
-    ipmi_oem_atca_conn_shutdown();
-    ipmi_oem_intel_shutdown();
-    ipmi_oem_kontron_conn_shutdown();
-    i_ipmi_mc_shutdown();
-    i_ipmi_domain_shutdown();
-    i_ipmi_fru_spd_decoder_shutdown();
     i_ipmi_conn_shutdown();
-    i_ipmi_normal_fru_shutdown();
-    i_ipmi_fru_shutdown();
     if (seq_lock)
 	ipmi_os_handler->destroy_lock(ipmi_os_handler, seq_lock);
     if (con_type_list)
