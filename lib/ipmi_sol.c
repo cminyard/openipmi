@@ -3240,6 +3240,8 @@ handle_deactivate_payload_response(ipmi_sol_conn_t *conn,
 int
 ipmi_sol_close(ipmi_sol_conn_t *conn)
 {
+    int err;
+
     ipmi_lock(conn->transmitter.packet_lock);
     if ((conn->state == ipmi_sol_state_closing)
 	|| (conn->state == ipmi_sol_state_closed))
@@ -3248,9 +3250,9 @@ ipmi_sol_close(ipmi_sol_conn_t *conn)
 	return EINVAL;
     }
 	
-    send_close(conn, handle_deactivate_payload_response);
+    err = send_close(conn, handle_deactivate_payload_response);
     ipmi_unlock(conn->transmitter.packet_lock);
-    return 0;
+    return err;
 }
 
 
