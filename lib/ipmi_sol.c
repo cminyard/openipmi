@@ -1158,9 +1158,10 @@ ipmi_sol_set_connection_state(ipmi_sol_conn_t *conn,
 
     if (new_state == ipmi_sol_state_closed) {
 	transmitter_shutdown(&conn->transmitter, error);
-    } else if (((new_state == ipmi_sol_state_connected)
-		|| (new_state == ipmi_sol_state_connected_ctu))
-	       && (conn->state == ipmi_sol_state_connecting))
+    } else if ((new_state == ipmi_sol_state_connected
+		|| new_state == ipmi_sol_state_connected_ctu)
+	       && (conn->state == ipmi_sol_state_connecting
+		   || conn->state == ipmi_sol_state_closed))
     {
 	int rv = transmitter_startup(&conn->transmitter);
 	if (rv) {
