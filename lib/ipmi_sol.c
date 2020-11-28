@@ -2753,6 +2753,8 @@ static void
 handle_set_volatile_bitrate_response(ipmi_sol_conn_t *conn,
 				     ipmi_msg_t      *msg_in)
 {
+    int err;
+
     if (msg_in->data_len != 1) {
 	ipmi_log(IPMI_LOG_WARNING,
 		 "ipmi_sol.c(handle_set_volatile_bitrate_response): "
@@ -2784,7 +2786,9 @@ handle_set_volatile_bitrate_response(ipmi_sol_conn_t *conn,
 	     "ipmi_sol.c(handle_set_volatile_bitrate_response): "
 	     "Volatile bit rate set.");
 #endif
-    send_activate_payload(conn);
+    err = send_activate_payload(conn);
+    if (err)
+	ipmi_sol_set_connection_state(conn, ipmi_sol_state_closed, err);
 }
 
 static int
@@ -2812,7 +2816,7 @@ static void
 handle_get_payload_activation_status_response(ipmi_sol_conn_t *conn,
 					      ipmi_msg_t      *msg_in)
 {
-    int count = 0, found, max, byte, index;
+    int count = 0, found, max, byte, index, err;
 
     if (msg_in->data_len != 4) {
 	ipmi_log(IPMI_LOG_SEVERE,
@@ -2867,9 +2871,12 @@ handle_get_payload_activation_status_response(ipmi_sol_conn_t *conn,
 #endif
 
     if (conn->initial_bit_rate)
-	send_set_volatile_bitrate(conn);
+	err = send_set_volatile_bitrate(conn);
     else
-	send_activate_payload(conn);
+	err = send_activate_payload(conn);
+    if (err)
+	ipmi_sol_set_connection_state
+	    (conn, ipmi_sol_state_closed, err);
 }
 
 static int
