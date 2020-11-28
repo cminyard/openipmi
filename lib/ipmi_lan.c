@@ -1271,6 +1271,7 @@ find_free_lan_fd(int family, lan_data_t *lan, int *slot)
 		rv = ipmi_create_global_lock(&item->con_lock);
 		if (rv) {
 		    ipmi_mem_free(item);
+		    item = NULL;
 		    goto out_unlock;
 		}
 		item->lock = lock;
