@@ -4060,11 +4060,14 @@ lan_cleanup(ipmi_con_t *ipmi)
 	ipmi_mem_free(q_item);
     }
     if (lan->audit_info) {
-	rv = ipmi->os_hnd->stop_timer(ipmi->os_hnd, lan->audit_timer);
-	if (rv)
+	rv = 0;
+	if (lan->audit_timer)
+	    rv = ipmi->os_hnd->stop_timer(ipmi->os_hnd, lan->audit_timer);
+	if (rv) {
 	    lan->audit_info->cancelled = 1;
-	else {
-	    ipmi->os_hnd->free_timer(ipmi->os_hnd, lan->audit_timer);
+	} else {
+	    if (lan->audit_timer)
+		ipmi->os_hnd->free_timer(ipmi->os_hnd, lan->audit_timer);
 	    ipmi_mem_free(lan->audit_info);
 	}
     }
