@@ -2026,7 +2026,7 @@ ipmi_sol_write(ipmi_sol_conn_t               *conn,
 {
     int rv;
 
-    if (count <= 0)
+    if (count <= 0 || count > 255)
 	return EINVAL;
 
     ipmi_lock(conn->transmitter.packet_lock);
