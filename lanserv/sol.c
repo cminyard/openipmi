@@ -1155,7 +1155,7 @@ handle_sol_port_payload(lanserv_data_t *lan, ipmi_sol_t *sol, msg_t *msg)
     char isnack, isbreak, ctspause, deassert_dcd, flush_in, flush_out;
     unsigned char *data;
     unsigned int len;
-    int need_send_ack = 0;
+    int need_send_ack = 0, is_dup = 0;
     struct timeval tv;
 
     if (!sol->active || msg->len < 4)
@@ -1175,16 +1175,35 @@ handle_sol_port_payload(lanserv_data_t *lan, ipmi_sol_t *sol, msg_t *msg)
     data = msg->data + 4;
     len = msg->len - 4;
 
+    is_dup = seq == sd->last_acked_packet;
+
+    if (!is_dup) {
+	/* Don't re-do an operation that we already did. */
+
+	if (flush_out) {
+	    sd->waiting_ack = 0;
+	    next_seq(sd);
+	    sd->outlen = 0;
+	}
+
+	if (flush_in)
+	    sd->inlen = 0;
+
+	if (isbreak)
+	    sd->send_break(sol);
+    }
+
+    /* Indepotent with respect to duplicates. */
+    sd->update_modemstate(sol, ctspause, deassert_dcd);
+
     if (seq != 0) {
-	if (seq == sd->last_acked_packet) {
+	if (is_dup) {
 	    need_send_ack = 1;
 	} else if (sd->fd == -1) {
 	    /* Ignore the data. */
-	    if  (len) {
-		sd->last_acked_packet = seq;
-		need_send_ack = 1;
-		sd->last_acked_packet_len = len;
-	    }
+	    sd->last_acked_packet = seq;
+	    need_send_ack = 1;
+	    sd->last_acked_packet_len = len;
 	} else if (len) {
 	    sd->last_acked_packet = seq;
 	    if (sol->do_telnet) {
@@ -1211,6 +1230,10 @@ handle_sol_port_payload(lanserv_data_t *lan, ipmi_sol_t *sol, msg_t *msg)
 	    sd->last_acked_packet_len = len;
 	    need_send_ack = 1;
 	    set_write_enable(sol->soldata);
+	} else {
+	    sd->last_acked_packet = seq;
+	    sd->last_acked_packet_len = 0;
+	    need_send_ack = 1;
 	}
     }
 
@@ -1244,20 +1267,6 @@ handle_sol_port_payload(lanserv_data_t *lan, ipmi_sol_t *sol, msg_t *msg)
 
     if (need_send_ack)
 	send_ack(sol);
-
-    if (flush_out) {
-	sd->waiting_ack = 0;
-	next_seq(sd);
-	sd->outlen = 0;
-    }
-
-    if (flush_in)
-	sd->inlen = 0;
-
-    if (isbreak)
-	sd->send_break(sol);
-
-    sd->update_modemstate(sol, ctspause, deassert_dcd);
 }
 
 static int
