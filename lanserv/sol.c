@@ -1211,6 +1211,10 @@ handle_sol_port_payload(lanserv_data_t *lan, ipmi_sol_t *sol, msg_t *msg)
 	    sd->last_acked_packet_len = len;
 	    need_send_ack = 1;
 	    set_write_enable(sol->soldata);
+	} else {
+	    sd->last_acked_packet = seq;
+	    sd->last_acked_packet_len = 0;
+	    need_send_ack = 1;
 	}
     }
 
