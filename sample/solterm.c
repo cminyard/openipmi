@@ -706,6 +706,14 @@ static int parse_sol_alerts(char *src, ipmi_sol_serial_alert_behavior *behavior)
 		} \
 	}
 
+int ipmi_closed;
+
+static void
+ipmi_connection_closed(ipmi_con_t *ipmi, void *cb_data)
+{
+    ipmi_closed = 1;
+}
+
 int main(int argc, char *argv[])
 {
 	int         rv;
@@ -715,6 +723,7 @@ int main(int argc, char *argv[])
 	char *name = "remote system";
 	os_hnd_fd_id_t *stdin_id;
 	sol_configuration_t sol_configuration;
+	struct timeval zero_timeout;
 
 	memset(&sol_configuration, 0, sizeof(sol_configuration));
 
@@ -833,6 +842,7 @@ int main(int argc, char *argv[])
 
 
 	rv = ipmi_args_setup_con(args, os_hnd, NULL, &ipmi);
+	ipmi_free_args(args);
 	if (rv) {
 	        ipmi_log(IPMI_LOG_FATAL, "ipmi_ip_setup_con: %s", strerror(rv));
 		exit(1);
@@ -899,6 +909,20 @@ int main(int argc, char *argv[])
 		ipmi_sol_force_close(active_connection);
 		ipmi_sol_free(active_connection);
 	}
+
+	rv = ipmi->close_connection_done(ipmi, ipmi_connection_closed, NULL);
+	if (!rv) {
+	    while (!ipmi_closed)
+		os_hnd->perform_one_op(os_hnd, NULL);
+	}
+
+	os_hnd->remove_fd_to_wait_for(os_hnd, stdin_id);
+
+	/* Wait for all operations to complete. */
+	do {
+	    zero_timeout.tv_sec = 0;
+	    zero_timeout.tv_usec = 0;
+	} while (os_hnd->perform_one_op(os_hnd, &zero_timeout) == 0);
 
 	if (connection_up)
 		printf("Connection to %s closed.\n", name);
