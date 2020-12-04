@@ -2050,10 +2050,10 @@ sol_connection_closed(ipmi_con_t *ipmi, void *cb_data)
 {
     ipmi_sol_conn_t *sol = cb_data;
 
+    ipmi_lock(sol->lock);
     if (sol->state != ipmi_sol_state_closed)
 	ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed,
 				      sol->close_err);
-    ipmi_lock(sol->lock);
     sol_put_connection_unlock(sol);
 }
 
@@ -2082,9 +2082,11 @@ handle_deactivate_payload_response(ipmi_sol_conn_t *sol,
 
     if (sol->ipmid != sol->ipmi) {
 	sol_get_connection(sol);
+	ipmi_unlock(sol->lock);
 	err = sol->ipmi->close_connection_done(sol->ipmid,
 					       sol_connection_closed,
 					       sol);
+	ipmi_lock(sol->lock);
 	if (err) {
 	    ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed, err);
 	    sol_put_connection(sol);
@@ -2109,9 +2111,11 @@ sol_do_close(ipmi_sol_conn_t *sol, int norep)
     }
 
     if (sol->ipmid != sol->ipmi) {
+	ipmi_unlock(sol->lock);
 	err = sol->ipmi->close_connection_done(sol->ipmid,
 					       sol_connection_closed,
 					       sol);
+	ipmi_lock(sol->lock);
 	if (!err) {
 	    sol_get_connection(sol);
 	    return 0;
