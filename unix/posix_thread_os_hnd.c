@@ -675,6 +675,8 @@ perform_one_op(os_handler_t   *os_hnd,
 		    timeout);
     if (rv == -1)
 	return errno;
+    if (rv == 0)
+	return ETIMEDOUT;
     return 0;
 }
 
