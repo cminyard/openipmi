@@ -164,7 +164,7 @@ struct os_handler_s
        time has passed, the "timed_out" will be called with the given
        cb_data.  The identifier in "id" just be one previously
        allocated with alloc_timer().  Note that timed_out may NOT
-       block. */
+       block. Returns EBUSY if the timer is already running. */
     int (*start_timer)(os_handler_t      *handler,
 		       os_hnd_timer_id_t *id,
 		       struct timeval    *timeout,
