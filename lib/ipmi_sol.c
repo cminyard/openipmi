@@ -971,6 +971,7 @@ ipmi_sol_get_bit_rate(ipmi_sol_conn_t *sol)
 }
 
 static void process_pending(ipmi_sol_conn_t *sol);
+static int transmit_next_packet(ipmi_sol_conn_t *sol);
 
 /**
  * Changes the currently recorded "state" for the SoL connection.
@@ -1013,8 +1014,8 @@ ipmi_sol_set_connection_state(ipmi_sol_conn_t *sol,
 	ipmi_lock(sol->lock);
 
 	process_pending(sol);
-
 	sol->in_recv = 0;
+	transmit_next_packet(sol);
 
 	if (new_state == ipmi_sol_state_closed && sol->timer_running) {
 	    os_handler_t *os_hnd = sol->ipmi->os_hnd;
@@ -1147,7 +1148,7 @@ transmit_curr_packet(ipmi_sol_conn_t *sol)
     sol->recv_ack = 0;
 
 #ifdef SOL_DEBUG_MSG
-    printf("Write:\n");
+    printf("Write:\n  ");
     print_hex(msg.data, msg.data_len);
 #endif
 
@@ -1166,10 +1167,10 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
     struct sol_callback *c;
     int rv = 0;
 
-    if (sol->xmit_waiting_ack || sol->in_recv)
+    if (sol->in_recv)
 	return 0;
 
-    if (sol->xmit_pkt_data_len) {
+    if (sol->xmit_pkt_data_len || sol->xmit_waiting_ack) {
 	data_len = 0;
     } else {
 	data_len = sol->xmit_buf_len;
@@ -1684,14 +1685,15 @@ process_next_packet(ipmi_sol_conn_t *sol,
     unsigned int count;
 
 #ifdef SOL_DEBUG_MSG
-    printf("Read:\n");
+    printf("Read:\n  ");
     print_hex(packet, data_len);
 #endif
 
     sol->recv_ack = packet[PACKET_SEQNR];
 
     new_packet = sol->last_recv_seq == packet[PACKET_SEQNR];
-    sol->last_recv_seq = packet[PACKET_SEQNR];
+    if (packet[PACKET_SEQNR] != 0)
+	sol->last_recv_seq = packet[PACKET_SEQNR];
 
     if (data_len > 4) {
 	data_len -= 4; /* Skip over header */
@@ -2166,7 +2168,7 @@ handle_deactivate_payload_response(ipmi_sol_conn_t *sol,
 static int
 sol_do_close(ipmi_sol_conn_t *sol, int norep)
 {
-    int err;
+    int err = 0;
 
     ipmi_sol_set_connection_state_norep(sol, ipmi_sol_state_closing);
 
