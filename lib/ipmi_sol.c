@@ -388,7 +388,7 @@ dump_hex(unsigned char *data, int len)
     }
 }
 
-#if 0
+#ifdef SOL_DEBUG_MSG
 static void
 print_hex(unsigned char *data, unsigned int len)
 {
@@ -1146,6 +1146,11 @@ transmit_curr_packet(ipmi_sol_conn_t *sol)
     sol->xmit_pkt[PACKET_ACK_NACK_SEQNR] = sol->recv_ack;
     sol->recv_ack = 0;
 
+#ifdef SOL_DEBUG_MSG
+    printf("Write:\n");
+    print_hex(msg.data, msg.data_len);
+#endif
+
     rv = sol->ipmid->send_command_option
 	(sol->ipmi, (ipmi_addr_t *) &sol->sol_payload_addr,
 	 sizeof(sol->sol_payload_addr), &msg, options,
@@ -1677,6 +1682,11 @@ process_next_packet(ipmi_sol_conn_t *sol,
     struct sol_callback *to_call = NULL, *to_call_end, *c, *c2;
     int err = 0, new_packet = 0;
     unsigned int count;
+
+#ifdef SOL_DEBUG_MSG
+    printf("Read:\n");
+    print_hex(packet, data_len);
+#endif
 
     sol->recv_ack = packet[PACKET_SEQNR];
 
