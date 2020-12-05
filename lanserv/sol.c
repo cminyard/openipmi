@@ -1186,8 +1186,13 @@ handle_sol_port_payload(lanserv_data_t *lan, ipmi_sol_t *sol, msg_t *msg)
 	    sd->outlen = 0;
 	}
 
-	if (flush_in)
+	if (flush_in) {
+	    unsigned int oldlen = sd->inlen;
+
 	    sd->inlen = 0;
+	    if (oldlen == sizeof(sd->inbuf))
+		send_ack(sol);
+	}
 
 	if (isbreak)
 	    sd->send_break(sol);
@@ -1436,6 +1441,7 @@ sol_write_ready(int fd, void *cb_data)
 {
     ipmi_sol_t *sol = cb_data;
     soldata_t *sd = sol->soldata;
+    unsigned int oldlen;
     int rv;
 
     rv = write(fd, sd->inbuf, sd->inlen);
@@ -1446,10 +1452,15 @@ sol_write_ready(int fd, void *cb_data)
 	sol_port_error(sol);
 	return;
     }
+    if (rv == 0)
+	return;
 
     if (((unsigned int) rv) < sd->inlen)
 	memcpy(sd->inbuf, sd->inbuf + rv, sd->inlen - rv);
+    oldlen = sd->inlen;
     sd->inlen -= rv;
+    if (oldlen == sizeof(sd->inbuf))
+	send_ack(sol);
 
     set_write_enable(sd);
 }
