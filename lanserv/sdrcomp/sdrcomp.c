@@ -834,6 +834,7 @@ add_variable(const char *name, const char *value)
 	var->name = strdup(name);
 	if (!var->name) {
 	    fprintf(stderr, "Out of memory\n");
+	    free(var);
 	    return ENOMEM;
 	}
 	var->next = NULL;
@@ -993,6 +994,8 @@ get_delim_str(char **rtokptr, char **rval, char **err)
 	if (rv) {
 	    char *newrv = malloc(strlen(rv) + strlen(val) + 1);
 	    if (!newrv) {
+		if (rv)
+		    free(rv);
 		*err = "Out of memory copying string";
 		return -1;
 	    }
