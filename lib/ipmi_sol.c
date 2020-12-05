@@ -388,6 +388,38 @@ dump_hex(unsigned char *data, int len)
     }
 }
 
+#if 0
+static void
+print_hex(unsigned char *data, unsigned int len)
+{
+    unsigned int i, j = 0;
+
+    for (i=0; i<len; i++) {
+	if ((i != 0) && ((i % 16) == 0)) {
+	    printf(" ");
+	    for (; j < i; j++) {
+		if (isprint(data[j]))
+		    printf("%c", data[j]);
+		else
+		    printf(".");
+	    }
+	    printf("\n  ");
+	}
+	printf(" %2.2x", data[i]);
+    }
+    while (i % 16) {
+	printf("   ");
+	i++;
+    }
+    for (; j < len; j++) {
+	if (isprint(data[j]))
+		    printf("%c", data[j]);
+	else
+	    printf(".");
+    }
+    printf("\n");
+}
+#endif
 
 /****************************************************************************
  * SoL Connection List
@@ -984,6 +1016,16 @@ ipmi_sol_set_connection_state(ipmi_sol_conn_t *sol,
 
 	sol->in_recv = 0;
 
+	if (new_state == ipmi_sol_state_closed && sol->timer_running) {
+	    os_handler_t *os_hnd = sol->ipmi->os_hnd;
+	    int rv = os_hnd->stop_timer(os_hnd, sol->ack_timer);
+
+	    if (!rv) {
+		/* We successfully stopped the timer. */
+		sol->timer_running = 0;
+		sol_put_connection(sol);
+	    }
+	}
     }
 }
 
@@ -1051,8 +1093,17 @@ start_ACK_timer(ipmi_sol_conn_t *sol, struct timeval *now)
     }
 
     if (sol->timer_running) {
-	os_hnd->stop_timer(os_hnd, sol->ack_timer);
-	sol->timer_running = 0;
+	rv = os_hnd->stop_timer(os_hnd, sol->ack_timer);
+	if (rv) {
+	    /* The timer is in the handler.  It will put the
+	       connection and set timer_running to zero.  Go ahead and
+	       start the timer, if the handler is just started, it
+	       will stop and restart the timer. */
+	} else {
+	    /* We successfully stopped the timer. */
+	    sol->timer_running = 0;
+	    sol_put_connection(sol);
+	}
     }
 
     rv = os_hnd->start_timer(os_hnd,
@@ -1121,7 +1172,9 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 	    data_len = sol->max_xmit_data_size;
     }
 
-    if (data_len > 0 || (sol->remote_acks_nodata && sol->xmit_pending)) {
+    if (!sol->remote_nack &&
+		(data_len > 0 ||
+		 (sol->remote_acks_nodata && sol->xmit_pending))) {
 	/* There is data to transmit that needs an ack. */
 
 	set_ACK_timeout(sol, NULL);
@@ -1213,6 +1266,9 @@ sol_ACK_timer_expired(void *cb_data, os_hnd_timer_id_t *id)
     int rv;
 
     ipmi_lock(sol->lock);
+
+    sol->timer_running = 0;
+
     if (sol->remote_nack || sol->xmit_seq == 0 ||
 		(sol->state != ipmi_sol_state_connected &&
 		 sol->state != ipmi_sol_state_connected_ctu))
@@ -1228,8 +1284,6 @@ sol_ACK_timer_expired(void *cb_data, os_hnd_timer_id_t *id)
 	    goto timer_fail;
 	goto out_unlock;
     }
-
-    sol->timer_running = 0;
 
     sol->rexmit_count--;
     if (sol->rexmit_count == 0) {
@@ -1624,7 +1678,6 @@ process_next_packet(ipmi_sol_conn_t *sol,
     int err = 0, new_packet = 0;
     unsigned int count;
 
-
     sol->recv_ack = packet[PACKET_SEQNR];
 
     new_packet = sol->last_recv_seq == packet[PACKET_SEQNR];
@@ -1746,6 +1799,9 @@ process_next_packet(ipmi_sol_conn_t *sol,
 	}
 
 	ipmi_sol_set_connection_state(sol, new_state, 0);
+	sol->remote_nack = 1;
+    } else {
+	sol->remote_nack = 0;
     }
 
     if (packet[PACKET_STATUS] & IPMI_SOL_STATUS_DEACTIVATED) {
@@ -2360,6 +2416,7 @@ handle_activate_payload_response(ipmi_sol_conn_t *sol,
 	sol->payload_port_number = IPMI_LAN_STD_PORT;
     }
 
+    /* FIXME - get the port from the ipmi, don't use the standard port. */
     if (sol->payload_port_number != IPMI_LAN_STD_PORT) {
 	int rv = setup_new_ipmi(sol);
 	if (rv) {
