@@ -353,7 +353,7 @@ struct ipmi_sol_conn_s {
     unsigned int xmit_buf_len;
 
     /* Nack returns pending that we need release_nack calls for. */
-    unsigned int nack_count;
+    int nack_count;
 
     /*
      * Currently running the receive code.  Hold off any transmits until
@@ -1085,12 +1085,21 @@ start_ACK_timer(ipmi_sol_conn_t *sol, struct timeval *now)
 	os_hnd->get_monotonic_time(os_hnd, now);
     }
 
-    timeout.tv_sec = sol->curr_timeout.tv_sec - tv.tv_sec;
-    if (tv.tv_usec <= sol->curr_timeout.tv_usec) {
-	timeout.tv_usec = sol->curr_timeout.tv_usec - tv.tv_usec;
+    if (sol->curr_timeout.tv_sec < now->tv_sec ||
+		(sol->curr_timeout.tv_sec == now->tv_sec &&
+		 sol->curr_timeout.tv_sec < now->tv_sec)) {
+	/* Timeout has already expired, timeout asap. */
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 0;
     } else {
-	timeout.tv_sec--;
-	timeout.tv_usec = sol->curr_timeout.tv_usec + 1000000 - tv.tv_usec;
+	timeout.tv_sec = sol->curr_timeout.tv_sec - now->tv_sec;
+	if (tv.tv_usec <= sol->curr_timeout.tv_usec) {
+	    timeout.tv_usec = sol->curr_timeout.tv_usec - now->tv_usec;
+	} else {
+	    timeout.tv_sec--;
+	    timeout.tv_usec = (sol->curr_timeout.tv_usec + 1000000 -
+			       now->tv_usec);
+	}
     }
 
     if (sol->timer_running) {
@@ -1392,10 +1401,10 @@ ipmi_sol_write(ipmi_sol_conn_t               *sol,
     memcpy(sol->xmit_buf + sol->xmit_buf_len, buf, count);
     sol->xmit_buf_len += count;
 
-    if (c)
+    if (c) {
 	c->pos = sol->xmit_buf_len;
-
-    sol_callback_add_tail(&sol->pending_xmit_cbs, c);
+	sol_callback_add_tail(&sol->pending_xmit_cbs, c);
+    }
 
     rv = transmit_next_packet(sol);
 
@@ -1624,7 +1633,7 @@ ipmi_sol_flush(ipmi_sol_conn_t            *sol,
 	       void                       *cb_data)
 {
     int rv = EINVAL;
-    int need_callback;
+    int need_callback = 0;
 
     ipmi_lock(sol->lock);
     if (sol->state != ipmi_sol_state_connected &&
@@ -2912,7 +2921,6 @@ ipmi_sol_open(ipmi_sol_conn_t *sol)
 
     sol->activated = 0;
     sol->close_err = 0;
-    sol->nack_count = 0;
     sol->recv_ack = 0;
     sol->last_recv_seq = 0;
     sol->curr_xmit_seq = 0;
