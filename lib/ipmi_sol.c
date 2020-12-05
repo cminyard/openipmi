@@ -1832,33 +1832,42 @@ process_next_packet(ipmi_sol_conn_t *sol,
 	err = IPMI_SOL_DEACTIVATED;
     }
 
-    ipmi_unlock(sol->lock);
-
     /* Do all our other callbacks once unlocked. */
 
     while(to_call) {
 	struct sol_callback *n = to_call->next;
+	void *cb_data = to_call->cb_data;
 
-	if (to_call->cb)
-	    to_call->cb(sol, err, to_call->cb_data);
-	else
-	    to_call->flush_cb(sol, err, to_call->queue_selectors,
-			      to_call->cb_data);
-	to_call->free(sol, to_call);
+	if (to_call->cb) {
+	    ipmi_sol_transmit_complete_cb cb = to_call->cb;
+
+	    to_call->free(sol, to_call);
+	    ipmi_unlock(sol->lock);
+	    cb(sol, err, cb_data);
+	} else {
+	    ipmi_sol_flush_complete_cb flush_cb = to_call->flush_cb;
+	    int queue_selectors = to_call->queue_selectors;
+
+	    to_call->free(sol, to_call);
+	    ipmi_unlock(sol->lock);
+	    flush_cb(sol, err, queue_selectors, cb_data);
+	}
+	ipmi_lock(sol->lock);
 	to_call = n;
     }
 
     if (new_packet) {
 	/* Only do these if it's not a dup receive. */
+	ipmi_unlock(sol->lock);
 
 	if (packet[PACKET_STATUS] & IPMI_SOL_STATUS_BREAK_DETECTED)
 	    do_break_detected_callbacks(sol);
 
 	if (packet[PACKET_STATUS] & IPMI_SOL_STATUS_BMC_TX_OVERRUN)
 	    do_transmit_overrun_callbacks(sol);
-    }
 
-    ipmi_lock(sol->lock);
+	ipmi_lock(sol->lock);
+    }
 }
 
 static void
