@@ -659,10 +659,10 @@ int ipmi_sol_release_nack(ipmi_sol_conn_t *conn);
  *			returns zero.
  * @param [in] cb_data	User-defined data to pass to the callback.
  * @return	Zero on success, or a nonzero IPMI error code on failure.
- *		Callback is likely to receive IPMI_SOL_UNCONFIRMABLE_OPERATION
- *		because the BMC will not bother to acknowledge the receipt of
- *		this request unless it is sent at the same time as a block of
- * 		data.
+ *		If you supply a callback but the remote system does not ack
+ *		packets without data, this will return
+ *		IPMI_SOL_UNCONFIRMABLE_OPERATION.  The operation will be
+ *		sent, but there is no way to confirm it was handled.
  */
 IPMI_DLL_PUBLIC
 int ipmi_sol_send_break(ipmi_sol_conn_t *conn,
@@ -688,10 +688,7 @@ int ipmi_sol_send_break(ipmi_sol_conn_t *conn,
  *			returns zero.
  * @param [in] cb_data	User-defined data to pass to the callback.
  * @return	Zero on success, or a nonzero IPMI error code on failure.
- *		Callback is likely to receive IPMI_SOL_UNCONFIRMABLE_OPERATION
- *		because the BMC will not bother to acknowledge the receipt of
- *		this request unless it is sent at the same time as a block of
- * 		data.
+ *		See the return value in ipmi_sol_send_break for more details.
  */
 IPMI_DLL_PUBLIC
 int ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t *conn,
@@ -710,10 +707,7 @@ int ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t *conn,
  *			returns zero.
  * @param [in] cb_data	User-defined data to pass to the callback.
  * @return	Zero on success, or a nonzero IPMI error code on failure.
- *		Callback is likely to receive IPMI_SOL_UNCONFIRMABLE_OPERATION
- *		because the BMC will not bother to acknowledge the receipt of
- *		this request unless it is sent at the same time as a block of
- * 		data.
+ *		See the return value in ipmi_sol_send_break for more details.
  */
 IPMI_DLL_PUBLIC
 int ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t *conn,
@@ -735,10 +729,7 @@ int ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t *conn,
  *			returns zero.
  * @param [in] cb_data	User-defined data to pass to the callback.
  * @return	Zero on success, or a nonzero IPMI error code on failure.
- *		Callback is likely to receive IPMI_SOL_UNCONFIRMABLE_OPERATION
- *		because the BMC will not bother to acknowledge the receipt of
- *		this request unless it is sent at the same time as a block of
- * 		data.
+ *		See the return value in ipmi_sol_send_break for more details.
  */
 IPMI_DLL_PUBLIC
 int ipmi_sol_set_RI_asserted(ipmi_sol_conn_t *conn,
@@ -770,10 +761,7 @@ int ipmi_sol_set_RI_asserted(ipmi_sol_conn_t *conn,
  *			returns zero.
  * @param [in] cb_data	User-defined data to pass to the callback.
  * @return	Zero on success, or a nonzero IPMI error code on failure.
- *		Callback is likely to receive IPMI_SOL_UNCONFIRMABLE_OPERATION
- *		because the BMC will not bother to acknowledge the receipt of
- *		this request unless it is sent at the same time as a block of
- * 		data.
+ *		See the return value in ipmi_sol_send_break for more details.
  */
 IPMI_DLL_PUBLIC
 int ipmi_sol_flush(ipmi_sol_conn_t *conn,

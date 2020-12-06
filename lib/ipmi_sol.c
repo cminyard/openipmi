@@ -1517,6 +1517,11 @@ static int
 sol_enqueue_op_cb(ipmi_sol_conn_t *sol, struct sol_callback *c,
 		  ipmi_sol_transmit_complete_cb cb, void *cb_data)
 {
+    if (!cb)
+	return 0;
+    if (!sol->remote_acks_nodata)
+	/* Don't get acks for ops, so don'e expect callbacks. */
+	return IPMI_SOL_ERR_VAL(IPMI_SOL_UNCONFIRMABLE_OPERATION);
     if (c->inuse)
 	return EAGAIN;
     c->cb = cb;
@@ -1546,7 +1551,7 @@ ipmi_sol_send_break(ipmi_sol_conn_t *sol,
 	goto out_unlock;
 
     rv = sol_enqueue_op_cb(sol, &sol->break_cb, cb, cb_data);
-    if (rv)
+    if (rv && rv != IPMI_SOL_ERR_VAL(IPMI_SOL_UNCONFIRMABLE_OPERATION))
 	goto out_unlock;
 
     sol->xmit_pending_ops |= IPMI_SOL_OPERATION_GENERATE_BREAK;
@@ -1582,7 +1587,7 @@ ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t               *sol,
 	goto out_unlock;
 
     rv = sol_enqueue_op_cb(sol, &sol->cts_cb, cb, cb_data);
-    if (rv)
+    if (rv && rv != IPMI_SOL_ERR_VAL(IPMI_SOL_UNCONFIRMABLE_OPERATION))
 	goto out_unlock;
 
     if (assertable)
@@ -1621,7 +1626,7 @@ ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t               *sol,
 	goto out_unlock;
 
     rv = sol_enqueue_op_cb(sol, &sol->dcd_cb, cb, cb_data);
-    if (rv)
+    if (rv && rv != IPMI_SOL_ERR_VAL(IPMI_SOL_UNCONFIRMABLE_OPERATION))
 	goto out_unlock;
 
     if (asserted)
@@ -1659,7 +1664,7 @@ ipmi_sol_set_RI_asserted(ipmi_sol_conn_t               *sol,
 	goto out_unlock;
 
     rv = sol_enqueue_op_cb(sol, &sol->ri_cb, cb, cb_data);
-    if (rv)
+    if (rv && rv != IPMI_SOL_ERR_VAL(IPMI_SOL_UNCONFIRMABLE_OPERATION))
 	goto out_unlock;
 
     if (asserted)
