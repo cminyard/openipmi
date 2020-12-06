@@ -378,6 +378,9 @@ struct ipmi_sol_conn_s {
     /* Remote end has requested a nack. */
     int remote_nack;
 
+    /* On timer expiry, report a close and return. */
+    int report_closed;
+
     /* Used to make a linked-list of these */
     ipmi_sol_conn_t *next;
 };
@@ -1279,6 +1282,55 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 }
 
 static void
+call_callback(ipmi_sol_conn_t *sol, struct sol_callback *to_call, int err)
+{
+    void *cb_data = to_call->cb_data;
+
+    if (to_call->cb) {
+	ipmi_sol_transmit_complete_cb cb = to_call->cb;
+
+	to_call->free(sol, to_call);
+	ipmi_unlock(sol->lock);
+	cb(sol, err, cb_data);
+    } else {
+	ipmi_sol_flush_complete_cb flush_cb = to_call->flush_cb;
+	int queue_selectors = to_call->queue_selectors;
+
+	to_call->free(sol, to_call);
+	ipmi_unlock(sol->lock);
+	flush_cb(sol, err, queue_selectors, cb_data);
+    }
+    ipmi_lock(sol->lock);
+}
+
+static void
+close_cleanup(ipmi_sol_conn_t *sol)
+{
+    struct sol_callback *c;
+
+    do {
+	c = sol_callback_dequeue_head(&sol->xmit_waiting_cbs);
+	if (!c)
+	    break;
+	call_callback(sol, c, sol->close_err);
+    } while(1);
+    do {
+	c = sol_callback_dequeue_head(&sol->pending_op_cbs);
+	if (!c)
+	    break;
+	call_callback(sol, c, sol->close_err);
+    } while(1);
+    do {
+	c = sol_callback_dequeue_head(&sol->pending_xmit_cbs);
+	if (!c)
+	    break;
+	call_callback(sol, c, sol->close_err);
+    } while(1);
+    ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed,
+				  sol->close_err);
+}
+
+static void
 sol_ACK_timer_expired(void *cb_data, os_hnd_timer_id_t *id)
 {
     ipmi_sol_conn_t *sol = cb_data;
@@ -1289,6 +1341,12 @@ sol_ACK_timer_expired(void *cb_data, os_hnd_timer_id_t *id)
     ipmi_lock(sol->lock);
 
     sol->timer_running = 0;
+
+    if (sol->report_closed) {
+	sol->report_closed = 0;
+	close_cleanup(sol);
+	goto out_unlock;
+    }
 
     if (sol->remote_nack || sol->xmit_seq == 0 ||
 		(sol->state != ipmi_sol_state_connected &&
@@ -1840,25 +1898,9 @@ process_next_packet(ipmi_sol_conn_t *sol,
 
     /* Do all our other callbacks once unlocked. */
 
-    while(to_call) {
+    while (to_call) {
 	struct sol_callback *n = to_call->next;
-	void *cb_data = to_call->cb_data;
-
-	if (to_call->cb) {
-	    ipmi_sol_transmit_complete_cb cb = to_call->cb;
-
-	    to_call->free(sol, to_call);
-	    ipmi_unlock(sol->lock);
-	    cb(sol, err, cb_data);
-	} else {
-	    ipmi_sol_flush_complete_cb flush_cb = to_call->flush_cb;
-	    int queue_selectors = to_call->queue_selectors;
-
-	    to_call->free(sol, to_call);
-	    ipmi_unlock(sol->lock);
-	    flush_cb(sol, err, queue_selectors, cb_data);
-	}
-	ipmi_lock(sol->lock);
+	call_callback(sol, to_call, err);
 	to_call = n;
     }
 
@@ -2146,6 +2188,28 @@ sol_send_close(ipmi_sol_conn_t *sol, sol_command_callback cb)
     return send_message(sol, &msg_out, cb);
 }
 
+static int
+finish_close(ipmi_sol_conn_t *sol, int norep)
+{
+    os_handler_t *os_hnd = sol->os_hnd;
+    int err;
+
+    /*
+     * Start the timer to go off immediately, report the close
+     * from there.  This has the bonus of also making sure the
+     * timer is stopped.
+     */
+    os_hnd->get_monotonic_time(os_hnd, &sol->curr_timeout);
+    err = start_ACK_timer(sol, &sol->curr_timeout);
+    if (!err)
+	sol->report_closed = 1;
+    else if (norep)
+	ipmi_sol_set_connection_state_norep(sol, ipmi_sol_state_closed);
+    else
+	ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed, err);
+    return err;
+}
+
 static void
 sol_connection_closed(ipmi_con_t *ipmi, void *cb_data)
 {
@@ -2153,8 +2217,7 @@ sol_connection_closed(ipmi_con_t *ipmi, void *cb_data)
 
     ipmi_lock(sol->lock);
     if (sol->state != ipmi_sol_state_closed)
-	ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed,
-				      sol->close_err);
+	finish_close(sol, 0);
     sol_put_connection_unlock(sol);
 }
 
@@ -2189,12 +2252,11 @@ handle_deactivate_payload_response(ipmi_sol_conn_t *sol,
 					       sol);
 	ipmi_lock(sol->lock);
 	if (err) {
-	    ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed, err);
+	    finish_close(sol, 0);
 	    sol_put_connection(sol);
 	}
     } else {
-	ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed,
-				      sol->close_err);
+	finish_close(sol, 0);
     }
 }
 
@@ -2212,6 +2274,7 @@ sol_do_close(ipmi_sol_conn_t *sol, int norep)
     }
 
     if (sol->ipmid != sol->ipmi) {
+	sol->close_err = err;
 	ipmi_unlock(sol->lock);
 	err = sol->ipmi->close_connection_done(sol->ipmid,
 					       sol_connection_closed,
@@ -2223,12 +2286,8 @@ sol_do_close(ipmi_sol_conn_t *sol, int norep)
 	}
     }
 
-    if (norep)
-	ipmi_sol_set_connection_state_norep(sol, ipmi_sol_state_closed);
-    else
-	ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed, err);
-
-    return err;
+    sol->close_err = err;
+    return finish_close(sol, norep);
 }
 
 /**
@@ -2466,7 +2525,6 @@ handle_activate_payload_response(ipmi_sol_conn_t *sol,
 	int rv = setup_new_ipmi(sol);
 	if (rv) {
 	    sol_do_close(sol, 0);
-	    ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed, rv);
 	}
     } else {
 	sol->ipmid = sol->ipmi;
