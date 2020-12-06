@@ -229,6 +229,8 @@ struct ipmi_sol_conn_s {
     /* The IPMI connection for commands. */
     ipmi_con_t *ipmi;
 
+    os_handler_t *os_hnd;
+
     /* The IPMI connection for SOL data. */
     ipmi_con_t *ipmid;
 
@@ -531,7 +533,7 @@ find_sol_connection_for_ipmi(ipmi_con_t *ipmi)
 static void
 sol_free_connection(ipmi_sol_conn_t *sol)
 {
-    os_handler_t *os_hnd = sol->ipmi->os_hnd;
+    os_handler_t *os_hnd = sol->os_hnd;
 
     if (sol->lock)
 	ipmi_destroy_lock(sol->lock);
@@ -1022,7 +1024,7 @@ ipmi_sol_set_connection_state(ipmi_sol_conn_t *sol,
 	transmit_next_packet(sol);
 
 	if (new_state == ipmi_sol_state_closed && sol->timer_running) {
-	    os_handler_t *os_hnd = sol->ipmi->os_hnd;
+	    os_handler_t *os_hnd = sol->os_hnd;
 	    int rv = os_hnd->stop_timer(os_hnd, sol->ack_timer);
 
 	    if (!rv) {
@@ -1056,7 +1058,7 @@ set_ACK_timeout(ipmi_sol_conn_t *sol, struct timeval *now)
     struct timeval timeout, tv2;
 
     if (!now) {
-	os_handler_t *os_hnd = sol->ipmi->os_hnd;
+	os_handler_t *os_hnd = sol->os_hnd;
 
 	now = &tv2;
 	os_hnd->get_monotonic_time(os_hnd, now);
@@ -1078,12 +1080,12 @@ set_ACK_timeout(ipmi_sol_conn_t *sol, struct timeval *now)
 static int
 start_ACK_timer(ipmi_sol_conn_t *sol, struct timeval *now)
 {
-    os_handler_t *os_hnd = sol->ipmi->os_hnd;
+    os_handler_t *os_hnd = sol->os_hnd;
     struct timeval timeout, tv;
     int rv;
 
     if (!now) {
-	os_handler_t *os_hnd = sol->ipmi->os_hnd;
+	os_handler_t *os_hnd = sol->os_hnd;
 
 	now = &tv;
 	os_hnd->get_monotonic_time(os_hnd, now);
@@ -1280,7 +1282,7 @@ static void
 sol_ACK_timer_expired(void *cb_data, os_hnd_timer_id_t *id)
 {
     ipmi_sol_conn_t *sol = cb_data;
-    os_handler_t *os_hnd = sol->ipmi->os_hnd;
+    os_handler_t *os_hnd = sol->os_hnd;
     struct timeval tv;
     int rv;
 
@@ -2004,6 +2006,8 @@ ipmi_sol_create(ipmi_con_t      *ipmi,
 
     memset(sol, 0, sizeof(*sol));
 
+    sol->os_hnd = os_hnd;
+
     sol->refcount = 1;
 
     /* Enable authentication and encryption by default. */
@@ -2373,7 +2377,7 @@ setup_new_ipmi(ipmi_sol_conn_t *sol)
 	return rv;
     }
 
-    rv = ipmi_args_setup_con(args, sol->ipmi->os_hnd, NULL, &sol->ipmid);
+    rv = ipmi_args_setup_con(args, sol->os_hnd, NULL, &sol->ipmid);
     if (rv) {
 	ipmi_log(IPMI_LOG_SEVERE,
 		 "ipmi_sol.c(handle_active_payload_response): "
