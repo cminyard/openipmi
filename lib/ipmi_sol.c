@@ -8,6 +8,10 @@
  *
  * Copyright 2005 Cyclades Australia Pty. Ltd.
  *
+ * Almost entirely rewritten by Corey Minyard to reduce complexity and
+ * increase stability.  Not much remains of the the original
+ * implementation.
+ *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
  *  as published by the Free Software Foundation; either version 2 of
@@ -1960,6 +1964,22 @@ process_pending(ipmi_sol_conn_t *sol)
  ** IPMI SoL API
  *******************************************************/
 
+static void
+sol_init_queues(ipmi_sol_conn_t *sol)
+{
+    unsigned int i;
+
+    for (i = 0; i < NR_SOL_XMIT_PENDING; i++)
+	sol_callback_add_tail(&sol->pending_xmit_free,
+			      &sol->pending_xmit_data[i]);
+    for (i = 0; i < NR_SOL_PENDING / 2; i++)
+	sol_pending_add_tail(&sol->free_pendings_pkt,
+			     &sol->pending_data[i]);
+    for (; i < NR_SOL_PENDING; i++)
+	sol_pending_add_tail(&sol->free_pendings_conrpt,
+			     &sol->pending_data[i]);
+}
+
 /**
  * Constructs a handle for managing an SoL session.
  *
@@ -1977,7 +1997,6 @@ ipmi_sol_create(ipmi_con_t      *ipmi,
     ipmi_sol_conn_t *sol;
     os_handler_t *os_hnd = ipmi->os_hnd;
     int rv;
-    unsigned int i;
 
     sol = ipmi_mem_alloc(sizeof(*sol));
     if (!sol)
@@ -2021,15 +2040,7 @@ ipmi_sol_create(ipmi_con_t      *ipmi,
 	goto out_err;
     }
 
-    for (i = 0; i < NR_SOL_XMIT_PENDING; i++)
-	sol_callback_add_tail(&sol->pending_xmit_free,
-			      &sol->pending_xmit_data[i]);
-    for (i = 0; i < NR_SOL_PENDING / 2; i++)
-	sol_pending_add_tail(&sol->free_pendings_pkt,
-			     &sol->pending_data[i]);
-    for (; i < NR_SOL_PENDING; i++)
-	sol_pending_add_tail(&sol->free_pendings_conrpt,
-			     &sol->pending_data[i]);
+    sol_init_queues(sol);
 
     sol->state = ipmi_sol_state_closed;
     sol->try_fast_connect = 1;
@@ -2892,7 +2903,6 @@ send_get_channel_payload_support_command(ipmi_sol_conn_t *sol)
 			handle_get_channel_payload_support_response);
 }
 
-
 int
 ipmi_sol_open(ipmi_sol_conn_t *sol)
 {
@@ -2947,6 +2957,7 @@ ipmi_sol_open(ipmi_sol_conn_t *sol)
     sol->nack_count = 0;
     sol->in_recv = 0;
     sol->remote_nack = 0;
+    sol_init_queues(sol);
 
     ipmi_unlock(sol->lock);
     return rv;
