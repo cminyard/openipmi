@@ -424,6 +424,7 @@ sol_serial_update_modemstate(ipmi_sol_t *sol, int ctspause, int deassert_dcd)
 	    val &= ~(TIOCM_DTR | TIOCM_RTS);
 	    val |= modemstate;
 	    ioctl(sol->soldata->fd, TIOCMSET, &val);
+	    sd->modemstate = modemstate;
 	}
     }
 }
