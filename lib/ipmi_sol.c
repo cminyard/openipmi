@@ -1188,7 +1188,7 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
     if (sol->in_recv)
 	return 0;
 
-    if (sol->xmit_pkt_data_len || sol->xmit_waiting_ack) {
+    if (sol->xmit_pkt_data_len) {
 	data_len = 0;
     } else {
 	data_len = sol->xmit_buf_len;
@@ -1196,7 +1196,7 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 	    data_len = sol->max_xmit_data_size;
     }
 
-    if (!sol->remote_nack &&
+    if (!sol->xmit_waiting_ack && !sol->remote_nack &&
 		(data_len > 0 ||
 		 (sol->remote_acks_nodata && sol->xmit_pending))) {
 	/* There is data to transmit that needs an ack. */
@@ -1247,6 +1247,15 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 	    c = c->next;
 	}
 
+	if (sol->remote_acks_nodata) {
+	    /* If we get acks for ops, then only put ops in acked packets. */
+	    sol->xmit_pkt[PACKET_OP] = sol->xmit_pending_ops;
+
+	    /* Clear out break and flush, they are one-shot. */
+	    sol->xmit_pending_ops &= ~(IPMI_SOL_OPERATION_GENERATE_BREAK |
+				       IPMI_SOL_OPERATION_FLUSH_CONSOLE_TO_BMC |
+				       IPMI_SOL_OPERATION_FLUSH_BMC_TO_CONSOLE);
+	}
 	sol->xmit_waiting_ack = 1;
     } else if (sol->recv_ack == 0 && !sol->xmit_pending) {
 	/* No reason to send, just exit. */
@@ -1258,12 +1267,15 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 
     /* Always set the current ack when transmitting. */
     sol->xmit_pkt[PACKET_ACCEPTED_CHARACTER_COUNT] = sol->acc_char_count;
-    sol->xmit_pkt[PACKET_OP] = sol->xmit_pending_ops;
+    if (!sol->remote_acks_nodata) {
+	/* If we don't get acks for ops, then put ops in any packet. */
+	sol->xmit_pkt[PACKET_OP] = sol->xmit_pending_ops;
 
-    /* Clear out break and flush, they are one-shot. */
-    sol->xmit_pending_ops &= ~(IPMI_SOL_OPERATION_GENERATE_BREAK |
-			       IPMI_SOL_OPERATION_FLUSH_CONSOLE_TO_BMC |
-			       IPMI_SOL_OPERATION_FLUSH_BMC_TO_CONSOLE);
+	/* Clear out break and flush, they are one-shot. */
+	sol->xmit_pending_ops &= ~(IPMI_SOL_OPERATION_GENERATE_BREAK |
+				   IPMI_SOL_OPERATION_FLUSH_CONSOLE_TO_BMC |
+				   IPMI_SOL_OPERATION_FLUSH_BMC_TO_CONSOLE);
+    }
 
     rv = transmit_curr_packet(sol);
     if (rv) {
