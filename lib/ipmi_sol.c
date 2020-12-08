@@ -1196,6 +1196,8 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 	    data_len = sol->max_xmit_data_size;
     }
 
+    sol->xmit_pkt[PACKET_OP] = 0;
+
     if (!sol->xmit_waiting_ack && !sol->remote_nack &&
 		(data_len > 0 ||
 		 (sol->remote_acks_nodata && sol->xmit_pending))) {
@@ -1291,6 +1293,14 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 
  out:
     return rv;
+}
+
+static int
+transmit_next_packet_op(ipmi_sol_conn_t *sol)
+{
+    if (!sol->xmit_waiting_ack)
+	return transmit_next_packet(sol);
+    return 0;
 }
 
 static void
@@ -1512,7 +1522,7 @@ ipmi_sol_release_nack(ipmi_sol_conn_t *sol)
 	/* Time to kick things off again. */
 	sol->xmit_pending_ops &= ~IPMI_SOL_OPERATION_NACK_PACKET;
 	sol->xmit_pending = 1;
-	rv = transmit_next_packet(sol);
+	rv = transmit_next_packet_op(sol);
     }
  out:
     ipmi_unlock(sol->lock);
@@ -1568,7 +1578,7 @@ ipmi_sol_send_break(ipmi_sol_conn_t *sol,
 
     sol->xmit_pending_ops |= IPMI_SOL_OPERATION_GENERATE_BREAK;
     sol->xmit_pending = 1;
-    rv = transmit_next_packet(sol);
+    rv = transmit_next_packet_op(sol);
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
@@ -1608,7 +1618,7 @@ ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t               *sol,
 	sol->xmit_pending_ops |= IPMI_SOL_OPERATION_CTS_PAUSE;
     sol->xmit_pending = 1;
 
-    rv = transmit_next_packet(sol);
+    rv = transmit_next_packet_op(sol);
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
@@ -1647,7 +1657,7 @@ ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t               *sol,
 	sol->xmit_pending_ops |= IPMI_SOL_OPERATION_DROP_DCD_DSR;
     sol->xmit_pending = 1;
 
-    rv = transmit_next_packet(sol);
+    rv = transmit_next_packet_op(sol);
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
@@ -1685,7 +1695,7 @@ ipmi_sol_set_RI_asserted(ipmi_sol_conn_t               *sol,
 	sol->xmit_pending_ops &= ~IPMI_SOL_OPERATION_RING_REQUEST;
     sol->xmit_pending = 1;
 
-    rv = transmit_next_packet(sol);
+    rv = transmit_next_packet_op(sol);
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
@@ -1749,7 +1759,7 @@ ipmi_sol_flush(ipmi_sol_conn_t            *sol,
     }
 
     sol_callback_add_tail(&sol->pending_op_cbs, &sol->flush_cb);
-    rv = transmit_next_packet(sol);
+    rv = transmit_next_packet_op(sol);
     if (rv)
 	goto out_unlock;
 
