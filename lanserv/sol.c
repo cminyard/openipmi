@@ -439,14 +439,18 @@ sol_serial_activate(ipmi_sol_t *sol, msg_t *msg)
      * always monitor the history.
      */
     if (!sol->history_size) {
+	int modemstate;
+
+	ioctl(sd->fd, TIOCMGET, &modemstate);
 	if ((msg->data[2] & 1) == 0) {
 	    /* Assuming standard NULL modem, RTS->CTS, DTR->DSR/DCD */
-	    int modemstate;
-	    ioctl(sd->fd, TIOCMGET, &modemstate);
 	    modemstate |= TIOCM_DTR | TIOCM_RTS;
 	    sd->modemstate = TIOCM_DTR | TIOCM_RTS;
-	    ioctl(sd->fd, TIOCMSET, &modemstate);
+	} else {
+	    modemstate &= ~(TIOCM_DTR | TIOCM_RTS);
+	    sd->modemstate = 0;
 	}
+	ioctl(sd->fd, TIOCMSET, &modemstate);
     }
 
     return 0;
