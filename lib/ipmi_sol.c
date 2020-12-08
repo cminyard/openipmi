@@ -1102,7 +1102,7 @@ start_ACK_timer(ipmi_sol_conn_t *sol, struct timeval *now)
 	timeout.tv_usec = 0;
     } else {
 	timeout.tv_sec = sol->curr_timeout.tv_sec - now->tv_sec;
-	if (tv.tv_usec <= sol->curr_timeout.tv_usec) {
+	if (now->tv_usec <= sol->curr_timeout.tv_usec) {
 	    timeout.tv_usec = sol->curr_timeout.tv_usec - now->tv_usec;
 	} else {
 	    timeout.tv_sec--;
