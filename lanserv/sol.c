@@ -325,6 +325,7 @@ sol_to_termios_bitrate(ipmi_sol_t *sol, int solbps)
 	if (retried)
 	    return B9600;
 	solbps = sol->solparm.default_bitrate;
+	retried =1;
 	goto retry;
     }
 }
