@@ -77,44 +77,54 @@ typedef int (*locked_list_handler_cb)(void *cb_data,
 				      void *item2);
 
 /* Allocate and free locked lists. */
+IPMI_UTILS_DLL_PUBLIC
 locked_list_t *locked_list_alloc(os_handler_t *os_hnd);
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_destroy(locked_list_t *ll);
 
 /* Add an item to the locked list.  If the item is a duplicate, this
    operation will be ignored but a value of "2" will be returned.  It
    returns true if successful or false if memory could not be
    allocated. */
+IPMI_UTILS_DLL_PUBLIC
 int locked_list_add(locked_list_t *ll, void *item1, void *item2);
 
 /* Remove an item from the locked list.  It returns true if the item
    was found on the list and false if not. */
+IPMI_UTILS_DLL_PUBLIC
 int locked_list_remove(locked_list_t *ll, void *item, void *item2);
 
 /* Iterate over the items of the list.  The prefunc version has a
    function that can be called before the lock is removed.  This allows
    the refcount on an object to be incremented or whatnot. */
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_iterate(locked_list_t          *ll,
 			 locked_list_handler_cb handler,
 			 void                   *cb_data);
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_iterate_prefunc(locked_list_t          *ll,
 				 locked_list_handler_cb prefunc,
 				 locked_list_handler_cb handler,
 				 void                   *cb_data);
 
 /* Return the number of items in the list. */
+IPMI_UTILS_DLL_PUBLIC
 unsigned int locked_list_num_entries(locked_list_t *ll);
 
 /* Allocate and free entries for a locked list.  With a pre-allocated
    entry, the add cannot fail.  This is primarily so you can
    pre-allocate data for the list and later adds won't fail. */
 typedef struct locked_list_entry_s locked_list_entry_t;
+IPMI_UTILS_DLL_PUBLIC
 locked_list_entry_t *locked_list_alloc_entry(void);
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_free_entry(locked_list_entry_t *entry);
 
 /* This add will not fail if you supply the entry (non-null, allocated
    from locked_list_alloc_entry()). Note that once you pass the entry
    into this function, you may no longer free it or use it for
    anything else. */
+IPMI_UTILS_DLL_PUBLIC
 int locked_list_add_entry(locked_list_t *ll, void *item1, void *item2,
 			  locked_list_entry_t *entry);
 
@@ -122,25 +132,34 @@ int locked_list_add_entry(locked_list_t *ll, void *item1, void *item2,
    to have their own lock function.  The nolock functions must be
    called with the lock already held.  */
 typedef void (*locked_list_lock_cb)(void *cb_data);
+IPMI_UTILS_DLL_PUBLIC
 locked_list_t *locked_list_alloc_my_lock(locked_list_lock_cb lock_func,
 					 locked_list_lock_cb unlock_func,
 					 void              *lock_func_cb_data);
+IPMI_UTILS_DLL_PUBLIC
 int locked_list_add_nolock(locked_list_t *ll, void *item1, void *item2);
+IPMI_UTILS_DLL_PUBLIC
 int locked_list_add_entry_nolock(locked_list_t *ll, void *item1, void *item2,
 				 locked_list_entry_t *entry);
+IPMI_UTILS_DLL_PUBLIC
 int locked_list_remove_nolock(locked_list_t *ll, void *item, void *item2);
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_iterate_nolock(locked_list_t          *ll,
 				locked_list_handler_cb handler,
 				void                   *cb_data);
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_iterate_prefunc_nolock(locked_list_t          *ll,
 					locked_list_handler_cb prefunc,
 					locked_list_handler_cb handler,
 					void                   *cb_data);
+IPMI_UTILS_DLL_PUBLIC
 unsigned int locked_list_num_entries_nolock(locked_list_t *ll);
 
 /* Lock and unlock the lock in the locked list, useful with the
    previous nolock calls. */
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_lock(locked_list_t *ll);
+IPMI_UTILS_DLL_PUBLIC
 void locked_list_unlock(locked_list_t *ll);
 
 #endif /* OPENIPMI_LOCKED_LIST_H */

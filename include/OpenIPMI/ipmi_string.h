@@ -71,7 +71,7 @@
    error value. */
 #define IPMI_STR_SDR_SEMANTICS	0
 #define IPMI_STR_FRU_SEMANTICS	1
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ipmi_get_device_string(unsigned char        **input,
 			   unsigned int         in_len,
 			   char                 *output,
@@ -86,7 +86,7 @@ int ipmi_get_device_string(unsigned char        **input,
    place the output (including the type/length byte) and out_len is a
    pointer to the max size of output (including the type/length byte).
    Upon return, out_len will be set to the actual output length. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_set_device_string(const char           *input,
 			    enum ipmi_str_type_e type,
 			    unsigned int         in_len,
@@ -96,7 +96,7 @@ void ipmi_set_device_string(const char           *input,
 
 /* Like ipmi_set_device_string, but include options.  See ipmi_bits.h
    for IPMI_STRING_OPTION_xxx. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_set_device_string2(const char           *input,
 			     enum ipmi_str_type_e type,
 			     unsigned int         in_len,

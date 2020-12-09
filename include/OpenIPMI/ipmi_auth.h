@@ -119,7 +119,7 @@ const char *ipmi_authtype_string(int authtype);
 
 /* This is a table of authentication algorithms. */
 #define MAX_IPMI_AUTHS		6
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 extern ipmi_auth_t ipmi_auths[MAX_IPMI_AUTHS];
 
 /* IPMI privilege levels */

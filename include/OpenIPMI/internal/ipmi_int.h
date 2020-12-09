@@ -34,6 +34,8 @@
 #ifndef OPENIPMI_INT_H
 #define OPENIPMI_INT_H
 
+#include <OpenIPMI/dllvisibility.h>
+
 /* Stuff used internally in the IPMI code, and possibly by OEM code. */
 
 #include <OpenIPMI/os_handler.h>
@@ -197,6 +199,7 @@ void i__ipmi_check_sensor_lock(const ipmi_sensor_t *sensor);
 void i__ipmi_check_control_lock(const ipmi_control_t *control);
 #define CHECK_CONTROL_LOCK(control) i__ipmi_check_control_lock(control)
 
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_check_lock(const ipmi_lock_t *lock, const char *str);
 #else
 #define CHECK_MC_LOCK(mc) do {} while (0)

@@ -2,7 +2,8 @@
 LIB_VERSION = 0.0.1
 LD_VERSION = 0:1:0
 
-AM_CFLAGS = -Wall -Wsign-compare -I$(top_srcdir)/include -DIPMI_CHECK_LOCKS
+AM_CFLAGS = -Wall -Wsign-compare -I$(top_srcdir)/include -DIPMI_CHECK_LOCKS \
+	-DBUILDING_IPMI_UTILS_DLL
 
 lib_LTLIBRARIES = libOpenIPMIutils.la
 

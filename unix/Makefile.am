@@ -3,7 +3,7 @@ LIB_VERSION = 0.0.1
 LD_VERSION = 0:1:0
 
 AM_CFLAGS = -Wall -Wsign-compare -I$(top_builddir)/include \
-	-I$(top_srcdir)/include
+	-I$(top_srcdir)/include -DBUILDING_IPMI_SELECTOR_DLL
 
 lib_LTLIBRARIES = libOpenIPMIposix.la libOpenIPMIpthread.la
 

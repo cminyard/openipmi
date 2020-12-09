@@ -58,24 +58,29 @@
 
 #include <OpenIPMI/ipmi_auth.h>
 
+IPMI_UTILS_DLL_PUBLIC
 int ipmi_md5_authcode_init(unsigned char   *password, 
 			   ipmi_authdata_t *handle,
 			   void            *info,
 			   void            *(*mem_alloc)(void *info, int size),
 			   void            (*mem_free)(void *info, void *data));
 /* Allow variable-length passwords. */
+IPMI_UTILS_DLL_PUBLIC
 int ipmi_md5_authcode_initl(const unsigned char *password, 
 			    unsigned int        password_len,
 			    ipmi_authdata_t     *handle,
 			    void                *info,
 			    void                *(*mem_alloc)(void *info, int size),
 			    void                (*mem_free)(void *info, void *data));
+IPMI_UTILS_DLL_PUBLIC
 int ipmi_md5_authcode_gen(ipmi_authdata_t handle,
 			  ipmi_auth_sg_t  data[],
 			  void            *output);
+IPMI_UTILS_DLL_PUBLIC
 int ipmi_md5_authcode_check(ipmi_authdata_t handle,
 			    ipmi_auth_sg_t  data[],
 			    void            *code);
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_md5_authcode_cleanup(ipmi_authdata_t handle);
 
 #endif /* OPENIPMI_MD5_H__ */

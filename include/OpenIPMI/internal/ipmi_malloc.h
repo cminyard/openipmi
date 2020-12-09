@@ -60,17 +60,22 @@
 
 /* IPMI uses this for memory allocation, so it can easily be
    substituted, etc. */
+IPMI_UTILS_DLL_PUBLIC
 void *ipmi_mem_alloc(int size);
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_mem_free(void *data);
 
 /* strdup using the above memory allocation routines. */
+IPMI_UTILS_DLL_PUBLIC
 char *ipmi_strdup(const char *str);
+IPMI_UTILS_DLL_PUBLIC
 char *ipmi_strndup(const char *str, int n);
 
 /* If you have debug allocations on, then you should call this to
    check for data you haven't freed (after you have freed all the
    data, of course).  It's safe to call even if malloc debugging is
    turned off. */
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_debug_malloc_cleanup(void);
 
 extern int i__ipmi_debug_malloc;

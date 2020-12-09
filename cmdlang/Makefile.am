@@ -5,7 +5,7 @@ LD_VERSION = 0:5:0
 AM_CFLAGS = -Wall -Wsign-compare -I$(top_builddir)/include \
 	-I$(top_srcdir)/include \
 	-DIPMI_CHECK_LOCKS $(GLIB_CFLAGS) \
-	$(TCL_CFLAGS)
+	$(TCL_CFLAGS) -DBUILDING_IPMI_CMDLANG_DLL
 
 lib_LTLIBRARIES = libOpenIPMIcmdlang.la
 

@@ -27,7 +27,7 @@
 #include <OpenIPMI/ipmi_types.h>
 
 /* Do a hash on a pointer value. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 unsigned int ipmi_hash_pointer(void *);
 
 typedef void (*ipmi_ifru_cb)(ipmi_domain_t *domain, ipmi_fru_t *fru,

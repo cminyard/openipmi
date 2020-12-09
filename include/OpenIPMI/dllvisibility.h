@@ -34,28 +34,50 @@
 #ifndef OpenIPMI_DLLVISIBILITY
 #define OpenIPMI_DLLVISIBILITY
 
+/*
+ * GCC seems to support __declspec(dllexport), but I am worred about older
+ * compiler support on CYGWIN, so I'm leaving __attribute__ ((dllexport)) in.
+ */
 #if defined _WIN32 || defined __CYGWIN__
-  #ifdef BUILDING_DLL
+  #ifdef BUILDING_IPMI_DLL
     #ifdef __GNUC__
       #define IPMI_DLL_PUBLIC __attribute__ ((dllexport))
     #else
-      #define IPMI_DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+      #define IPMI_DLL_PUBLIC __declspec(dllexport)
     #endif
   #else
     #ifdef __GNUC__
       #define IPMI_DLL_PUBLIC __attribute__ ((dllimport))
     #else
-      #define IPMI_DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+      #define IPMI_DLL_PUBLIC __declspec(dllimport)
+    #endif
+  #endif
+  #if defined(BUILDING_IPMI_UTILS_DLL)
+    #ifdef __GNUC__
+      #define IPMI_UTILS_DLL_PUBLIC __attribute__ ((dllexport))
+    #else
+      #define IPMI_UTILS_DLL_PUBLIC __declspec(dllexport)
+    #endif
+  #else
+    #ifdef __GNUC__
+      #define IPMI_UTILS_DLL_PUBLIC __attribute__ ((dllimport))
+    #else
+      #define IPMI_UTILS_DLL_PUBLIC __declspec(dllimport)
     #endif
   #endif
   #define IPMI_DLL_LOCAL
+  #define IPMI_UTILS_DLL_LOCAL
 #else
   #if __GNUC__ >= 4
     #define IPMI_DLL_PUBLIC __attribute__ ((visibility ("default")))
     #define IPMI_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
+    #define IPMI_UTILS_DLL_PUBLIC __attribute__ ((visibility ("default")))
+    #define IPMI_UTILS_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
   #else
     #define IPMI_DLL_PUBLIC
     #define IPMI_DLL_LOCAL
+    #define IPMI_UTILS_DLL_PUBLIC
+    #define IPMI_UTILS_DLL_LOCAL
   #endif
 #endif
 

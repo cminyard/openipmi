@@ -3,7 +3,8 @@ LIB_VERSION = 0.0.5
 LD_VERSION = 0:5:0
 
 AM_CFLAGS = -Wall -Wsign-compare -I$(top_builddir)/include \
-	-I$(top_srcdir)/include -DIPMI_CHECK_LOCKS $(OPENSSLINCS)
+	-I$(top_srcdir)/include -DIPMI_CHECK_LOCKS $(OPENSSLINCS) \
+	-DBUILDING_IPMI_DLL
 
 lib_LTLIBRARIES = libOpenIPMI.la
 

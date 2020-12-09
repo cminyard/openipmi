@@ -56,32 +56,43 @@
 #ifndef OPENIPMI_LOCKS_H
 #define OPENIPMI_LOCKS_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/os_handler.h>
 
 /* This is a generic lock used by the IPMI code. */
 typedef struct ipmi_lock_s ipmi_lock_t;
 
 /* Create a lock but us your own OS handlers. */
+IPMI_UTILS_DLL_PUBLIC
 int ipmi_create_lock_os_hnd(os_handler_t *os_hnd, ipmi_lock_t **lock);
 
 /* Destroy a lock. */
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_destroy_lock(ipmi_lock_t *lock);
 
 /* Lock the lock.  Locks are recursive, so the same thread can claim
    the same lock multiple times, and must release it the same number
    of times. */
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_lock(ipmi_lock_t *lock);
 
 /* Release the lock. */
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_unlock(ipmi_lock_t *lock);
 
 /* Like the above locks, but read/write locks. */
 typedef struct ipmi_rwlock_s ipmi_rwlock_t;
+IPMI_UTILS_DLL_PUBLIC
 int ipmi_create_rwlock_os_hnd(os_handler_t *os_hnd, ipmi_rwlock_t **new_lock);
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_destroy_rwlock(ipmi_rwlock_t *lock);
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_rwlock_read_lock(ipmi_rwlock_t *lock);
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_rwlock_read_unlock(ipmi_rwlock_t *lock);
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_rwlock_write_lock(ipmi_rwlock_t *lock);
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_rwlock_write_unlock(ipmi_rwlock_t *lock);
 
 #endif /* OPENIPMI_LOCKS_H */

@@ -69,68 +69,68 @@ typedef struct ilist_iter_s ilist_iter_t;
 typedef struct ilist_item_s ilist_item_t;
 
 /* Returns NULL on failure. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 ilist_t *alloc_ilist(void);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 ilist_iter_t *alloc_ilist_iter(ilist_t *list);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void free_ilist(ilist_t *list);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void free_ilist_iter(ilist_iter_t *iter);
 
 /* Returns true if the list is empty, false if not. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_empty(ilist_t *list);
 
 /* Return false on failure, true on success.  entry may be NULL,
    meaning you want the ilist code to supply the entry.  If you supply
    an entry, the "malloced" flag will be set to zero for you. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_add_head(ilist_t *list, void *item, ilist_item_t *entry);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_add_tail(ilist_t *list, void *item, ilist_item_t *entry);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_add_before(ilist_iter_t *iter, void *item, ilist_item_t *entry);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_add_after(ilist_iter_t *iter, void *item, ilist_item_t *entry);
 
 /* Return false on failure, true on success.  This will return a
    failure (false) if you try to position past the end of the array or
    try to set first or last on an empty array.  In that case it will
    leave the iterator unchanged. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_first(ilist_iter_t *iter);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_last(ilist_iter_t *iter);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_next(ilist_iter_t *iter);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_prev(ilist_iter_t *iter);
 
 /* Remove the first or last item from the list.  It will be deleted
    from the list and returned.  If the list is empty, NULL will be
    returned. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void *ilist_remove_first(ilist_t *list);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void *ilist_remove_last(ilist_t *list);
 
 /* Remove a given item from the list, if it is there.  Return 1 if it
    was found and 0 if it was not found. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_remove_item_from_list(ilist_t *list, void *item);
 
 /* Returns failue (false) if unpositioned. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_delete(ilist_iter_t *iter); /* Position on next element after del */
 
 /* Set unpositioned.  Next will go to the first item, prev to the last
    item. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_unpositioned(ilist_iter_t *iter);
 
 /* Returns NULL if unpositioned or list empty. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void *ilist_get(ilist_iter_t *iter);
 
 /* This should return true if the item matches, false if not. */
@@ -140,12 +140,12 @@ typedef int (*ilist_search_cb)(void *item, void *cb_data);
    NULL if not found, the item if found.  iter will be positioned on
    the item, too.  To search from the beginning, set the iterator to
    the "unpositioined" position. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void *ilist_search_iter(ilist_iter_t *iter, ilist_search_cb cmp, void *cb_data);
 
 /* Search from the beginning, but without an iterator.  This will return
    the first item found. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void *ilist_search(ilist_t *list, ilist_search_cb cmp, void *cb_data);
 
 /* Called with an iterator positioned on the item. */
@@ -154,23 +154,23 @@ typedef void (*ilist_iter_cb)(ilist_iter_t *iter, void *item, void *cb_data);
 /* Call the given handler for each item in the list.  You may delete
    the current item the iterator references while this is happening,
    but no other items. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_iter(ilist_t *list, ilist_iter_cb handler, void *cb_data);
 
 /* Call the given handler for each item in the list, but run the list
    backwards.  You may delete the current item the iterator references
    while this is happening, but no other items. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_iter_rev(ilist_t *list, ilist_iter_cb handler, void *cb_data);
 
 /* Initialize a statically declared iterator. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_init_iter(ilist_iter_t *iter, ilist_t *list);
 
 /* Return -1 if item1 < item2, 0 if item1 == item2, and 1 if item1 > item2 */
 typedef int (*ilist_sort_cb)(void *item1, void *item2);
 
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_sort(ilist_t *list, ilist_sort_cb cmp);
 
 /* A two-item list.  This is useful for managing list of handlers
@@ -183,22 +183,22 @@ typedef void (*ilist_twoitem_cb)(void *data, void *cb_data1, void *cb_data2);
 
 /* Add an entry to the list.  Returns 0 upon failure, 1 if successful.
    Duplicates are allowed. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_add_twoitem(ilist_t *list, void *cb_data1, void *cb_data2);
 
 /* Remove an entry, returns 1 if present, 0 if not. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_remove_twoitem(ilist_t *list, void *cb_data1, void *cb_data2);
 
 /* Returns 1 if the entry exists in the list, 0 if not. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 int ilist_twoitem_exists(ilist_t *list, void *cb_data1, void *cb_data2);
 
 /* Call all the callbacks in the list */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_iter_twoitem(ilist_t *ilist, ilist_twoitem_cb handler, void *data);
 
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_twoitem_destroy(ilist_t *list);
 
 /* Internal data structures, DO NOT USE THESE. */
@@ -222,9 +222,9 @@ struct ilist_iter_s
 };
 
 /* You must define these. */
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void *ilist_mem_alloc(size_t size);
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ilist_mem_free(void *data);
 
 #endif /* OPENIPMI_ILIST_H */

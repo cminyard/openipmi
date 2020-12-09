@@ -106,7 +106,7 @@ extern unsigned int i__ipmi_log_mask;
 #define DEBUG_MSG_ERR_DISABLE() i__ipmi_log_mask &= ~DEBUG_MSG_ERR_BIT
 
 #ifdef IPMI_CHECK_LOCKS
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 void ipmi_report_lock_error(os_handler_t *handler, char *str);
 #define IPMI_REPORT_LOCK_ERROR(handler, str) ipmi_report_lock_error(handler, \
 								    str)
@@ -114,7 +114,7 @@ void ipmi_report_lock_error(os_handler_t *handler, char *str);
 #define IPMI_REPORT_LOCK_ERROR(handler, str) do {} while (0)
 #endif
 
-IPMI_DLL_PUBLIC
+IPMI_UTILS_DLL_PUBLIC
 extern int i__ipmi_debug_locks;
 #define DEBUG_LOCKS	(i__ipmi_debug_locks)
 #define DEBUG_LOCKS_ENABLE() i__ipmi_debug_locks = 1
