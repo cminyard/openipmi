@@ -49,7 +49,13 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdio.h>
+#ifdef _WIN32
+#include <winsock2.h>
+static void syslog(int level, char *format, ...) {}
+#define LOG_ERR 3
+#else
 #include <syslog.h>
+#endif
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
