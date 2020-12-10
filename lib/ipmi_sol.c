@@ -42,8 +42,13 @@
  *	- Multiple connections at once: should work, but UNTESTED.
  */
 #include <sys/types.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netdb.h>
+#endif
 #include <sys/stat.h>
 #include <sys/poll.h>
 #include <sys/time.h>
@@ -52,7 +57,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <netdb.h>
 #include <assert.h>
 
 #include <OpenIPMI/ipmi_conn.h>

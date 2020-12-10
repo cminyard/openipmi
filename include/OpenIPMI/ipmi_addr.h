@@ -56,8 +56,13 @@
 #ifndef OPENIPMI_ADDR_H
 #define OPENIPMI_ADDR_H
 
+#include <stdint.h>
 /* To get a socket. */
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 #include <OpenIPMI/dllvisibility.h>
 

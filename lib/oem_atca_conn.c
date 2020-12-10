@@ -35,11 +35,18 @@
 #include <string.h>
 #include <stdio.h> /* for snprintf */
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define F_SETFL 1
+#define O_NONBLOCK 1
+#else
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include <OpenIPMI/ipmi_conn.h>
 #include <OpenIPMI/ipmi_err.h>

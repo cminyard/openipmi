@@ -34,18 +34,25 @@
 #include <config.h>
 
 #include <sys/types.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#define F_SETFL 1
+#define O_NONBLOCK 1
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <sys/stat.h>
+#include <netdb.h>
+#include <arpa/inet.h>
 #include <sys/poll.h>
+#endif
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <netdb.h>
-#include <arpa/inet.h>
 
 #include <OpenIPMI/ipmi_conn.h>
 #include <OpenIPMI/ipmi_msgbits.h>

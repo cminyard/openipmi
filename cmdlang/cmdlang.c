@@ -39,8 +39,12 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
 #include <netdb.h>
+#endif
 #include <OpenIPMI/ipmiif.h>
 #include <OpenIPMI/ipmi_cmdlang.h>
 #include <OpenIPMI/ipmi_pet.h>
@@ -1321,7 +1325,7 @@ ipmi_cmdlang_handle(ipmi_cmdlang_t *cmdlang, char *str)
 
     if (argc == curr_arg) {
 	cmdlang->errstr = "No command";
-	cmdlang->err = ENOMSG;
+	cmdlang->err = ENOSYS;
 	cmdlang->location = "cmdlang.c(ipmi_cmdlang_handle)";
 	goto done;
     }
@@ -1390,7 +1394,7 @@ ipmi_cmdlang_handle(ipmi_cmdlang_t *cmdlang, char *str)
     for (;;) {
 	if (argc == curr_arg) {
 	    cmdlang->errstr = "Missing command";
-	    cmdlang->err = ENOMSG;
+	    cmdlang->err = ENOSYS;
 	    cmdlang->location = "cmdlang.c(ipmi_cmdlang_handle)";
 	    goto done;
 	}

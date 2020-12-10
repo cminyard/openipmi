@@ -36,7 +36,11 @@
 
 #include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_mc.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

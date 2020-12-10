@@ -34,7 +34,14 @@
 #ifndef SELECTOR
 #define SELECTOR
 
+#include <sys/types.h> /* For timeval */
 #include <sys/time.h> /* For timeval */
+
+#ifdef _WIN32
+#include <winsock2.h>
+#include <winerror.h>
+#define ETIMEDOUT WSAETIMEDOUT
+#endif
 
 #if defined _WIN32 || defined __CYGWIN__
   #ifdef BUILDING_IPMI_SELECTOR_DLL

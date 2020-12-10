@@ -41,8 +41,12 @@
 #include <stdint.h>
 #include <errno.h>
 #include <sys/types.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
 #include <arpa/inet.h>
+#endif
 
 #include <OpenIPMI/ipmiif.h>
 #include <OpenIPMI/ipmi_fru.h>

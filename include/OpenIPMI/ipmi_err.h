@@ -176,5 +176,11 @@ int ipmi_get_error_string_len(unsigned int err);
 #endif
 
 #include <errno.h>
+#ifdef _WIN32
+#include <winerror.h>
+#define ECANCELED WSAECANCELLED
+#define EMSGSIZE WSAEMSGSIZE
+#define ETIMEDOUT WSAETIMEDOUT
+#endif
 
 #endif /* OPENIPMI_ERR_H */

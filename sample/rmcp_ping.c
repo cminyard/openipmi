@@ -34,11 +34,15 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/time.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/select.h>
 #include <netdb.h>
+#endif
+#include <sys/select.h>
 
 unsigned char ping_msg[12] =
 {

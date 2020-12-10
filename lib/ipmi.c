@@ -36,7 +36,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <netdb.h>
 
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/ipmi_conn.h>
