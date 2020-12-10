@@ -50,7 +50,6 @@
 #include <netdb.h>
 #endif
 #include <sys/stat.h>
-#include <sys/poll.h>
 #include <sys/time.h>
 #include <fcntl.h>
 #include <stdio.h>
