@@ -35,6 +35,10 @@
 
 #include <sys/types.h>
 #ifdef _WIN32
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600     //fix missing inet_ntop
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #define F_SETFL 1
@@ -51,6 +55,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <string.h>
 
@@ -1303,7 +1308,12 @@ find_free_lan_fd(int family, lan_data_t *lan, int *slot)
 	/* Bind is not necessary, we don't care what port we are. */
 
 	/* We want it to be non-blocking. */
+#ifdef __WIN32__
+        unsigned long flags = 1;
+        rv = ioctlsocket(item->fd, FIONBIO, &flags);
+#else
 	rv = fcntl(item->fd, F_SETFL, O_NONBLOCK);
+#endif
 	if (rv) {
 	    close(item->fd);
 	    item->next = *free_list;
@@ -1374,7 +1384,7 @@ hash_lan(const ipmi_con_t *ipmi)
 {
     unsigned int idx;
 
-    idx = (((unsigned long) ipmi)
+    idx = (((uintptr_t) ipmi)
 	   >> (sizeof(unsigned long) + LAN_HASH_SHIFT));
     idx %= LAN_HASH_SIZE;
     return idx;
@@ -1913,7 +1923,7 @@ lan_send_addr(lan_data_t              *lan,
 
     add_stat(lan->ipmi, STAT_XMIT_PACKETS, 1);
 
-    rv = sendto(lan->fd->fd, tmsg, pos, 0,
+    rv = sendto(lan->fd->fd, (void*) tmsg, pos, 0,
 		(struct sockaddr *) &(lan->cparm.ip_addr[addr_num].s_ipsock),
 		lan->cparm.ip_addr[addr_num].ip_addr_len);
     if (rv == -1)
@@ -3479,7 +3489,7 @@ data_handler(int            fd,
     int                addr_num = 0; /* Keep gcc happy and initialize */
 
     from_len = sizeof(ipaddrd.s_ipsock);
-    len = recvfrom(fd, data, sizeof(data), 0, (struct sockaddr *)&ipaddrd, 
+    len = recvfrom(fd, (void*) data, sizeof(data), 0, (struct sockaddr *)&ipaddrd, 
 		   &from_len);
 
     if (len < 0)
@@ -3594,7 +3604,7 @@ ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
 	goto out_unlock;
     }
 
-    rspi->data4 = (void *) (long) addr_num;
+    rspi->data4 = (void *) (intptr_t) addr_num;
     rv = handle_msg_send(info, addr_num, addr, addr_len, msg,
 			 rsp_handler, rspi, 0);
     /* handle_msg_send handles freeing the timer and info on an error */
@@ -4209,7 +4219,7 @@ handle_ipmb_addr(ipmi_con_t   *ipmi,
 		 void         *cb_data)
 {
     lan_data_t   *lan;
-    unsigned int addr_num = (unsigned long) cb_data;
+    unsigned int addr_num = (uintptr_t) cb_data;
     unsigned int i;
 
     if (err) {
@@ -4246,7 +4256,7 @@ handle_dev_id(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
     int          err;
     unsigned int manufacturer_id;
     unsigned int product_id;
-    int          addr_num = (long) rspi->data4;
+    int          addr_num = (intptr_t) rspi->data4;
 
     if (!ipmi) {
 	err = ECANCELED;
@@ -4279,7 +4289,7 @@ handle_dev_id(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 	if (ipmi->get_ipmb_addr) {
 	    /* We have a way to fetch the IPMB address, do so. */
 	    err = ipmi->get_ipmb_addr(ipmi, handle_ipmb_addr,
-				      (void *) (long) addr_num);
+				      (void *) (intptr_t) addr_num);
 	    if (err)
 		goto out_err;
 	} else
@@ -4323,7 +4333,7 @@ lan_oem_done(ipmi_con_t *ipmi, void *cb_data)
     lan_data_t  *lan;
     int         rv;
     ipmi_msgi_t *rspi = cb_data;
-    int         addr_num = (long) rspi->data4;
+    int         addr_num = (intptr_t) rspi->data4;
 
     if (! ipmi) {
 	ipmi_mem_free(rspi);
@@ -4344,7 +4354,7 @@ session_privilege_set(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
     ipmi_msg_t *msg = &rspi->msg;
     lan_data_t *lan;
     int        rv;
-    int        addr_num = (long) rspi->data4;
+    int        addr_num = (intptr_t) rspi->data4;
 
     if (!ipmi) {
 	handle_connected(ipmi, ECANCELED, addr_num);
@@ -4521,7 +4531,7 @@ got_rmcpp_open_session_rsp(ipmi_con_t *ipmi, ipmi_msgi_t  *rspi)
 {
     ipmi_msg_t   *msg = &rspi->msg;
     lan_data_t   *lan;
-    int          addr_num = (long) rspi->data4;
+    int          addr_num = (intptr_t) rspi->data4;
     uint32_t     session_id;
     uint32_t     mgsys_session_id;
     unsigned int privilege;
@@ -4783,7 +4793,7 @@ session_activated(ipmi_con_t *ipmi, ipmi_msgi_t  *rspi)
     ipmi_msg_t *msg = &rspi->msg;
     lan_data_t *lan;
     int        rv;
-    int        addr_num = (long) rspi->data4;
+    int        addr_num = (intptr_t) rspi->data4;
 
 
     if (!ipmi) {
@@ -4862,7 +4872,7 @@ challenge_done(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
     ipmi_msg_t *msg = &rspi->msg;
     lan_data_t *lan;
     int        rv;
-    int        addr_num = (long) rspi->data4;
+    int        addr_num = (intptr_t) rspi->data4;
 
 
     if (!ipmi) {
@@ -4945,7 +4955,7 @@ auth_cap_done(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
     ipmi_msg_t *msg = &rspi->msg;
     lan_data_t *lan;
     int        rv;
-    int        addr_num = (long) rspi->data4;
+    int        addr_num = (intptr_t) rspi->data4;
     int        supports_ipmi2;
     int        extended_capabilities_reported;
 
@@ -5071,7 +5081,7 @@ auth_cap_done_p(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 {
     ipmi_msg_t *msg = &rspi->msg;
     lan_data_t *lan;
-    int        addr_num = (long) rspi->data4;
+    int        addr_num = (intptr_t) rspi->data4;
     int        rv;
 
     if (!ipmi) {
