@@ -32,6 +32,7 @@
  */
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
@@ -167,7 +168,7 @@ deactivated(ipmi_con_t *ipmi, ipmi_msgi_t  *rspi)
 {
     ipmi_ll_ipmb_addr_cb handler = rspi->data1;
     void                 *cb_data = rspi->data2;
-    int                  active = (long) rspi->data3;
+    int                  active = (rspi->data3 ? 1 : 0);
     int                  rv;
     unsigned char        dummy;
 
@@ -212,7 +213,7 @@ force_activate(ipmi_con_t           *conn,
 
 	rspi->data1 = handler;
 	rspi->data2 = cb_data;
-	rspi->data3 = (void *) (long) active;
+	rspi->data3 = (void *) (intptr_t) active;
 	rv = conn->send_command(conn, (ipmi_addr_t *) &ipmb, sizeof(ipmb),
 				&msg,
 				deactivated, rspi);

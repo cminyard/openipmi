@@ -38,6 +38,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 #ifdef _WIN32
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600     //fix missing inet_ntop
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #define F_SETFL 1
@@ -186,7 +190,7 @@ fd_sock_handler(int fd, void *cb_data, os_hnd_fd_id_t *id)
     atca_ip_addr_info_t *addrs;
 
     from_len = sizeof(ipaddrd);
-    len = recvfrom(fd, data, sizeof(data), 0, (struct sockaddr *)&ipaddrd, 
+    len = recvfrom(fd, (void*) data, sizeof(data), 0, (struct sockaddr *)&ipaddrd, 
 		   &from_len);
     if (len < 10)
 	/* Got an error, or not enough data, just return. */
@@ -261,7 +265,12 @@ static int register_atca_conn(atca_conn_info_t *info)
 	    rv = errno;
 	    goto out_unlock;
 	}
+#ifdef _WIN32
+        unsigned long flags = 0;
+        rv = ioctlsocket(fd_sock, FIONBIO, &flags);
+#else
 	rv = fcntl(fd_sock, F_SETFL, O_NONBLOCK);
+#endif
 	if (rv) {
 	    rv = errno;
 	    close(fd_sock);
@@ -359,7 +368,7 @@ atca_check_and_ping(ipmi_con_t *ipmi, atca_conn_info_t *info)
 	}
 
 	/* Send a ping. */
-	sendto(fd_sock, data, sizeof(data), 0,
+	sendto(fd_sock, (void*) data, sizeof(data), 0,
 	       (struct sockaddr *) &ainfo->addr, ainfo->addr_len);
 	ainfo->dropped_pings++;
     }
