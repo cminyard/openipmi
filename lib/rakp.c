@@ -33,6 +33,7 @@
 
 #include <config.h>
 
+#include <stdint.h>
 #include <string.h>
 
 #include <OpenIPMI/ipmi_conn.h>
@@ -138,7 +139,7 @@ handle_rakp4(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 {
     ipmi_msg_t  *msg = &rspi->msg;
     rakp_info_t *info = rspi->data1;
-    int         addr_num = (long) rspi->data4;
+    int         addr_num = (intptr_t) rspi->data4;
     int         rv;
     uint32_t    session_id;
 
@@ -220,7 +221,7 @@ handle_rakp2(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 {
     ipmi_msg_t    *msg = &rspi->msg;
     rakp_info_t   *info = rspi->data1;
-    int           addr_num = (long) rspi->data4;
+    int           addr_num = (intptr_t) rspi->data4;
     int           rv;
     uint32_t      session_id;
     int           err = 0;

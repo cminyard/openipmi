@@ -49,12 +49,13 @@
  */
 
 #include <OpenIPMI/internal/ipmi_utils.h>
+#include <stdint.h>
 
 /* FIXME - need a better hash value. */
 unsigned int
 ipmi_hash_pointer(void *ptr)
 {
-    unsigned long val = (unsigned long) ptr;
+    uintptr_t val = (uintptr_t) ptr;
 
     return val >> 5;
 }

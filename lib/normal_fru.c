@@ -42,7 +42,12 @@
 #include <errno.h>
 #include <sys/types.h>
 #ifdef _WIN32
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600     //fix missing inet_pton
+#endif
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #else
 #include <sys/socket.h>
 #include <arpa/inet.h>

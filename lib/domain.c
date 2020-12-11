@@ -34,6 +34,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
+#ifdef __MINGW32__
+#undef __USE_MINGW_ANSI_STDIO   //fix wrong definition of PRId64 on MinGW
+#endif
+#include <inttypes.h>
 
 #include <OpenIPMI/ipmi_conn.h>
 #include <OpenIPMI/ipmiif.h>
@@ -1675,7 +1680,7 @@ in_ipmb_ignores(ipmi_domain_t *domain,
 		unsigned char channel,
 		unsigned char ipmb_addr)
 {
-    unsigned long addr;
+    uintptr_t addr;
     unsigned char first, last, ichan;
     ilist_iter_t iter;
     int          rv = 0;
@@ -1684,7 +1689,7 @@ in_ipmb_ignores(ipmi_domain_t *domain,
     ilist_init_iter(&iter, domain->ipmb_ignores);
     ilist_unpositioned(&iter);
     while (ilist_next(&iter)) {
-	addr = (unsigned long) ilist_get(&iter);
+	addr = (uintptr_t) ilist_get(&iter);
 	first = addr & 0xff;
 	last = (addr >> 8) & 0xff;
 	ichan = (addr >> 16) & 0xff;
@@ -1701,7 +1706,7 @@ ipmi_domain_add_ipmb_ignore(ipmi_domain_t *domain,
 			    unsigned char channel,
 			    unsigned char ipmb_addr)
 {
-    unsigned long addr = ipmb_addr | (ipmb_addr << 8) | (channel << 16);
+    uintptr_t     addr = ipmb_addr | (ipmb_addr << 8) | (channel << 16);
     int           rv = 0;
 
     ipmi_lock(domain->ipmb_ignores_lock);
@@ -1718,7 +1723,7 @@ ipmi_domain_add_ipmb_ignore_range(ipmi_domain_t *domain,
 				  unsigned char first_ipmb_addr,
 				  unsigned char last_ipmb_addr)
 {
-    unsigned long addr = (first_ipmb_addr | (last_ipmb_addr << 8)
+    uintptr_t     addr = (first_ipmb_addr | (last_ipmb_addr << 8)
 			  | (channel << 16));
     int           rv = 0;
 
@@ -2037,8 +2042,8 @@ ll_rsp_handler(ipmi_con_t   *ipmi,
     ipmi_msgi_t   *rspi;
     ipmi_domain_t *domain = orspi->data1;
     ll_msg_t      *nmsg = orspi->data2;
-    long          seq = (long) orspi->data3;
-    long          conn_seq = (long) orspi->data4;
+    intptr_t      seq = (intptr_t) orspi->data3;
+    intptr_t      conn_seq = (intptr_t) orspi->data4;
     int           rv;
 
     rv = i_ipmi_domain_get(domain);
@@ -2276,7 +2281,7 @@ send_command_addr(ipmi_domain_t                *domain,
 
     /* Have to delay this to here so we are holding the lock. */
     if (is_ipmb)
-	data4 = (void *) (long) domain->conn_seq[u];
+	data4 = (void *) (intptr_t) domain->conn_seq[u];
 
     rspi = ipmi_alloc_msg_item();
     if (!rspi) {
@@ -2286,7 +2291,7 @@ send_command_addr(ipmi_domain_t                *domain,
 
     rspi->data1 = domain;
     rspi->data2 = nmsg;
-    rspi->data3 = (void *) nmsg->seq;
+    rspi->data3 = (void *) (uintptr_t) nmsg->seq;
     rspi->data4 = data4;
     rv = send_command_option(domain, u, addr, addr_len,
 			     msg, options, handler, rspi);
@@ -2376,8 +2381,8 @@ reroute_cmds(ipmi_domain_t *domain, int old_con, int new_con)
 
 	    rspi->data1 = domain;
 	    rspi->data2 = nmsg;
-	    rspi->data3 = (void *) nmsg->seq;
-	    rspi->data4 = (void *) domain->conn_seq[new_con];
+	    rspi->data3 = (void *) (uintptr_t) nmsg->seq;
+	    rspi->data4 = (void *) (uintptr_t) domain->conn_seq[new_con];
 	    rv = send_command_option(domain, new_con,
 				     &nmsg->rsp_item->addr,
 				     nmsg->rsp_item->addr_len,
@@ -3136,8 +3141,8 @@ i_ipmi_domain_system_event_handler(ipmi_domain_t *domain,
 	const unsigned char *data;
 
 	ipmi_log(IPMI_LOG_DEBUG_START,
-		 "Event recid mc (0x%x):%4.4x type:%2.2x timestamp %lld:",
-		 mcid.mc_num, record_id, type, (long long) timestamp);
+		 "Event recid mc (0x%x):%4.4x type:%2.2x timestamp %" PRId64 ":",
+		 mcid.mc_num, record_id, type, (int64_t) timestamp);
 	if (data_len) {
 	    ipmi_log(IPMI_LOG_DEBUG_CONT, "\n  ");
 	    data = ipmi_event_get_data_ptr(event);
@@ -4588,7 +4593,7 @@ chan_info_rsp_handler(ipmi_mc_t  *mc,
 		      void       *rsp_data)
 {
     int           rv = 0;
-    long          curr = (long) rsp_data;
+    intptr_t      curr = (intptr_t) rsp_data;
     ipmi_domain_t *domain;
 
     if (!mc)
