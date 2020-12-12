@@ -57,6 +57,7 @@
 #define OPENIPMI_MALLOC_H
 
 #include <OpenIPMI/ipmi_log.h>
+#include <OpenIPMI/os_handler.h>
 
 /* IPMI uses this for memory allocation, so it can easily be
    substituted, etc. */
@@ -90,5 +91,10 @@ extern void (*ipmi_malloc_log)(enum ipmi_log_type_e log_type,
      __attribute__ ((__format__ (__printf__, 2, 3)))
 #endif
 ;
+
+IPMI_UTILS_DLL_PUBLIC
+int ipmi_malloc_init(os_handler_t *os_hnd);
+IPMI_UTILS_DLL_PUBLIC
+void ipmi_malloc_shutdown(void);
 
 #endif /* OPENIPMI_MALLOC_H */

@@ -50,6 +50,7 @@
 #include <OpenIPMI/internal/ipmi_int.h>
 #include <OpenIPMI/internal/ipmi_oem.h>
 #include <OpenIPMI/internal/locked_list.h>
+#include <OpenIPMI/internal/ipmi_malloc.h>
 
 #if defined(DEBUG_MSG) || defined(DEBUG_RAWMSG)
 static void
@@ -427,8 +428,6 @@ int ipmi_oem_atca_init(void);
 int init_oem_test(void);
 int i_ipmi_smi_init(os_handler_t *os_hnd);
 int i_ipmi_lan_init(os_handler_t *os_hnd);
-int ipmi_malloc_init(os_handler_t *os_hnd);
-void ipmi_malloc_shutdown(void);
 int i_ipmi_rakp_init(void);
 int i_ipmi_aes_cbc_init(void);
 int i_ipmi_hmac_init(void);

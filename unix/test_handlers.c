@@ -59,6 +59,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <OpenIPMI/ipmi_posix.h>
+#include <OpenIPMI/internal/ipmi_malloc.h>
 
 os_handler_t *test_os_hnd;
 
@@ -214,8 +215,6 @@ reset_tests(void)
     expect_log = 0;
     expect_timeout = 0;
 }
-
-int ipmi_malloc_init(os_handler_t *os_hnd);
 
 int
 main(int argc, char *argv[])
