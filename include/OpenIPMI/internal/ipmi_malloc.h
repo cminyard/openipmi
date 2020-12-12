@@ -85,6 +85,7 @@ extern int i__ipmi_debug_malloc;
 
 /* Used by the malloc code to generate logs.  If not set, logs will go
    nowhere. */
+IPMI_UTILS_DLL_EXTERN
 extern void (*ipmi_malloc_log)(enum ipmi_log_type_e log_type,
 			       const char *format, ...)
 #if __GNUC__ > 2

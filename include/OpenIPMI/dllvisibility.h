@@ -55,14 +55,18 @@
   #if defined(BUILDING_IPMI_UTILS_DLL)
     #ifdef __GNUC__
       #define IPMI_UTILS_DLL_PUBLIC __attribute__ ((dllexport))
+      #define IPMI_UTILS_DLL_EXTERN __attribute__ ((dllimport))
     #else
       #define IPMI_UTILS_DLL_PUBLIC __declspec(dllexport)
+      #define IPMI_UTILS_DLL_EXTERN __declspec(dllimport)
     #endif
   #else
     #ifdef __GNUC__
       #define IPMI_UTILS_DLL_PUBLIC __attribute__ ((dllimport))
+      #define IPMI_UTILS_DLL_EXTERN __attribute__ ((dllexport))
     #else
       #define IPMI_UTILS_DLL_PUBLIC __declspec(dllimport)
+      #define IPMI_UTILS_DLL_EXTERN __declspec(dllexport)
     #endif
   #endif
   #define IPMI_DLL_LOCAL
@@ -79,6 +83,7 @@
     #define IPMI_UTILS_DLL_PUBLIC
     #define IPMI_UTILS_DLL_LOCAL
   #endif
+  #define IPMI_UTILS_DLL_EXTERN
 #endif
 
 #endif /* OpenIPMI_DLLVISIBILITY */

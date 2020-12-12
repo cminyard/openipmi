@@ -44,8 +44,6 @@
 #endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#define F_SETFL 1
-#define O_NONBLOCK 1
 #else
 #include <sys/socket.h>
 #include <netinet/in.h>
