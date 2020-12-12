@@ -856,7 +856,7 @@ static os_handler_t ipmi_glib_os_handler =
 };
 
 
-os_handler_t *
+IPMI_DLL_PUBLIC os_handler_t *
 ipmi_glib_get_os_handler(int priority)
 {
     os_handler_t    *rv;
@@ -921,7 +921,7 @@ glib_handle_log(const gchar *log_domain,
 	hndlr(log_domain, pfx, message);
 }
 
-void
+IPMI_DLL_PUBLIC void
 ipmi_glib_set_log_handler(void (*hndlr)(const char *domain,
 					const char *pfx,
 					const char *msg))
