@@ -230,12 +230,22 @@ main(int argc, char *argv[])
     }
 
     /* We want it to be non-blocking. */
+#ifdef __WIN32__
+    unsigned long flags = 1;
+    rv = ioctlsocket(sock, FIONBIO, &flags);
+    if (rv) {
+	closesocket(sock);
+	perror("ioctlsocket(sock, FIONBIO, 1)");
+	exit(1);
+    }
+#else
     rv = fcntl(sock, F_SETFL, O_NONBLOCK);
     if (rv) {
 	close(sock);
 	perror("fcntl(sock, F_SETFL, O_NONBLOCK)");
 	exit(1);
     }
+#endif
 
     val = 1;
     rv = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val));
