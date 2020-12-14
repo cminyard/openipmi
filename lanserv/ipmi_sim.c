@@ -398,7 +398,7 @@ ser_data_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     int           len;
     unsigned char msgd[256];
 
-    len = read(fd, msgd, sizeof(msgd));
+    len = recv(fd, msgd, sizeof(msgd), 0);
     if (len <= 0) {
 	if ((len < 0) && (errno == EINTR))
 	    return;
