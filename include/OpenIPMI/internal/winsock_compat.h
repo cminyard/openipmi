@@ -6,16 +6,13 @@
 
 #define close_socket(f) closesocket(f)
 
-static int socket_set_nonblock(int sock)
-{
-    unsigned long flags = 1;
+#define socket_set_nonblock(sock)	  \
+    ({					  \
+    unsigned long flags = 1;		  \
+    ioctlsocket(sock, FIONBIO, &flags);	  \
+    })
 
-    return ioctlsocket(sock, FIONBIO, &flags);
-}
-
-static int gen_random(void *data, int len)
-{
-}
+#define gen_random(data, len)
 
 #else
 #include <unistd.h>
@@ -25,34 +22,26 @@ static int gen_random(void *data, int len)
 
 #define close_socket(f) close(f)
 
-static int socket_set_nonblock(int sock)
-{
-    return fcntl(sock, F_SETFL, O_NONBLOCK);
-}
+#define socket_set_nonblock(sock) fcntl(sock, F_SETFL, O_NONBLOCK);
 
-static int gen_random(void *data, int len)
-{
-    int fd = open("/dev/urandom", O_RDONLY);
-    int rv;
-
-    if (fd == -1)
-	return errno;
-
-    while (len > 0) {
-	rv = read(fd, data, len);
-	if (rv < 0) {
-	    rv = errno;
-	    goto out;
-	}
-	len -= rv;
-    }
-
-    rv = 0;
-
- out:
-    close(fd);
-    return rv;
-}
+#define gen_random(data, len)				\
+    ({							\
+    int fd = open("/dev/urandom", O_RDONLY);		\
+    int rv = 0;						\
+    if (fd == -1)					\
+	return errno;					\
+    while (len > 0) {					\
+	rv = read(fd, data, len);			\
+	if (rv < 0) {					\
+	    rv = errno;					\
+	    break;					\
+	}						\
+	len -= rv;					\
+	rv = 0;						\
+    }							\
+    close(fd);						\
+    rv;							\
+    })
 
 #endif
 
