@@ -575,7 +575,11 @@ sol_tcp_shutdown(ipmi_sol_t *sol)
     soldata_t *sd = sol->soldata;
 
     if (sd->fd >= 0)
+#ifdef _WIN32
+	closesocket(sd->fd);
+#else
 	close(sd->fd);
+#endif
     sd->fd = -1;
 }
 
@@ -616,7 +620,11 @@ sol_tcp_initialize(ipmi_sol_t *sol)
 
     rv = connect(sd->fd, addr->ai_addr, addr->ai_addrlen);
     if (rv == -1) {
+#ifdef _WIN32
+	closesocket(sd->fd);
+#else
 	close(sd->fd);
+#endif
 	sd->fd = -1;
 	if (sd->sys->debug & DEBUG_SOL)
 	    sd->logchan->log(sd->logchan, OS_ERROR, NULL,
@@ -629,7 +637,11 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     rv = setsockopt(sd->fd, IPPROTO_TCP, TCP_NODELAY,
 		    (char *) &options, sizeof(options));
     if (rv == -1) {
+#ifdef _WIN32
+	closesocket(sd->fd);
+#else
 	close(sd->fd);
+#endif
 	sd->fd = -1;
 	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
 			 "Error setting nodelay on tcp sol port socket"
@@ -645,7 +657,11 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     rv = fcntl(sd->fd, F_SETFL, O_NONBLOCK);
 #endif
     if (rv == -1) {
+#ifdef __WIN32__
+	closesocket(sd->fd);
+#else
 	close(sd->fd);
+#endif
 	sd->fd = -1;
 	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
 			 "Error setting nonblock on tcp sol port socket"
