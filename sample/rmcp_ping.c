@@ -43,6 +43,7 @@
 #include <netdb.h>
 #endif
 #include <sys/select.h>
+#include <OpenIPMI/internal/winsock_compat.h>
 
 unsigned char ping_msg[12] =
 {
@@ -230,22 +231,12 @@ main(int argc, char *argv[])
     }
 
     /* We want it to be non-blocking. */
-#ifdef __WIN32__
-    unsigned long flags = 1;
-    rv = ioctlsocket(sock, FIONBIO, &flags);
+    rv = socket_set_nonblock(sock);
     if (rv) {
-	closesocket(sock);
-	perror("ioctlsocket(sock, FIONBIO, 1)");
+	close_socket(sock);
+	perror("socket_set_nonblock(sock)");
 	exit(1);
     }
-#else
-    rv = fcntl(sock, F_SETFL, O_NONBLOCK);
-    if (rv) {
-	close(sock);
-	perror("fcntl(sock, F_SETFL, O_NONBLOCK)");
-	exit(1);
-    }
-#endif
 
     val = 1;
     rv = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, &val, sizeof(val));

@@ -639,7 +639,7 @@ sol_tcp_initialize(ipmi_sol_t *sol)
 	goto out;
     }
 
-    rv = fcntl(sd->fd, F_SETFL, O_NONBLOCK);
+    rv = socket_set_nonblock(sd->fd);
     if (rv == -1) {
 	close_socket(sd->fd);
 	sd->fd = -1;

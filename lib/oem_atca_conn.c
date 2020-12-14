@@ -264,12 +264,7 @@ static int register_atca_conn(atca_conn_info_t *info)
 	    rv = errno;
 	    goto out_unlock;
 	}
-#ifdef _WIN32
-        unsigned long flags = 0;
-        rv = ioctlsocket(fd_sock, FIONBIO, &flags);
-#else
-	rv = fcntl(fd_sock, F_SETFL, O_NONBLOCK);
-#endif
+	rv = socket_set_nonblock(fd_sock);
 	if (rv) {
 	    rv = errno;
 	    close_socket(fd_sock);

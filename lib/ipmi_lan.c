@@ -1307,12 +1307,7 @@ find_free_lan_fd(int family, lan_data_t *lan, int *slot)
 	/* Bind is not necessary, we don't care what port we are. */
 
 	/* We want it to be non-blocking. */
-#ifdef __WIN32__
-        unsigned long flags = 1;
-        rv = ioctlsocket(item->fd, FIONBIO, &flags);
-#else
-	rv = fcntl(item->fd, F_SETFL, O_NONBLOCK);
-#endif
+	rv = socket_set_nonblock(item->fd);
 	if (rv) {
 	    close_socket(item->fd);
 	    item->next = *free_list;
