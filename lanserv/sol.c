@@ -69,6 +69,7 @@
 #include <OpenIPMI/ipmi_lan.h>
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/persist.h>
+#include <OpenIPMI/internal/winsock_compat.h>
 
 /* FIXME - move to configure handling */
 #define USE_UUCP_LOCKING
@@ -575,7 +576,7 @@ sol_tcp_shutdown(ipmi_sol_t *sol)
     soldata_t *sd = sol->soldata;
 
     if (sd->fd >= 0)
-	close(sd->fd);
+	close_socket(sd->fd);
     sd->fd = -1;
 }
 
@@ -616,7 +617,7 @@ sol_tcp_initialize(ipmi_sol_t *sol)
 
     rv = connect(sd->fd, addr->ai_addr, addr->ai_addrlen);
     if (rv == -1) {
-	close(sd->fd);
+	close_socket(sd->fd);
 	sd->fd = -1;
 	if (sd->sys->debug & DEBUG_SOL)
 	    sd->logchan->log(sd->logchan, OS_ERROR, NULL,
@@ -629,7 +630,7 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     rv = setsockopt(sd->fd, IPPROTO_TCP, TCP_NODELAY,
 		    (char *) &options, sizeof(options));
     if (rv == -1) {
-	close(sd->fd);
+	close_socket(sd->fd);
 	sd->fd = -1;
 	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
 			 "Error setting nodelay on tcp sol port socket"
@@ -640,7 +641,7 @@ sol_tcp_initialize(ipmi_sol_t *sol)
 
     rv = fcntl(sd->fd, F_SETFL, O_NONBLOCK);
     if (rv == -1) {
-	close(sd->fd);
+	close_socket(sd->fd);
 	sd->fd = -1;
 	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
 			 "Error setting nonblock on tcp sol port socket"

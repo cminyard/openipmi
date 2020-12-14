@@ -94,6 +94,7 @@
 
 #include "emu.h"
 #include <OpenIPMI/persist.h>
+#include <OpenIPMI/internal/winsock_compat.h>
 
 #define MAX_ADDR 4
 
@@ -425,7 +426,7 @@ ser_data_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
 	if (ser->codec->disconnected)
 	    ser->codec->disconnected(ser);
 	ser->os_hnd->remove_fd_to_wait_for(ser->os_hnd, id);
-	close(fd);
+	close_socket(fd);
 	ser->con_fd = -1;
 	return;
     }
@@ -451,7 +452,7 @@ ser_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     }
 
     if (ser->con_fd >= 0) {
-	close(rv);
+	close_socket(rv);
 	return;
     }
 
@@ -466,7 +467,7 @@ ser_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     if (err) {
 	fprintf(stderr, "Unable to add serial socket wait: 0x%x\n", err);
 	ser->con_fd = -1;
-	close(rv);
+	close_socket(rv);
     } else {
 	if (ser->codec->connected)
 	    ser->codec->connected(ser);
@@ -1049,7 +1050,7 @@ console_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     if (!newcon) {
 	char *msg = "Out of memory\n";
 	err = write(rv, msg, strlen(msg));
-	close(rv);
+	close_socket(rv);
 	return;
     }
 
@@ -1072,7 +1073,7 @@ console_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     if (err) {
 	char *msg = "Unable to add socket wait\n";
 	err = write(rv, msg, strlen(msg));
-	close(rv);
+	close_socket(rv);
 	free(newcon);
 	return;
     }

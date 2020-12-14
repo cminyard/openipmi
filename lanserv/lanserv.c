@@ -83,6 +83,7 @@
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/ipmi_posix.h>
 #include <OpenIPMI/lanserv.h>
+#include <OpenIPMI/internal/winsock_compat.h>
 
 /* Stolen from ipmi_mc.h can't include that and linux/ipmi.h */
 #define IPMI_CHANNEL_MEDIUM_8023_LAN	4
