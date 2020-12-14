@@ -13,6 +13,10 @@ static int socket_set_nonblock(int sock)
     return ioctlsocket(sock, FIONBIO, &flags);
 }
 
+static int gen_random(void *data, int len)
+{
+}
+
 #else
 #include <unistd.h>
 #include <fcntl.h>
@@ -24,6 +28,30 @@ static int socket_set_nonblock(int sock)
 static int socket_set_nonblock(int sock)
 {
     return fcntl(sock, F_SETFL, O_NONBLOCK);
+}
+
+static int gen_random(void *data, int len)
+{
+    int fd = open("/dev/urandom", O_RDONLY);
+    int rv;
+
+    if (fd == -1)
+	return errno;
+
+    while (len > 0) {
+	rv = read(fd, data, len);
+	if (rv < 0) {
+	    rv = errno;
+	    goto out;
+	}
+	len -= rv;
+    }
+
+    rv = 0;
+
+ out:
+    close(fd);
+    return rv;
 }
 
 #endif

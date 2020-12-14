@@ -53,6 +53,7 @@
 
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/ipmi_tcl.h>
+#include <OpenIPMI/internal/winsock_compat.h>
 
 #include <tcl.h>
 
@@ -215,26 +216,7 @@ free_timer(os_handler_t *handler, os_hnd_timer_id_t *id)
 static int
 get_random(os_handler_t *handler, void *data, unsigned int len)
 {
-    int fd = open("/dev/urandom", O_RDONLY);
-    int rv = 0;
-
-    if (fd == -1)
-	return errno;
-
-    while (len > 0) {
-	rv = read(fd, data, len);
-	if (rv < 0) {
-	    rv = errno;
-	    goto out;
-	}
-	len -= rv;
-    }
-
-    rv = 0;
-
- out:
-    close(fd);
-    return rv;
+    return gen_random(data, len);
 }
 
 static void

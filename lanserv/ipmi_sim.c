@@ -208,33 +208,13 @@ smi_send(channel_t *chan, msg_t *msg)
 static int
 gen_rand(lanserv_data_t *lan, void *data, int len)
 {
-    int fd = open("/dev/urandom", O_RDONLY);
-    int rv;
-
-    if (fd == -1)
-	return errno;
-
-    while (len > 0) {
-	rv = read(fd, data, len);
-	if (rv < 0) {
-	    rv = errno;
-	    goto out;
-	}
-	len -= rv;
-    }
-
-    rv = 0;
-
- out:
-    close(fd);
-    return rv;
+    return gen_random(data, len);
 }
 
 static int
 sys_gen_rand(sys_data_t *lan, void *data, int len)
 {
-    gen_rand(NULL, data, len);
-    return 0;
+    return gen_random(data, len);
 }
 
 static void

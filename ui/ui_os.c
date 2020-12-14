@@ -44,6 +44,7 @@
 #include <OpenIPMI/selector.h>
 
 #include <OpenIPMI/internal/ipmi_int.h>
+#include <OpenIPMI/internal/winsock_compat.h>
 
 struct selector_s *ui_sel;
 
@@ -226,26 +227,7 @@ free_timer(os_handler_t *handler, os_hnd_timer_id_t *timer_data)
 static int
 get_random(os_handler_t *handler, void *data, unsigned int len)
 {
-    int fd = open("/dev/urandom", O_RDONLY);
-    int rv;
-
-    if (fd == -1)
-	return errno;
-
-    while (len > 0) {
-	rv = read(fd, data, len);
-	if (rv < 0) {
-	    rv = errno;
-	    goto out;
-	}
-	len -= rv;
-    }
-
-    rv = 0;
-
- out:
-    close(fd);
-    return rv;
+    return gen_random(data, len);
 }
 
 extern void ui_vlog(const char *format, enum ipmi_log_type_e log_type,
