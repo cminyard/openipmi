@@ -42,13 +42,6 @@
  *	- Multiple connections at once: should work, but UNTESTED.
  */
 #include <sys/types.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
@@ -57,6 +50,8 @@
 #include <unistd.h>
 #include <string.h>
 #include <assert.h>
+
+#include <OpenIPMI/internal/winsock_compat.h>
 
 #include <OpenIPMI/ipmi_conn.h>
 #include <OpenIPMI/ipmi_msgbits.h>

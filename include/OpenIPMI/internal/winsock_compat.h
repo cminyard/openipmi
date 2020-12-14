@@ -2,7 +2,12 @@
 #define OPENIPMI_WINSOCK_COMPAT_H
 
 #ifdef _WIN32
+#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600     //fix missing inet_pton
+#endif
 #include <winsock2.h>
+#include <ws2tcpip.h>
 
 #define close_socket(f) closesocket(f)
 
@@ -19,6 +24,12 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <arpa/inet.h>
+#include <sys/poll.h>
 
 #define close_socket(f) close(f)
 

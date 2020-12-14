@@ -36,16 +36,12 @@
    connections. */
 
 #include <sys/types.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#endif
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+
+#include <OpenIPMI/internal/winsock_compat.h>
 
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/ipmi_err.h>

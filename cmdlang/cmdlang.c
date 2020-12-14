@@ -39,12 +39,6 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <sys/types.h>
-#ifdef _WIN32
-#include <winsock2.h>
-#else
-#include <sys/socket.h>
-#include <netdb.h>
-#endif
 #include <OpenIPMI/ipmiif.h>
 #include <OpenIPMI/ipmi_cmdlang.h>
 #include <OpenIPMI/ipmi_pet.h>
@@ -59,6 +53,7 @@
 /* Internal includes, do not use in your programs */
 #include <OpenIPMI/internal/ipmi_locks.h>
 #include <OpenIPMI/internal/ipmi_malloc.h>
+#include <OpenIPMI/internal/winsock_compat.h>
 
 /*
  * This is the value passed to a command handler.

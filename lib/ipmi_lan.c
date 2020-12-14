@@ -34,20 +34,6 @@
 #include <config.h>
 
 #include <sys/types.h>
-#ifdef _WIN32
-#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600     //fix missing inet_ntop
-#endif
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <sys/poll.h>
-#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <fcntl.h>
@@ -56,6 +42,8 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <string.h>
+
+#include <OpenIPMI/internal/winsock_compat.h>
 
 #include <OpenIPMI/ipmi_conn.h>
 #include <OpenIPMI/ipmi_msgbits.h>

@@ -41,23 +41,15 @@
 #include <stdint.h>
 #include <errno.h>
 #include <sys/types.h>
-#ifdef _WIN32
-#if !defined(_WIN32_WINNT) || _WIN32_WINNT < 0x0600
-#undef _WIN32_WINNT
-#define _WIN32_WINNT 0x0600     //fix missing inet_pton
-#endif
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#else
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#endif
+
+#include <OpenIPMI/internal/winsock_compat.h>
 
 #include <OpenIPMI/ipmiif.h>
 #include <OpenIPMI/ipmi_fru.h>
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/ipmi_msgbits.h>
 
+#include <OpenIPMI/internal/winsock_compat.h>
 #include <OpenIPMI/internal/locked_list.h>
 #include <OpenIPMI/internal/ipmi_domain.h>
 #include <OpenIPMI/internal/ipmi_int.h>
