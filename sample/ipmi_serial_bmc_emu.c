@@ -1142,7 +1142,11 @@ next_tok(char **str)
 static void
 exit_handler(char *line, struct msg_info *mi)
 {
+#ifdef _WIN32
+    closesocket(mi->sock);
+#else
     close(mi->sock);
+#endif
     exit(0);
 }
 

@@ -233,6 +233,9 @@ smi_send_dev(channel_t *chan, msg_t *msg)
 static int
 gen_rand(lanserv_data_t *lan, void *data, int len)
 {
+#ifdef _WIN32
+    #error gen_rand() to be defined for Windows
+#else
     int fd = open("/dev/urandom", O_RDONLY);
     int rv;
 
@@ -253,6 +256,7 @@ gen_rand(lanserv_data_t *lan, void *data, int len)
  out:
     close(fd);
     return rv;
+#endif
 }
 
 static void

@@ -226,6 +226,9 @@ free_timer(os_handler_t *handler, os_hnd_timer_id_t *timer_data)
 static int
 get_random(os_handler_t *handler, void *data, unsigned int len)
 {
+#ifdef _WIN32
+    #error get_random() to be defined for Windows
+#else
     int fd = open("/dev/urandom", O_RDONLY);
     int rv;
 
@@ -246,6 +249,7 @@ get_random(os_handler_t *handler, void *data, unsigned int len)
  out:
     close(fd);
     return rv;
+#endif
 }
 
 extern void ui_vlog(const char *format, enum ipmi_log_type_e log_type,

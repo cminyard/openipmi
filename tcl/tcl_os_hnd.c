@@ -215,6 +215,9 @@ free_timer(os_handler_t *handler, os_hnd_timer_id_t *id)
 static int
 get_random(os_handler_t *handler, void *data, unsigned int len)
 {
+#ifdef _WIN32
+    #error get_random() to be defined for Windows
+#else
     int fd = open("/dev/urandom", O_RDONLY);
     int rv = 0;
 
@@ -235,6 +238,7 @@ get_random(os_handler_t *handler, void *data, unsigned int len)
  out:
     close(fd);
     return rv;
+#endif
 }
 
 static void

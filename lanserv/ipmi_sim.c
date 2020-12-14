@@ -207,6 +207,9 @@ smi_send(channel_t *chan, msg_t *msg)
 static int
 gen_rand(lanserv_data_t *lan, void *data, int len)
 {
+#ifdef _WIN32
+    #error gen_rand() to be defined for Windows
+#else
     int fd = open("/dev/urandom", O_RDONLY);
     int rv;
 
@@ -227,6 +230,7 @@ gen_rand(lanserv_data_t *lan, void *data, int len)
  out:
     close(fd);
     return rv;
+#endif
 }
 
 static int
@@ -417,6 +421,9 @@ ser_data_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     int           len;
     unsigned char msgd[256];
 
+#ifdef _WIN32
+#warning TO DO: does read() work with network sockets on Windows?
+#endif
     len = read(fd, msgd, sizeof(msgd));
     if (len <= 0) {
 	if ((len < 0) && (errno == EINTR))
@@ -425,7 +432,11 @@ ser_data_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
 	if (ser->codec->disconnected)
 	    ser->codec->disconnected(ser);
 	ser->os_hnd->remove_fd_to_wait_for(ser->os_hnd, id);
+#ifdef _WIN32
+	closesocket(fd);
+#else
 	close(fd);
+#endif
 	ser->con_fd = -1;
 	return;
     }
@@ -451,7 +462,11 @@ ser_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     }
 
     if (ser->con_fd >= 0) {
+#ifdef _WIN32
+	closesocket(rv);
+#else
 	close(rv);
+#endif
 	return;
     }
 
@@ -466,7 +481,11 @@ ser_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     if (err) {
 	fprintf(stderr, "Unable to add serial socket wait: 0x%x\n", err);
 	ser->con_fd = -1;
+#ifdef _WIN32
+	closesocket(rv);
+#else
 	close(rv);
+#endif
     } else {
 	if (ser->codec->connected)
 	    ser->codec->connected(ser);
@@ -1049,7 +1068,11 @@ console_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     if (!newcon) {
 	char *msg = "Out of memory\n";
 	err = write(rv, msg, strlen(msg));
+#ifdef _WIN32
+	closesocket(rv);
+#else
 	close(rv);
+#endif
 	return;
     }
 
@@ -1072,7 +1095,11 @@ console_bind_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
     if (err) {
 	char *msg = "Unable to add socket wait\n";
 	err = write(rv, msg, strlen(msg));
+#ifdef _WIN32
+	closesocket(rv);
+#else
 	close(rv);
+#endif
 	free(newcon);
 	return;
     }

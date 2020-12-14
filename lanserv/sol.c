@@ -638,7 +638,12 @@ sol_tcp_initialize(ipmi_sol_t *sol)
 	goto out;
     }
 
+#ifdef __WIN32__
+    unsigned long flags = 1;
+    rv = ioctlsocket(sd->fd, FIONBIO, &flags);
+#else
     rv = fcntl(sd->fd, F_SETFL, O_NONBLOCK);
+#endif
     if (rv == -1) {
 	close(sd->fd);
 	sd->fd = -1;

@@ -1313,7 +1313,11 @@ find_free_lan_fd(int family, lan_data_t *lan, int *slot)
 	rv = fcntl(item->fd, F_SETFL, O_NONBLOCK);
 #endif
 	if (rv) {
+#ifdef _WIN32
+	    closesocket(item->fd);
+#else
 	    close(item->fd);
+#endif
 	    item->next = *free_list;
 	    *free_list = item;
 	    item = NULL;
@@ -1327,7 +1331,11 @@ find_free_lan_fd(int family, lan_data_t *lan, int *slot)
 					    NULL,
 					    &(item->fd_wait_id));
 	if (rv) {
+#ifdef _WIN32
+	    closesocket(item->fd);
+#else
 	    close(item->fd);
+#endif
 	    item->next = *free_list;
 	    *free_list = item;
 	    item = NULL;
@@ -1354,7 +1362,11 @@ release_lan_fd(lan_fd_t *item, int slot)
     item->cons_in_use--;
     if (item->cons_in_use == 0) {
 	lan_os_hnd->remove_fd_to_wait_for(lan_os_hnd, item->fd_wait_id);
+#ifdef _WIN32
+	closesocket(item->fd);
+#else
 	close(item->fd);
+#endif
 	item->next->prev = item->prev;
 	item->prev->next = item->next;
 	item->next = *(item->free_list);
@@ -7108,7 +7120,11 @@ i_ipmi_lan_shutdown(void)
 	    e->next->prev = e->prev;
 	    e->prev->next = e->next;
 	    lan_os_hnd->remove_fd_to_wait_for(lan_os_hnd, e->fd_wait_id);
+#ifdef _WIN32
+	    closesocket(e->fd);
+#else
 	    close(e->fd);
+#endif
 	    ipmi_destroy_lock(e->con_lock);
 	    ipmi_mem_free(e);
 	}
@@ -7131,7 +7147,11 @@ i_ipmi_lan_shutdown(void)
 	    e->next->prev = e->prev;
 	    e->prev->next = e->next;
 	    lan_os_hnd->remove_fd_to_wait_for(lan_os_hnd, e->fd_wait_id);
+#ifdef _WIN32
+	    closesocket(e->fd);
+#else
 	    close(e->fd);
+#endif
 	    ipmi_destroy_lock(e->con_lock);
 	    ipmi_mem_free(e);
 	}

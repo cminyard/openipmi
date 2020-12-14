@@ -271,7 +271,11 @@ static int register_atca_conn(atca_conn_info_t *info)
 #endif
 	if (rv) {
 	    rv = errno;
+#ifdef _WIN32
+	    closesocket(fd_sock);
+#else
 	    close(fd_sock);
+#endif
 	    fd_sock = -1;
 	    goto out_unlock;
 	}
@@ -283,7 +287,11 @@ static int register_atca_conn(atca_conn_info_t *info)
 					NULL,
 					&fd_wait);
 	if (rv) {
+#ifdef _WIN32
+	    closesocket(fd_sock);
+#else
 	    close(fd_sock);
+#endif
 	    fd_sock = -1;
 	    goto out_unlock;
 	}
@@ -1035,7 +1043,11 @@ ipmi_oem_atca_conn_shutdown(void)
     if (fd_sock != -1) {
 	os_handler_t *os_hnd = ipmi_get_global_os_handler();
 	os_hnd->remove_fd_to_wait_for(os_hnd, fd_wait);
+#ifdef _WIN32
+	closesocket(fd_sock);
+#else
 	close(fd_sock);
+#endif
 	fd_sock = -1;
     }
 
