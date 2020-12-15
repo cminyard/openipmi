@@ -3,6 +3,7 @@ AC_INIT([OpenIPMI], [2.0.30], [minyard@acm.org], [OpenIPMI])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall])
 AC_CONFIG_HEADER([config.h])
+AM_PROG_AR
 
 AC_CONFIG_MACRO_DIR([m4])
 
