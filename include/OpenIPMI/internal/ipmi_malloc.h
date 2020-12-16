@@ -56,6 +56,7 @@
 #ifndef OPENIPMI_MALLOC_H
 #define OPENIPMI_MALLOC_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_log.h>
 #include <OpenIPMI/os_handler.h>
 
