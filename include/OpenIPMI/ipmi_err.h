@@ -55,6 +55,7 @@
 
 #ifndef OPENIPMI_ERR_H
 #define OPENIPMI_ERR_H
+#include <OpenIPMI/dllvisibility.h>
 
 /*
  * Error values
@@ -161,14 +162,18 @@ extern "C" {
 /* Convert a completion code into a string.  You must pass a buffer in
    (32 bytes is good) and the buffer length.  The string will be
    stored in that buffer and also returned. */
+IPMI_DLL_PUBLIC
 char *ipmi_get_cc_string(unsigned int cc,
 			 char         *buffer,
 			 unsigned int buf_len);
+IPMI_DLL_PUBLIC
 int ipmi_get_cc_string_len(unsigned int cc);
 
+IPMI_DLL_PUBLIC
 char *ipmi_get_error_string(unsigned int err,
 			    char *buffer,
 			    unsigned int buf_len);
+IPMI_DLL_PUBLIC
 int ipmi_get_error_string_len(unsigned int err);
 
 #ifdef __cplusplus
