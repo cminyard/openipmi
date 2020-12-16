@@ -34,7 +34,30 @@
 #ifndef OPENIPMI_UI_H
 #define OPENIPMI_UI_H
 
-#include <OpenIPMI/dllvisibility.h>
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef BUILDING_IPMI_UI_DLL
+    #ifdef __GNUC__
+      #define IPMI_UI_DLL_PUBLIC __attribute__ ((dllexport))
+    #else
+      #define IPMI_UI_DLL_PUBLIC __declspec(dllexport)
+    #endif
+  #else
+    #ifdef __GNUC__
+      #define IPMI_UI_DLL_PUBLIC __attribute__ ((dllimport))
+    #else
+      #define IPMI_UI_DLL_PUBLIC __declspec(dllimport)
+    #endif
+  #endif
+#else
+  #if __GNUC__ >= 4
+    #define IPMI_UI_DLL_PUBLIC __attribute__ ((visibility ("default")))
+    #define IPMI_UI_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
+  #else
+    #define IPMI_UI_DLL_PUBLIC
+    #define IPMI_UI_DLL_LOCAL
+  #endif
+#endif
+
 #include <OpenIPMI/ipmi_types.h>
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/selector.h>
@@ -45,15 +68,15 @@ extern "C" {
 
 extern os_handler_t ipmi_ui_cb_handlers;
 
-IPMI_DLL_PUBLIC
+IPMI_UI_DLL_PUBLIC
 int ipmi_ui_init(os_handler_t *os_hnd, int full_screen);
-IPMI_DLL_PUBLIC
+IPMI_UI_DLL_PUBLIC
 void ipmi_ui_shutdown(void);
 
-IPMI_DLL_PUBLIC
+IPMI_UI_DLL_PUBLIC
 void ipmi_ui_set_first_domain(ipmi_domain_id_t fdomain_id);
 
-IPMI_DLL_PUBLIC
+IPMI_UI_DLL_PUBLIC
 void ipmi_ui_setup_done(ipmi_domain_t *mc,
 			int           err,
 			unsigned int  conn_num,
