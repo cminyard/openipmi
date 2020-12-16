@@ -11197,10 +11197,10 @@ void set_cmdlang_event_handler(swig_cb *handler);
 
     swig_cb_val *cmdlang_global_err_handler = NULL;
 
-    void ipmi_cmdlang_global_err(char *objstr,
-				 char *location,
-				 char *errstr,
-				 int  errval)
+    static void cmdlang_global_err(char *objstr,
+				   char *location,
+				   char *errstr,
+				   int  errval)
     {
 	swig_cb_val *handler = cmdlang_global_err_handler;
 
@@ -11238,6 +11238,7 @@ void set_cmdlang_event_handler(swig_cb *handler);
     {
 	swig_cb_val *old_handler = cmdlang_global_err_handler;
 	IPMI_SWIG_C_CB_ENTRY
+	ipmi_cmdlang_err_rpt = cmdlang_global_err;
 	if (valid_swig_cb(handler, global_cmdlang_err))
 	    cmdlang_global_err_handler = ref_swig_cb(handler,
 						     global_cmdlang_err);

@@ -47,6 +47,7 @@
 
 /* Internal includes, do not use in your programs */
 #include <OpenIPMI/internal/ipmi_malloc.h>
+#include "cmdlang.h"
 
 static void
 mc_list_handler(ipmi_domain_t *domain, ipmi_mc_t *mc, void *cb_data)

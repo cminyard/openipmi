@@ -54,6 +54,7 @@
 #include <OpenIPMI/internal/ipmi_locks.h>
 #include <OpenIPMI/internal/ipmi_malloc.h>
 #include <OpenIPMI/internal/winsock_compat.h>
+#include "cmdlang.h"
 
 /*
  * This is the value passed to a command handler.
@@ -2817,4 +2818,25 @@ int
 ipmi_cmdlang_get_evinfo(void)
 {
     return do_evinfo;
+}
+
+void (*ipmi_cmdlang_err_rpt)(char *objstr,
+			     char *location,
+			     char *errstr,
+			     int  errval);
+
+void
+ipmi_cmdlang_global_err(char *objstr,
+			char *location,
+			char *errstr,
+			int  errval)
+{
+    if (ipmi_cmdlang_err_rpt)
+	ipmi_cmdlang_err_rpt(objstr, location, errstr, errval);
+    else if (objstr)
+	fprintf(stderr, "global error: %s %s: %s (0x%x)", location, objstr,
+		errstr, errval);
+    else
+	fprintf(stderr, "global error: %s: %s (0x%x)", location,
+		errstr, errval);
 }

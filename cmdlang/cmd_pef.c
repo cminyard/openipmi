@@ -44,6 +44,7 @@
 /* Internal includes, do not use in your programs */
 #include <OpenIPMI/internal/ipmi_malloc.h>
 #include <OpenIPMI/internal/locked_list.h>
+#include "cmdlang.h"
 
 static locked_list_t *pefs;
 

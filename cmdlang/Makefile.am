@@ -30,6 +30,10 @@ openipmish_LDADD =  libOpenIPMIcmdlang.la \
 		$(SNMPLIBS) $(GLIB_LIB) $(GLIB_LIBS) \
 		$(TCL_LIB) $(TCL_LIBS) \
 		$(OPENSSLLIBS) $(GDBM_LIB) $(RT_LIB)
+openipmish_CFLAGS = -Wall -Wsign-compare -I$(top_builddir)/include \
+	-I$(top_srcdir)/include \
+	-DIPMI_CHECK_LOCKS $(GLIB_CFLAGS) \
+	$(TCL_CFLAGS)
 
 # We need to make a link from ipmish to openipmish for backwards
 # compatability.

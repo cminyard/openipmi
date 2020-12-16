@@ -40,6 +40,7 @@
 #include <OpenIPMI/ipmi_pet.h>
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_cmdlang.h>
+#include "cmdlang.h"
 
 
 static void

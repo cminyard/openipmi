@@ -42,6 +42,7 @@
 
 /* Internal includes, do not use in your programs */
 #include <OpenIPMI/internal/ipmi_malloc.h>
+#include "cmdlang.h"
 
 static int
 discrete_event_handler(ipmi_sensor_t         *sensor,

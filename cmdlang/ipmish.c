@@ -626,11 +626,11 @@ cmd_done(ipmi_cmdlang_t *info)
     }
 }
 
-void
-ipmi_cmdlang_global_err(char *objstr,
-			char *location,
-			char *errstr,
-			int  errval)
+static void
+cmdlang_err(char *objstr,
+	    char *location,
+	    char *errstr,
+	    int  errval)
 {
     if (handling_input && !done && cmd_redisp)
 	fputc('\n', stdout);
@@ -995,6 +995,8 @@ main(int argc, char *argv[])
 #ifdef HAVE_TCL
     int              use_tcl = 0;
 #endif
+
+    ipmi_cmdlang_err_rpt = cmdlang_err;
 
     colstr = getenv("COLUMNS");
     if (colstr) {

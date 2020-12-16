@@ -423,10 +423,10 @@ int ipmi_cmdlang_event_next_field(ipmi_cmdlang_event_t        *event,
    where the error occurred.  The errstr is a descriptive string and
    errval is an IPMI error value to be printed. */
 IPMI_CMDLANG_DLL_PUBLIC
-void ipmi_cmdlang_global_err(char *objstr,
-			     char *location,
-			     char *errstr,
-			     int  errval);
+extern void (*ipmi_cmdlang_err_rpt)(char *objstr,
+				    char *location,
+				    char *errstr,
+				    int  errval);
 
 /* Supplied by the user to report events. */
 IPMI_CMDLANG_DLL_PUBLIC

@@ -41,6 +41,7 @@
 
 /* Internal includes, do not use in your programs */
 #include <OpenIPMI/internal/ipmi_malloc.h>
+#include "cmdlang.h"
 
 static void
 control_list_handler(ipmi_entity_t *entity, ipmi_control_t *control,

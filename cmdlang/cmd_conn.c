@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <OpenIPMI/ipmiif.h>
 #include <OpenIPMI/ipmi_cmdlang.h>
+#include "cmdlang.h"
 
 static void
 con_list_handler(ipmi_domain_t *domain, int conn, void *cb_data)

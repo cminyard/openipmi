@@ -42,6 +42,7 @@
 
 /* Internal includes, do not use in your programs */
 #include <OpenIPMI/internal/ipmi_malloc.h>
+#include "cmdlang.h"
 
 /* Don't pollute the namespace iwth ipmi_fru_t. */
 void ipmi_cmdlang_dump_fru_info(ipmi_cmd_info_t *cmd_info, ipmi_fru_t *fru);
