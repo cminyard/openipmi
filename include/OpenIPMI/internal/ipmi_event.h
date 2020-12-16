@@ -40,14 +40,6 @@
 /* The event code here is considered internal to OpenIPMI, normal
    users shouldn't use it. */
 
-/* Allocate an event with the given data. */
-ipmi_event_t *ipmi_event_alloc(ipmi_mcid_t   mcid,
-			       unsigned int  record_id,
-			       unsigned int  type,
-			       ipmi_time_t   timestamp,
-			       unsigned char *data,
-			       unsigned int  data_len);
-
 /* The only part of an event that can be set is the mcid, because the
    lower layers may need to allocate an event without knowing what the
    MC is.  Normal users shouldn't do this, obviously, it should be a
