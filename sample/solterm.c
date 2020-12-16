@@ -50,7 +50,7 @@
 #include <OpenIPMI/ipmi_lan.h>
 #include <OpenIPMI/ipmi_posix.h>
 
-#include <OpenIPMI/internal/ipmi_int.h>
+#include <OpenIPMI/ipmi_log.h>
 #include <OpenIPMI/ipmi_sol.h>
 #include <OpenIPMI/ipmi_debug.h>
 

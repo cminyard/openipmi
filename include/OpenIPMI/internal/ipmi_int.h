@@ -106,14 +106,6 @@ void ipmi_set_uint32(unsigned char *data, int val);
 /* Add a 16-bit integer to the data, IPMI (little-endian) style. */
 void ipmi_set_uint16(unsigned char *data, int val);
 
-/* Generate a log.  Note that logs should not end in a newline, that
-   will be automatically added as needed to the log.  */
-void ipmi_log(enum ipmi_log_type_e log_type, const char *format, ...)
-#ifdef __GNUC__
-     __attribute__ ((__format__ (__printf__, 2, 3)))
-#endif
-;
-
 /* Information for connection handlers. */
 typedef struct ipmi_con_setup_s ipmi_con_setup_t;
 typedef int (*ipmi_con_parse_args_cb)(int         *curr_arg,

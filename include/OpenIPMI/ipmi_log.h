@@ -57,6 +57,8 @@
 #ifndef OPENIPMI_LOG_H_
 #define OPENIPMI_LOG_H_
 
+#include <OpenIPMI/dllvisibility.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -96,6 +98,15 @@ enum ipmi_log_type_e
     IPMI_LOG_DEBUG_CONT,
     IPMI_LOG_DEBUG_END,
 };
+
+/* Generate a log.  Note that logs should not end in a newline, that
+   will be automatically added as needed to the log.  */
+IPMI_DLL_PUBLIC
+void ipmi_log(enum ipmi_log_type_e log_type, const char *format, ...)
+#ifdef __GNUC__
+     __attribute__ ((__format__ (__printf__, 2, 3)))
+#endif
+;
 
 #ifdef __cplusplus
 }
