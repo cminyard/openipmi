@@ -42,6 +42,7 @@
 
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/selector.h>
+#include <OpenIPMI/ipmi_ui.h>
 
 #include <OpenIPMI/internal/ipmi_int.h>
 #include <OpenIPMI/internal/winsock_compat.h>

@@ -62,8 +62,6 @@
 # endif
 #endif
 
-extern struct selector_s *ui_sel;
-
 #ifdef HAVE_UCDSNMP
 #define IPMI_OID_SIZE 9
 static oid ipmi_oid[IPMI_OID_SIZE] = {1,3,6,1,4,1,3183,1,1};

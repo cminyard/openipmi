@@ -84,6 +84,9 @@ void ipmi_ui_setup_done(ipmi_domain_t *mc,
 			int           still_connected,
 			void          *user_data);
 
+IPMI_UI_DLL_PUBLIC
+extern struct selector_s *ui_sel;
+
 #ifdef __cplusplus
 }
 #endif
