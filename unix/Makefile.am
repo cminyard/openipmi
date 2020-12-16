@@ -25,9 +25,13 @@ noinst_PROGRAMS = test_heap test_handlers
 
 test_heap_SOURCES = test_heap.c
 test_heap_LDADD = 
+test_heap_CFLAGS = -Wall -Wsign-compare -I$(top_builddir)/include \
+	-I$(top_srcdir)/include
 
 test_handlers_SOURCES = test_handlers.c
 test_handlers_LDADD = libOpenIPMIposix.la libOpenIPMIpthread.la \
 	$(top_builddir)/utils/libOpenIPMIutils.la $(GDBM_LIB)
+test_handlers_CFLAGS = -Wall -Wsign-compare -I$(top_builddir)/include \
+	-I$(top_srcdir)/include
 
 TESTS = test_heap test_handlers
