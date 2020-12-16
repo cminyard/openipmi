@@ -66,6 +66,7 @@
 extern "C" {
 #endif
 
+IPMI_UI_DLL_PUBLIC
 extern os_handler_t ipmi_ui_cb_handlers;
 
 IPMI_UI_DLL_PUBLIC
