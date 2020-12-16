@@ -14,7 +14,7 @@ noinst_LTLIBRARIES = libOpenIPMI.la
 
 nodist_libOpenIPMI_la_SOURCES = OpenIPMI_wrap.c
 libOpenIPMI_la_SOURCES = OpenIPMI_perl.c
-libOpenIPMI_la_LDFLAGS = -rpath /nowhere
+libOpenIPMI_la_LDFLAGS = -rpath /nowhere -no-undefined
 
 OpenIPMI_wrap.c OpenIPMI.pm: $(top_srcdir)/swig/OpenIPMI.i OpenIPMI_lang.i
 	$(SWIG) $(DEFS) -perl5 -o OpenIPMI_wrap.c -I$(top_srcdir)/swig/perl $<

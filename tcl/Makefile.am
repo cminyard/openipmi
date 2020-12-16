@@ -11,7 +11,7 @@ libOpenIPMItcl_la_SOURCES = tcl_os_hnd.c
 libOpenIPMItcl_la_CFLAGS = $(AM_CFLAGS)
 libOpenIPMItcl_la_LIBADD = $(GDBM_LIB)
 libOpenIPMItcl_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION) \
-	$(TCL_LIBS) -rpath $(libdir)
+	$(TCL_LIBS) -rpath $(libdir) -no-undefined
 
 noinst_PROGRAMS = test_handlers
 

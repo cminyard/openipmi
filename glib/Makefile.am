@@ -11,4 +11,4 @@ libOpenIPMIglib_la_SOURCES = glib_os_hnd.c
 libOpenIPMIglib_la_CFLAGS = $(GLIB_CFLAGS) $(AM_CFLAGS)
 libOpenIPMIglib_la_LIBADD = $(GDBM_LIB)
 libOpenIPMIglib_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION) \
-	$(GLIB_LIBS) -rpath $(libdir)
+	$(GLIB_LIBS) -rpath $(libdir) -no-undefined

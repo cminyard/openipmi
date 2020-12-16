@@ -15,7 +15,7 @@ PYPATH=$(top_builddir)/swig/python:$(top_builddir)/swig/python/.libs
 pythonlib_LTLIBRARIES = _OpenIPMI.la
 
 nodist__OpenIPMI_la_SOURCES = OpenIPMI_wrap.c
-_OpenIPMI_la_LDFLAGS = -module -avoid-version
+_OpenIPMI_la_LDFLAGS = -module -avoid-version -no-undefined
 _OpenIPMI_la_LIBADD = $(OPENIPMI_SWIG_LIBS) $(PYTHON_POSIX_LIB)
 
 EXTRA_DIST = OpenIPMI_lang.i OpenIPMI.h openipmigui.py sample.py sample2.py

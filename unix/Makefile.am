@@ -11,13 +11,13 @@ libOpenIPMIpthread_la_SOURCES = posix_thread_os_hnd.c selector.c
 libOpenIPMIpthread_la_LIBADD = -lpthread $(GDBM_LIB) \
 	$(top_builddir)/utils/libOpenIPMIutils.la $(RT_LIB)
 libOpenIPMIpthread_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION) \
-	-L$(libdir)
+	-L$(libdir) -no-undefined
 
 libOpenIPMIposix_la_SOURCES = posix_os_hnd.c selector.c
 libOpenIPMIposix_la_LIBADD = $(top_builddir)/utils/libOpenIPMIutils.la \
 	$(GDBM_LIB) $(RT_LIB)
 libOpenIPMIposix_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION) \
-	-L$(libdir)
+	-L$(libdir) -no-undefined
 
 noinst_HEADERS = heap.h
 

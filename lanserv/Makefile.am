@@ -37,7 +37,7 @@ libIPMIlanserv_la_SOURCES = lanserv_ipmi.c lanserv_asf.c priv_table.c \
 	persist.c extcmd.c ipmb_ipmi.c
 libIPMIlanserv_la_LIBADD = $(OPENSSLLIBS) -ldl $(RT_LIB)
 libIPMIlanserv_la_LDFLAGS = -version-info $(LD_VERSION) \
-	../utils/libOpenIPMIutils.la
+	../utils/libOpenIPMIutils.la -no-undefined
 
 ipmi_checksum_SOURCES = ipmi_checksum.c
 

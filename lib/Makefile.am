@@ -19,4 +19,5 @@ libOpenIPMI_la_SOURCES = entity.c ipmi.c domain.c mc.c sdr.c \
 	oem_atca_fru.c fru_spd_decode.c solparm.c
 libOpenIPMI_la_LIBADD = -lm $(top_builddir)/utils/libOpenIPMIutils.la \
 	$(OPENSSLLIBS) $(SOCKETLIB)
-libOpenIPMI_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION)
+libOpenIPMI_la_LDFLAGS = -rdynamic -version-info $(LD_VERSION) \
+			 -no-undefined
