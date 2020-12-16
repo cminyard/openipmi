@@ -43,20 +43,6 @@
 extern "C" {
 #endif
 
-/* These are the defined OS handlers for POSIX with and without
-   threading.  If you use these (and thus link with the OpenIPMIposix
-   or OpenIPMIpthread libraries) you must provide posix_vlog().  It is
-   not provided by the library. */
-/* DEPRECATED - This should no longer be used, you should use the
-   OS-handler function to set your log handler.  If you do not supply
-   your own os_vlog handler, logs will go to stderr.  If you supply a
-   posix_vlog handler and don't call set_log_handler in the OS handler,
-   posix_vlog() will still be used. */
-SEL_DLL_PUBLIC
-void posix_vlog(char *format,
-		enum ipmi_log_type_e log_type,
-		va_list ap);
-
 /* Non-threaded os handler operations */
 
 /**********************************************************************

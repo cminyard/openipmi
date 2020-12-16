@@ -57,13 +57,6 @@
 
 #include <OpenIPMI/internal/ipmi_int.h>
 
-/* CHEAP HACK - we don't want the user to have to provide this any
-   more. */
-extern void posix_vlog(char                 *format,
-		       enum ipmi_log_type_e log_type,
-		       va_list              ap);
-#pragma weak posix_vlog
-
 static void i_posix_lock(pthread_mutex_t *lock)
 {
     int rv = pthread_mutex_lock(lock);
@@ -386,8 +379,6 @@ sposix_vlog(os_handler_t         *handler,
 
     if (log_handler)
 	log_handler(handler, format, log_type, ap);
-    else if (posix_vlog)
-	posix_vlog((char *) format, log_type, ap);
     else
 	default_vlog(format, log_type, ap);
 }
