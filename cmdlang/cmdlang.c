@@ -2457,6 +2457,8 @@ event_down(ipmi_cmdlang_t *cmdlang)
     event->curr_level++;
 }
 
+void (*ipmi_cmdlang_event_rpt)(ipmi_cmdlang_event_t *event);
+
 void
 event_done(ipmi_cmdlang_t *cmdlang)
 {
@@ -2476,8 +2478,8 @@ event_done(ipmi_cmdlang_t *cmdlang)
 				cmdlang->err);
 	if (cmdlang->errstr_dynalloc)
 	    ipmi_mem_free(cmdlang->errstr);
-    } else {
-	ipmi_cmdlang_report_event(event);
+    } else if (ipmi_cmdlang_event_rpt) {
+	ipmi_cmdlang_event_rpt(event);
     }
 
     if (cmdlang->objstr)

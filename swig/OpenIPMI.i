@@ -11220,7 +11220,7 @@ void set_cmdlang_event_handler(swig_cb *handler);
 
     swig_cb_val *cmdlang_event_handler = NULL;
 
-    void ipmi_cmdlang_report_event(ipmi_cmdlang_event_t *event)
+    static void cmdlang_report_event(ipmi_cmdlang_event_t *event)
     {
 	swig_ref event_ref;
 	swig_cb_val *handler = cmdlang_event_handler;
@@ -11253,6 +11253,7 @@ void set_cmdlang_event_handler(swig_cb *handler);
     {
 	swig_cb_val *old_handler = cmdlang_event_handler;
 	IPMI_SWIG_C_CB_ENTRY
+	ipmi_cmdlang_event_rpt = cmdlang_report_event;
 	if (valid_swig_cb(handler, cmdlang_event))
 	    cmdlang_event_handler = ref_swig_cb(handler, cmdlang_event);
 	else

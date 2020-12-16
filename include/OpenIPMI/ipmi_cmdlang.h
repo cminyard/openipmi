@@ -430,7 +430,7 @@ extern void (*ipmi_cmdlang_err_rpt)(char *objstr,
 
 /* Supplied by the user to report events. */
 IPMI_CMDLANG_DLL_PUBLIC
-void ipmi_cmdlang_report_event(ipmi_cmdlang_event_t *event);
+extern void (*ipmi_cmdlang_event_rpt)(ipmi_cmdlang_event_t *event);
 
 /* In callbacks, you must use these to lock the cmd_info structure. */
 IPMI_CMDLANG_DLL_PUBLIC

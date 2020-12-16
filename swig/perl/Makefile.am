@@ -12,14 +12,9 @@ all-local: OpenIPMI.so
 
 noinst_LTLIBRARIES = libOpenIPMI.la
 
-check_LTLIBRARIES = libdummystuff.la
-
 nodist_libOpenIPMI_la_SOURCES = OpenIPMI_wrap.c
 libOpenIPMI_la_SOURCES = OpenIPMI_perl.c
 libOpenIPMI_la_LDFLAGS = -rpath /nowhere
-
-libdummystuff_la_SOURCES = dummystuff.c
-libdummystuff_la_LDFLAGS = -rpath /nowhere
 
 OpenIPMI_wrap.c OpenIPMI.pm: $(top_srcdir)/swig/OpenIPMI.i OpenIPMI_lang.i
 	$(SWIG) $(DEFS) -perl5 -o OpenIPMI_wrap.c -I$(top_srcdir)/swig/perl $<
@@ -42,10 +37,10 @@ uninstall-local:
 	rm -f "$(DESTDIR)$(PERL_INSTALL_DIR)/OpenIPMI.pm"
 	-rmdir "$(DESTDIR)$(PERL_INSTALL_DIR)/auto/OpenIPMI"
 
-AM_TESTS_ENVIRONMENT = mkdir -p tmppersist && mkdir -p auto/OpenIPMI && cp OpenIPMI.so auto/OpenIPMI && TEST_LD_PRELOAD="$(OPENIPMI_SWIG_SO):$(top_builddir)/swig/perl/.libs/libdummystuff.so" LD_LIBRARY_PATH=$(top_builddir)/glib/.libs PERL5LIB="$(top_builddir)/swig/perl:$(srcdir)" top_builddir="$(top_builddir)" srcdir="$(srcdir)"
+AM_TESTS_ENVIRONMENT = mkdir -p tmppersist && mkdir -p auto/OpenIPMI && cp OpenIPMI.so auto/OpenIPMI && TEST_LD_PRELOAD="$(OPENIPMI_SWIG_SO)" LD_LIBRARY_PATH=$(top_builddir)/glib/.libs PERL5LIB="$(top_builddir)/swig/perl:$(srcdir)" top_builddir="$(top_builddir)" srcdir="$(srcdir)"
 TESTS = test_fru test_chan test_lanparm test_pet test_pef
 REAL_TESTS = test_fru.p test_chan.p test_lanparm.p test_pet.p test_pef.p
 
 EXTRA_DIST = OpenIPMI_perl.c OpenIPMI_lang.i OpenIPMI.h \
 	sample ipmi_powerctl $(TESTS) $(REAL_TESTS) \
-	Lanserv.pm lan.conf dummystuff.c
+	Lanserv.pm lan.conf
