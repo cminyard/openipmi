@@ -79,6 +79,7 @@ char *ipmi_strndup(const char *str, int n);
 IPMI_UTILS_DLL_PUBLIC
 void ipmi_debug_malloc_cleanup(void);
 
+IPMI_UTILS_DLL_PUBLIC
 extern int i__ipmi_debug_malloc;
 #define DEBUG_MALLOC	(i__ipmi_debug_malloc)
 #define DEBUG_MALLOC_ENABLE() i__ipmi_debug_malloc = 1
