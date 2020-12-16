@@ -38,6 +38,7 @@
 #include "ui_command.h"
 
 #include <OpenIPMI/internal/ipmi_malloc.h>
+#include <OpenIPMI/internal/ilist.h>
 
 static int search_cmd(void *item, void *cb_data)
 {
