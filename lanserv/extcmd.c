@@ -56,13 +56,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef HAVE_NETINET_ETHER_H
-#include <netinet/ether.h>
-#elif defined(HAVE_SYS_ETHERNET_H)
-#include <sys/ethernet.h>
-#else
-#error "either netinet/ether.h or sys/ethernet.h must exist."
-#endif
 #include <ctype.h>
 #include <string.h>
 #include <errno.h>
@@ -72,6 +65,51 @@
 
 #include <OpenIPMI/serv.h>
 #include <OpenIPMI/extcmd.h>
+
+#ifdef HAVE_NETINET_ETHER_H
+#include <netinet/ether.h>
+#elif defined(HAVE_SYS_ETHERNET_H)
+#include <sys/ethernet.h>
+#else
+#include <stdint.h>
+#include <stdio.h>
+
+struct ether_addr {
+    uint8_t ether_addr_octet[6];
+};
+
+static char *
+ether_ntoa_r(const struct ether_addr *addr, char *buf)
+{
+    sprintf(buf, "%2.2x:%2.2x:%2.2x:%2.2x:%2.2x:%2.2x",
+	    addr->ether_addr_octet[0],
+	    addr->ether_addr_octet[1],
+	    addr->ether_addr_octet[2],
+	    addr->ether_addr_octet[3],
+	    addr->ether_addr_octet[4],
+	    addr->ether_addr_octet[5]);
+    return buf;
+}
+
+static struct ether_addr *
+ether_aton_r(const char *asc, struct ether_addr *addr)
+{
+    int rv;
+    unsigned int v[6], i;
+
+    rv = sscanf(asc, "%x:%x:%x:%x:%x:%x",
+		&v[0], &v[1], &v[2], &v[3], &v[4], &v[5]);
+    if (rv < 6)
+	return NULL;
+    for (i = 0; i < 6; i++) {
+	if (v[i] > 255)
+	    return NULL;
+    }
+    for (i = 0; i < 6; i++)
+	addr->ether_addr_octet[i] = v[i];
+    return addr;
+}
+#endif
 
 static int
 extcmd_getval(void *baseloc, extcmd_info_t *t, char *val)
