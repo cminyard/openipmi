@@ -10,7 +10,7 @@ SUBDIRS = OpenIPMI sdrcomp @MARVELL_BMC_DIR@
 DIST_SUBDIRS = OpenIPMI sdrcomp marvell-bmc
 
 AM_CFLAGS = -Wall -Wsign-compare -I$(top_srcdir)/include -DIPMI_CHECK_LOCKS \
-	$(OPENSSLINCS) -DPVERSION="\"$(PVERSION)\""
+	$(OPENSSLINCS) -DPVERSION="\"$(PVERSION)\"" -DBUILDING_IPMI_LANSERV_DLL
 
 AM_CPPFLAGS = -DSYSCONFDIR='"$(sysconfdir)"' -DSTATEDIR='"$(localstatedir)"'
 
@@ -46,6 +46,8 @@ ipmilan_SOURCES = lanserv.c
 ipmilan_LDADD = $(POPTLIBS) libIPMIlanserv.la -ldl $(RT_LIB)
 ipmilan_LDFLAGS = -rdynamic ../unix/libOpenIPMIposix.la \
 	../utils/libOpenIPMIutils.la
+ipmilan_CFLAGS = -Wall -Wsign-compare -I$(top_srcdir)/include \
+	-DIPMI_CHECK_LOCKS $(OPENSSLINCS) -DPVERSION="\"$(PVERSION)\""
 endif
 
 ipmi_sim_SOURCES = ipmi_sim.c bmc.c emu_cmd.c sol.c \
@@ -54,6 +56,8 @@ ipmi_sim_SOURCES = ipmi_sim.c bmc.c emu_cmd.c sol.c \
 ipmi_sim_LDADD = $(POPTLIBS) libIPMIlanserv.la -lpthread $(RT_LIB)
 ipmi_sim_LDFLAGS = -rdynamic ../unix/libOpenIPMIposix.la \
 	../utils/libOpenIPMIutils.la $(SOCKETLIB)
+ipmi_sim_CFLAGS = -Wall -Wsign-compare -I$(top_srcdir)/include \
+	-DIPMI_CHECK_LOCKS $(OPENSSLINCS) -DPVERSION="\"$(PVERSION)\""
 
 man_MANS = $(IPMILAN_MAN) ipmi_lan.5 ipmi_sim.1 ipmi_sim_cmd.5
 

@@ -56,6 +56,31 @@
 #ifndef __LANSERV_H
 #define __LANSERV_H
 
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef BUILDING_IPMI_LANSERV_DLL
+    #ifdef __GNUC__
+      #define IPMI_LANSERV_DLL_PUBLIC __attribute__ ((dllexport))
+    #else
+      #define IPMI_LANSERV_DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #else
+    #ifdef __GNUC__
+      #define IPMI_LANSERV_DLL_PUBLIC __attribute__ ((dllimport))
+    #else
+      #define IPMI_LANSERV_DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #endif
+  #define IPMI_LANSERV_DLL_LOCAL
+#else
+  #if __GNUC__ >= 4
+    #define IPMI_LANSERV_DLL_PUBLIC __attribute__ ((visibility ("default")))
+    #define IPMI_LANSERV_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
+  #else
+    #define IPMI_LANSERV_DLL_PUBLIC
+    #define IPMI_LANSERV_DLL_LOCAL
+  #endif
+#endif
+
 #include <OpenIPMI/ipmi_auth.h>
 #include <OpenIPMI/serv.h>
 
@@ -273,24 +298,29 @@ struct lanserv_data_s
 };
 
 
+IPMI_LANSERV_DLL_PUBLIC
 void handle_asf(lanserv_data_t *lan,
 		unsigned char *data, int len,
 		void *from_addr, int from_len);
 
+IPMI_LANSERV_DLL_PUBLIC
 void ipmi_handle_lan_msg(lanserv_data_t *lan,
 			 unsigned char *data, int len,
 			 void *from_addr, int from_len);
 
 /* Read in a configuration file and fill in the lan and address info. */
+IPMI_LANSERV_DLL_PUBLIC
 int lanserv_read_config(sys_data_t   *sys,
 			FILE         *f,
 			int          *line,
 			unsigned int channel_num);
 
+IPMI_LANSERV_DLL_PUBLIC
 int ipmi_lan_init(lanserv_data_t *lan);
 
 typedef void (*ipmi_payload_handler_cb)(lanserv_data_t *lan, msg_t *msg);
 
+IPMI_LANSERV_DLL_PUBLIC
 int ipmi_register_payload(unsigned int payload_id,
 			  ipmi_payload_handler_cb handler);
 
