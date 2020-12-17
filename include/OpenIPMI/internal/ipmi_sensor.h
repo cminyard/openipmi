@@ -34,6 +34,7 @@
 #ifndef OPENIPMI_SENSOR_H
 #define OPENIPMI_SENSOR_H
 
+#include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
 #include <OpenIPMI/ipmi_addr.h>
 
@@ -105,6 +106,7 @@ int ipmi_sensor_get_ignore_for_presence(ipmi_sensor_t *sensor);
 int ipmi_sensor_event(ipmi_sensor_t *sensor, ipmi_event_t *event);
 
 /* Fetch boatloads of internal information about sensors. */
+IPMI_DLL_PUBLIC /* Hack - needed for the UI. */
 int ipmi_sensor_get_channel(ipmi_sensor_t *sensor);
 int ipmi_sensor_get_entity_id(ipmi_sensor_t *sensor);
 int ipmi_sensor_get_entity_instance(ipmi_sensor_t *sensor);
