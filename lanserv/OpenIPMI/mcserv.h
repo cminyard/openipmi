@@ -280,23 +280,6 @@ int ipmi_mc_set_power(lmc_data_t *mc, unsigned char power, int gen_int);
 int ipmi_mc_set_num_leds(lmc_data_t   *mc,
 			 unsigned int count);
 
-void ipmi_emu_set_device_id(lmc_data_t *emu, unsigned char device_id);
-unsigned char ipmi_emu_get_device_id(lmc_data_t *emu);
-void ipmi_set_has_device_sdrs(lmc_data_t *emu, unsigned char has_device_sdrs);
-unsigned char ipmi_get_has_device_sdrs(lmc_data_t *emu);
-void ipmi_set_device_revision(lmc_data_t *emu, unsigned char device_revision);
-unsigned char ipmi_get_device_revision(lmc_data_t *emu);
-void ipmi_set_major_fw_rev(lmc_data_t *emu, unsigned char major_fw_rev);
-unsigned char ipmi_get_major_fw_rev(lmc_data_t *emu);
-void ipmi_set_minor_fw_rev(lmc_data_t *emu, unsigned char minor_fw_rev);
-unsigned char ipmi_get_minor_fw_rev(lmc_data_t *emu);
-void ipmi_set_device_support(lmc_data_t *emu, unsigned char device_support);
-unsigned char ipmi_get_device_support(lmc_data_t *emu);
-void ipmi_set_mfg_id(lmc_data_t *emu, unsigned char mfg_id[3]);
-void ipmi_get_mfg_id(lmc_data_t *emu, unsigned char mfg_id[3]);
-void ipmi_set_product_id(lmc_data_t *emu, unsigned char product_id[3]);
-void ipmi_get_product_id(lmc_data_t *emu, unsigned char product_id[3]);
-
 void read_persist_users(sys_data_t *sys);
 int write_persist_users(sys_data_t *sys);
 int read_sol_config(sys_data_t *sys);
