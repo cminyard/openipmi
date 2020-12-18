@@ -99,7 +99,7 @@ handle_sel(const char *name, void *data, unsigned int len, void *cb_data)
     if (len != 16) {
 	mc->sysinfo->log(mc->sysinfo, INFO, NULL,
 			 "Got invalid SEL entry for %2.2x, name is %s",
-			 ipmi_mc_get_ipmb(mc), name);
+			 is_mc_get_ipmb(mc), name);
 	goto out;
     }
 
@@ -153,7 +153,7 @@ ipmi_mc_enable_sel(lmc_data_t    *mc,
     mc->sel.reservation = 0;
     mc->sel.next_entry = 1;
 
-    p = read_persist("sel.%2.2x", ipmi_mc_get_ipmb(mc));
+    p = read_persist("sel.%2.2x", is_mc_get_ipmb(mc));
     if (!p)
 	return 0;
 
@@ -169,7 +169,7 @@ rewrite_sels(lmc_data_t *mc)
     sel_entry_t *e;
     int err;
 
-    p = alloc_persist("sel.%2.2x", ipmi_mc_get_ipmb(mc));
+    p = alloc_persist("sel.%2.2x", is_mc_get_ipmb(mc));
     if (!p) {
 	err = ENOMEM;
 	goto out_err;
@@ -198,7 +198,7 @@ rewrite_sels(lmc_data_t *mc)
   out_err:
     mc->sysinfo->log(mc->sysinfo, OS_ERROR, NULL,
 		     "Unable to write persistent SELs for MC %d: %d",
-		     ipmi_mc_get_ipmb(mc), err);
+		     is_mc_get_ipmb(mc), err);
     if (p)
 	free_persist(p);
 }
@@ -739,7 +739,7 @@ rewrite_sdrs(lmc_data_t *mc, sdrs_t *sdrs)
     sdr_t *sdr;
     int err;
 
-    p = alloc_persist("sdr.%2.2x.main", ipmi_mc_get_ipmb(mc));
+    p = alloc_persist("sdr.%2.2x.main", is_mc_get_ipmb(mc));
     if (!p) {
 	err = ENOMEM;
 	goto out_err;
@@ -769,7 +769,7 @@ rewrite_sdrs(lmc_data_t *mc, sdrs_t *sdrs)
   out_err:
     mc->sysinfo->log(mc->sysinfo, OS_ERROR, NULL,
 		     "Unable to write persistent SDRs for MC %d: %d",
-		     ipmi_mc_get_ipmb(mc), err);
+		     is_mc_get_ipmb(mc), err);
     if (p)
 	free_persist(p);
 }
@@ -846,7 +846,7 @@ read_mc_sdrs(lmc_data_t *mc, sdrs_t *sdrs, const char *sdrtype)
 {
     persist_t *p;
 
-    p = read_persist("sdr.%2.2x.%s", ipmi_mc_get_ipmb(mc), sdrtype);
+    p = read_persist("sdr.%2.2x.%s", is_mc_get_ipmb(mc), sdrtype);
     if (!p)
 	return;
 

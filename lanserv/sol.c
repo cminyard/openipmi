@@ -70,6 +70,7 @@
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/persist.h>
 #include <OpenIPMI/internal/winsock_compat.h>
+#include "ipmi_sim.h"
 
 /* FIXME - move to configure handling */
 #define USE_UUCP_LOCKING
@@ -684,7 +685,7 @@ static void sol_set_history_return_size(lmc_data_t    *mc,
 					unsigned int  *rdata_len,
 					void          *cb_data)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
     soldata_t *sd = sol->soldata;
     unsigned int size;
 
@@ -716,7 +717,7 @@ static void sol_get_history_return_size(lmc_data_t    *mc,
 					unsigned int  *rdata_len,
 					void          *cb_data)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
     soldata_t *sd = sol->soldata;
 
     if (!sd) {
@@ -815,14 +816,14 @@ copy_history_buffer(ipmi_sol_t *sol, unsigned int *rsize)
 unsigned char *
 sol_set_frudata(lmc_data_t *mc, unsigned int *size)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
 
     return copy_history_buffer(sol, size);
 }
 
 void sol_free_frudata(lmc_data_t *mc, unsigned char *data)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
     soldata_t *sd = sol->soldata;
 
     if (data)
@@ -836,7 +837,7 @@ ipmi_sol_activate(lmc_data_t    *mc,
 		  unsigned char *rdata,
 		  unsigned int  *rdata_len)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
     soldata_t *sd = sol->soldata;
     uint16_t port;
     int rv;
@@ -954,7 +955,7 @@ ipmi_sol_deactivate(lmc_data_t    *mc,
 		    unsigned char *rdata,
 		    unsigned int  *rdata_len)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
     unsigned int instance;
     uint32_t session_id;
 
@@ -990,10 +991,10 @@ ipmi_sol_deactivate(lmc_data_t    *mc,
 static void
 sol_update_bitrate(lmc_data_t *mc)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
     soldata_t *sd = sol->soldata;
 
-    sd->update_bitrate(ipmi_mc_get_sol(mc));
+    sd->update_bitrate(is_mc_get_sol(mc));
 }
 
 static void
@@ -1418,7 +1419,7 @@ handle_sol_payload(lanserv_data_t *lan, msg_t *msg)
     if (!mc)
 	return;
 
-    sol = ipmi_mc_get_sol(mc);
+    sol = is_mc_get_sol(mc);
     if (msg->sid == sol->session_id)
 	handle_sol_port_payload(lan, sol, msg);
     else if (msg->sid == sol->history_session_id)
@@ -1638,7 +1639,7 @@ sol_data_ready(int fd, void *cb_data)
 }
 
 int
-sol_read_config(char **tokptr, sys_data_t *sys, const char **err)
+is_sol_read_config(char **tokptr, sys_data_t *sys, const char **err)
 {
     ipmi_sol_t *sol = sys->sol;
     unsigned int val;
@@ -1764,7 +1765,7 @@ read_sol_config(sys_data_t *sys)
 
 	if (!mc)
 	    continue;
-	sol = ipmi_mc_get_sol(mc);
+	sol = is_mc_get_sol(mc);
 	if (!sol->configured)
 	    continue;
 
@@ -1773,7 +1774,7 @@ read_sol_config(sys_data_t *sys)
 	sol->solparm.enabled = 1;
 	sol->solparm.bitrate_nonv = 0;
 
-	p = read_persist("sol.mc%2.2x", ipmi_mc_get_ipmb(mc));
+	p = read_persist("sol.mc%2.2x", sys->mc_get_ipmb(mc));
 	if (p) {
 	    if (!read_persist_int(p, &iv, "enabled"))
 		sol->solparm.enabled = iv;
@@ -1799,13 +1800,13 @@ write_sol_config(lmc_data_t *mc)
     ipmi_sol_t *sol;
     persist_t *p;
 
-    sol = ipmi_mc_get_sol(mc);
+    sol = is_mc_get_sol(mc);
 
-    p = alloc_persist("sol.mc%2.2x", ipmi_mc_get_ipmb(mc));
+    p = alloc_persist("sol.mc%2.2x", sol->soldata->sys->mc_get_ipmb(mc));
     if (!p)
 	return ENOMEM;
 
-    sol = ipmi_mc_get_sol(mc);
+    sol = is_mc_get_sol(mc);
 
     add_persist_int(p, sol->solparm.enabled, "enabled");
     add_persist_int(p, sol->solparm.bitrate_nonv, "bitrate");
@@ -1874,7 +1875,7 @@ handle_sol_shutdown(void *info, int sig)
 int
 sol_init_mc(sys_data_t *sys, lmc_data_t *mc)
 {
-    ipmi_sol_t *sol = ipmi_mc_get_sol(mc);
+    ipmi_sol_t *sol = is_mc_get_sol(mc);
     soldata_t *sd;
 
     sd = sys->alloc(sys, sizeof(*sd));
@@ -1929,7 +1930,7 @@ sol_init_mc(sys_data_t *sys, lmc_data_t *mc)
     sd->fd = -1;
     sd->curr_packet_seq = 1;
     sd->history_curr_packet_seq = 1;
-    sd->logchan = ipmi_mc_get_channelset(mc)[0];
+    sd->logchan = sd->sys->mc_get_channelset(mc)[0];
 
     if (sol_port_init(sol)) {
 	/* Retry in 10 seconds. */

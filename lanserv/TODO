@@ -2,17 +2,21 @@
 * The depends= that is part of the polled file sensor really needs to be
   part of the main sensor structure, or at least the polled structure.
 
+ipmi_mc_alloc_unconfigured
 ipmi_resend_atn
-ipmi_register_tick_handler
 ipmi_mc_get_ipmb
-ipmi_mc_get_next_recv_q
 ipmi_mc_get_channelset
-ipmi_mc_get_pef
-ipmi_mc_get_users
 ipmi_mc_get_sol
 ipmi_mc_get_startcmdinfo
-ipmi_mc_alloc_unconfigure
+ipmi_mc_get_users
+ipmi_mc_users_changed
+ipmi_mc_get_pef
+ipmi_mc_get_next_recv_q
 sol_read_config
 ipmi_set_chassis_control_prog
 
+ipmi_register_tick_handler
+
 ipmi_cmd_permitted
+
+ipmi_mc_set_frudata_handler

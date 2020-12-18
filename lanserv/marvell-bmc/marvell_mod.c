@@ -3051,7 +3051,7 @@ ipmi_sim_module_init(sys_data_t *sys, const char *initstr_i)
 	}
     }
 
-    rv = ipmi_mc_alloc_unconfigured(sys, 0x20, &bmc_mc);
+    rv = sys->mc_alloc_unconfigured(sys, 0x20, &bmc_mc);
     if (rv) {
 	sys->log(sys, OS_ERROR, NULL,
 		 "Unable to allocate an mc: %s", strerror(rv));
@@ -3098,7 +3098,7 @@ ipmi_sim_module_init(sys_data_t *sys, const char *initstr_i)
 	    }
 	}
 
-	rv = ipmi_mc_alloc_unconfigured(sys, board_ipmb[num], &mc);
+	rv = sys->mc_alloc_unconfigured(sys, board_ipmb[num], &mc);
 	if (rv) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "Unable to allocate an mc: %s", strerror(rv));
@@ -3284,7 +3284,7 @@ ipmi_sim_module_post_init(sys_data_t *sys)
 	 */
 	unsigned char data[13];
 	memset(data, 0, sizeof(data));
-	data[4] = ipmi_mc_get_ipmb(bmc_mc);
+	data[4] = sys->mc_get_ipmb(bmc_mc);
 	data[5] = 0; /* LUN */
 	data[6] = 0x04; /* Event message revision for IPMI 1.5. */
 	data[7] = 0x1d; /* System boot initiated. */

@@ -480,7 +480,7 @@ ipmi_emu_handle_msg(emu_data_t    *emu,
 }
 
 void
-ipmi_resend_atn(channel_t *chan)
+is_resend_atn(channel_t *chan)
 {
     lmc_data_t *mc = chan->mc;
 
@@ -489,7 +489,7 @@ ipmi_resend_atn(channel_t *chan)
 }
 
 msg_t *
-ipmi_mc_get_next_recv_q(channel_t *chan)
+is_mc_get_next_recv_q(channel_t *chan)
 {
     msg_t *rv;
 
@@ -721,25 +721,25 @@ chan_stop_cmd(channel_t *chan, int do_it_now)
 }
 
 channel_t **
-ipmi_mc_get_channelset(lmc_data_t *mc)
+is_mc_get_channelset(lmc_data_t *mc)
 {
     return mc->channels;
 }
 
 ipmi_sol_t *
-ipmi_mc_get_sol(lmc_data_t *mc)
+is_mc_get_sol(lmc_data_t *mc)
 {
     return &mc->sol;
 }
 
 unsigned char
-ipmi_mc_get_ipmb(lmc_data_t *mc)
+is_mc_get_ipmb(lmc_data_t *mc)
 {
     return mc->ipmb;
 }
 
 int
-ipmi_mc_users_changed(lmc_data_t *mc)
+is_mc_users_changed(lmc_data_t *mc)
 {
     int rv = mc->users_changed;
     mc->users_changed = 0;
@@ -747,26 +747,26 @@ ipmi_mc_users_changed(lmc_data_t *mc)
 }
 
 user_t *
-ipmi_mc_get_users(lmc_data_t *mc)
+is_mc_get_users(lmc_data_t *mc)
 {
     return mc->users;
 }
 
 pef_data_t *
-ipmi_mc_get_pef(lmc_data_t *mc)
+is_mc_get_pef(lmc_data_t *mc)
 {
     return &mc->pef;
 }
 
 startcmd_t *
-ipmi_mc_get_startcmdinfo(lmc_data_t *mc)
+is_mc_get_startcmdinfo(lmc_data_t *mc)
 {
     return &mc->startcmd;
 }
 
 int
-ipmi_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
-			   lmc_data_t **rmc)
+is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
+			 lmc_data_t **rmc)
 {
     lmc_data_t *mc;
     unsigned int i;
@@ -898,7 +898,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
     int            i;
     sys_data_t     *sys = emu->sysinfo;
 
-    i = ipmi_mc_alloc_unconfigured(sys, ipmb, &mc);
+    i = is_mc_alloc_unconfigured(sys, ipmb, &mc);
     if (i)
 	return i;
 
@@ -984,7 +984,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
 	ipmi_register_child_quit_handler(&mc->child_quit_handler);
 	mc->tick_handler.info = mc;
 	mc->tick_handler.handler = handle_tick;
-	ipmi_register_tick_handler(&mc->tick_handler);
+	emu->sysinfo->register_tick_handler(&mc->tick_handler);
 	mc->channels[15]->start_cmd = chan_start_cmd;
 	mc->channels[15]->stop_cmd = chan_stop_cmd;
     }
@@ -1085,7 +1085,7 @@ ipmi_set_product_id(lmc_data_t *mc, unsigned char product_id[2])
 }
 
 void
-ipmi_set_chassis_control_prog(lmc_data_t *mc, const char *prog)
+is_set_chassis_control_prog(lmc_data_t *mc, const char *prog)
 {
     mc->chassis_control_prog = prog;
 }

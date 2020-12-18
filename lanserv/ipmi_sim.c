@@ -95,6 +95,7 @@
 #include "emu.h"
 #include <OpenIPMI/persist.h>
 #include <OpenIPMI/internal/winsock_compat.h>
+#include "ipmi_sim.h"
 
 #define MAX_ADDR 4
 
@@ -1272,8 +1273,8 @@ ipmi_free_timer(ipmi_timer_t *timer)
 
 static ipmi_tick_handler_t *tick_handlers;
 
-void
-ipmi_register_tick_handler(ipmi_tick_handler_t *handler)
+static void
+is_register_tick_handler(ipmi_tick_handler_t *handler)
 {
     handler->next = tick_handlers;
     tick_handlers = handler;
@@ -1515,6 +1516,20 @@ main(int argc, const char *argv[])
     sysinfo.lan_channel_init = lan_channel_init;
     sysinfo.ser_channel_init = ser_channel_init;
     sysinfo.ipmb_channel_init = ipmb_channel_init;
+    sysinfo.mc_alloc_unconfigured = is_mc_alloc_unconfigured;
+    sysinfo.resend_atn = is_resend_atn;
+    sysinfo.mc_get_ipmb = is_mc_get_ipmb;
+    sysinfo.mc_get_channelset = is_mc_get_channelset;
+    sysinfo.mc_get_sol = is_mc_get_sol;
+    sysinfo.mc_get_startcmdinfo = is_mc_get_startcmdinfo;
+    sysinfo.mc_get_users = is_mc_get_users;
+    sysinfo.mc_users_changed = is_mc_users_changed;
+    sysinfo.mc_get_pef = is_mc_get_pef;
+    sysinfo.mc_get_next_recv_q = is_mc_get_next_recv_q;
+    sysinfo.sol_read_config = is_sol_read_config;
+    sysinfo.set_chassis_control_prog = is_set_chassis_control_prog;
+    sysinfo.register_tick_handler = is_register_tick_handler;
+
     data.sys = &sysinfo;
 
     err = pipe(sigpipeh);
@@ -1562,18 +1577,18 @@ main(int argc, const char *argv[])
     stdio_console.prev = NULL;
     data.consoles = &stdio_console;
 
-    err = ipmi_mc_alloc_unconfigured(&sysinfo, 0x20, &mc);
+    err = is_mc_alloc_unconfigured(&sysinfo, 0x20, &mc);
     if (err) {
 	if (err == ENOMEM)
 	    fprintf(stderr, "Out of memory allocation BMC MC\n");
 	exit(1);
     }
     sysinfo.mc = mc;
-    sysinfo.chan_set = ipmi_mc_get_channelset(mc);
-    sysinfo.startcmd = ipmi_mc_get_startcmdinfo(mc);
-    sysinfo.cpef = ipmi_mc_get_pef(mc);
-    sysinfo.cusers = ipmi_mc_get_users(mc);
-    sysinfo.sol = ipmi_mc_get_sol(mc);
+    sysinfo.chan_set = is_mc_get_channelset(mc);
+    sysinfo.startcmd = is_mc_get_startcmdinfo(mc);
+    sysinfo.cpef = is_mc_get_pef(mc);
+    sysinfo.cusers = is_mc_get_users(mc);
+    sysinfo.sol = is_mc_get_sol(mc);
 
     if (read_config(&sysinfo, config_file, print_version))
 	exit(1);

@@ -546,8 +546,8 @@ void init_oem_force(void);
 
 static ipmi_tick_handler_t *tick_handlers;
 
-void
-ipmi_register_tick_handler(ipmi_tick_handler_t *handler)
+static void
+ls_register_tick_handler(ipmi_tick_handler_t *handler)
 {
     handler->next = tick_handlers;
     tick_handlers = handler;
@@ -593,87 +593,75 @@ sys_start_cmd(sys_data_t *sys)
 {
 }
 
-void
-ipmi_resend_atn(channel_t *chan)
-{
-}
-
-msg_t *
-ipmi_mc_get_next_recv_q(channel_t *chan)
+static msg_t *
+ls_mc_get_next_recv_q(channel_t *chan)
 {
     return NULL;
 }
 
-void
-ipmi_set_chassis_control_prog(lmc_data_t *mc, const char *prog)
+static void
+ls_set_chassis_control_prog(lmc_data_t *mc, const char *prog)
 {
 }
 
-int
-ipmi_mc_set_frudata_handler(lmc_data_t *mc, unsigned int fru,
-			    get_frudata_f handler, free_frudata_f freefunc)
-{
-    return 0;
-}
-
-int
-ipmi_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
-			   lmc_data_t **rmc)
+static int
+ls_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
+			 lmc_data_t **rmc)
 {
     *rmc = (lmc_data_t *) sys;
     return 0;
 }
 
-channel_t **
-ipmi_mc_get_channelset(lmc_data_t *mc)
+static channel_t **
+ls_mc_get_channelset(lmc_data_t *mc)
 {
     sys_data_t *sys = (sys_data_t *) mc;
     return sys->chan_set;
 }
 
-int
-sol_read_config(char **tokptr, sys_data_t *sys, const char **err)
+static int
+ls_sol_read_config(char **tokptr, sys_data_t *sys, const char **err)
 {
     *err = "SOL not supported in lanserv";
     return -1;
 }
 
 ipmi_sol_t *
-ipmi_mc_get_sol(lmc_data_t *mc)
+ls_mc_get_sol(lmc_data_t *mc)
 {
     return NULL;
 }
 
 startcmd_t *
-ipmi_mc_get_startcmdinfo(lmc_data_t *mc)
+ls_mc_get_startcmdinfo(lmc_data_t *mc)
 {
     return NULL;
 }
 
 static user_t musers[MAX_USERS + 1];
 
-unsigned char
-ipmi_mc_get_ipmb(lmc_data_t *mc)
+static unsigned char
+ls_mc_get_ipmb(lmc_data_t *mc)
 {
     return 0x20;
 }
 
 int
-ipmi_mc_users_changed(lmc_data_t *mc)
+ls_mc_users_changed(lmc_data_t *mc)
 {
     return 0;
 }
 
-user_t *
-ipmi_mc_get_users(lmc_data_t *mc)
+static user_t *
+ls_mc_get_users(lmc_data_t *mc)
 {
     return musers;
 }
 
 static pef_data_t mpef;
 
-pef_data_t *
-ipmi_mc_get_pef(lmc_data_t *mc)
+static pef_data_t *
+ls_mc_get_pef(lmc_data_t *mc)
 {
     return &mpef;
 }
@@ -795,6 +783,19 @@ main(int argc, const char *argv[])
 
     memset(channels, 0, sizeof(channels));
     sysinfo.chan_set = channels;
+
+    sysinfo.mc_alloc_unconfigured = ls_mc_alloc_unconfigured;
+    sysinfo.mc_get_ipmb = ls_mc_get_ipmb;
+    sysinfo.mc_get_channelset = ls_mc_get_channelset;
+    sysinfo.mc_get_sol = ls_mc_get_sol;
+    sysinfo.mc_get_startcmdinfo = ls_mc_get_startcmdinfo;
+    sysinfo.mc_get_users = ls_mc_get_users;
+    sysinfo.mc_users_changed = ls_mc_users_changed;
+    sysinfo.mc_get_pef = ls_mc_get_pef;
+    sysinfo.mc_get_next_recv_q = ls_mc_get_next_recv_q;
+    sysinfo.sol_read_config = ls_sol_read_config;
+    sysinfo.set_chassis_control_prog = ls_set_chassis_control_prog;
+    sysinfo.register_tick_handler = ls_register_tick_handler;
 
     if (read_config(&sysinfo, config_file, 0))
 	exit(1);

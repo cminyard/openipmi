@@ -321,6 +321,12 @@ struct startcmd_s {
  */
 #define IPMI_MAX_MCS 256
 
+typedef struct ipmi_tick_handler_s {
+    void (*handler)(void *info, unsigned int seconds);
+    void *info;
+    struct ipmi_tick_handler_s *next;
+} ipmi_tick_handler_t;
+
 /*
  * Generic data about the system that is global for the whole system and
  * required for all server types.
@@ -412,6 +418,25 @@ struct sys_data_s {
     int (*lan_channel_init)(void *info, channel_t *chan);
     int (*ser_channel_init)(void *info, channel_t *chan);
     int (*ipmb_channel_init)(void *info, channel_t *chan);
+
+    /*
+     * Various MC related info that must be provided.
+     */
+    int (*mc_alloc_unconfigured)(sys_data_t *sys, unsigned char ipmb,
+				 lmc_data_t **rmc);
+    void (*resend_atn)(channel_t *chan);
+    unsigned char (*mc_get_ipmb)(lmc_data_t *mc);
+    channel_t **(*mc_get_channelset)(lmc_data_t *mc);
+    ipmi_sol_t *(*mc_get_sol)(lmc_data_t *mc);
+    startcmd_t *(*mc_get_startcmdinfo)(lmc_data_t *mc);
+    user_t *(*mc_get_users)(lmc_data_t *mc);
+    int (*mc_users_changed)(lmc_data_t *mc);
+    pef_data_t *(*mc_get_pef)(lmc_data_t *mc);
+    msg_t *(*mc_get_next_recv_q)(channel_t *chan);
+    int (*sol_read_config)(char **tokptr, sys_data_t *sys, const char **err);
+    void (*set_chassis_control_prog)(lmc_data_t *mc, const char *prog);
+
+    void (*register_tick_handler)(ipmi_tick_handler_t *handler);
 };
 
 static inline void
@@ -430,14 +455,6 @@ zero_extend_ascii(uint8_t *c, unsigned int len)
 	i++;
     }
 }
-
-typedef struct ipmi_tick_handler_s {
-    void (*handler)(void *info, unsigned int seconds);
-    void *info;
-    struct ipmi_tick_handler_s *next;
-} ipmi_tick_handler_t;
-
-void ipmi_register_tick_handler(ipmi_tick_handler_t *handler);
 
 typedef struct ipmi_child_quit_s {
     void (*handler)(void *info, pid_t pid);

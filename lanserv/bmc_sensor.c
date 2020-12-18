@@ -1116,7 +1116,7 @@ static int check_sensor_sdr(lmc_data_t *mc, unsigned char *sdr,
 			    unsigned int len, void *cb_data)
 {
     sensor_t *sensor = cb_data;
-    uint8_t mc_ipmb = ipmi_mc_get_ipmb(mc);
+    uint8_t mc_ipmb = is_mc_get_ipmb(mc);
 
     if (len < 8)
 	return 0;
@@ -1524,7 +1524,7 @@ sensor_poll(void *cb_data)
 	if (err) {
 	    mc->sysinfo->log(mc->sysinfo, OS_ERROR, NULL,
 			     "Error getting sensor value (%2.2x,%d,%d): %s, %s",
-			     ipmi_mc_get_ipmb(mc), sensor->lun, sensor->num,
+			     is_mc_get_ipmb(mc), sensor->lun, sensor->num,
 			     strerror(err), errstr);
 	    goto out_restart;
 	}

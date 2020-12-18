@@ -510,7 +510,7 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
     return_rsp(lan, msg, NULL, rsp);
 
-    msg = ipmi_mc_get_next_recv_q(chan);
+    msg = lan->sysinfo->mc_get_next_recv_q(chan);
     if (!msg)
 	return;
     while (msg) {
@@ -529,7 +529,7 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
 	chan->free(chan, msg);
 
-	msg = ipmi_mc_get_next_recv_q(chan);
+	msg = lan->sysinfo->mc_get_next_recv_q(chan);
     }
     if (chan->recv_in_q)
 	chan->recv_in_q(chan, 0);
@@ -727,7 +727,7 @@ handle_get_channel_cipher_suites(lanserv_data_t *lan, msg_t *msg)
     if (chan == 0xe)
 	chan = lan->channel.channel_num;
 
-    channels = ipmi_mc_get_channelset(lan->channel.mc);
+    channels = lan->sysinfo->mc_get_channelset(lan->channel.mc);
     channel = channels[chan];
     if (!channel) {
 	return_err(lan, msg, NULL, IPMI_NOT_PRESENT_CC);
@@ -1243,8 +1243,7 @@ write_lan_config(lanserv_data_t *lan)
     if (lan->persist_changed) {
 	persist_t *p;
 
-	p = alloc_persist("lanparm.mc%2.2x.%d",
-			  ipmi_mc_get_ipmb(lan->channel.mc),
+	p = alloc_persist("lanparm.mc%2.2x.%d", 0x20,
 			  lan->channel.channel_num);
 	if (!p)
 	    return;
@@ -3078,7 +3077,7 @@ read_lan_config(lanserv_data_t *lan)
     unsigned int len;
     long iv;
 
-    p = read_persist("lanparm.mc%2.2x.%d", ipmi_mc_get_ipmb(lan->channel.mc),
+    p = read_persist("lanparm.mc%2.2x.%d", 0x20,
 		     lan->channel.channel_num);
 
     if (p && !read_persist_data(p, &data, &len, "max_priv_for_cipher")) {
@@ -3201,7 +3200,7 @@ ipmi_lan_init(lanserv_data_t *lan)
 
     lan->tick_handler.handler = ipmi_lan_tick;
     lan->tick_handler.info = lan;
-    ipmi_register_tick_handler(&lan->tick_handler);
+    lan->sysinfo->register_tick_handler(&lan->tick_handler);
 
  out:
     return rv;

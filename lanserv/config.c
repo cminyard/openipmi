@@ -81,11 +81,11 @@ read_persist_users(sys_data_t *sys)
 	if (!mc)
 	    continue;
 
-	p = read_persist("users.mc%2.2x", ipmi_mc_get_ipmb(mc));
+	p = read_persist("users.mc%2.2x", sys->mc_get_ipmb(mc));
 	if (!p)
 	    continue;
 
-	users = ipmi_mc_get_users(mc);
+	users = sys->mc_get_users(mc);
 	for (j = 0; j <= MAX_USERS; j++) {
 	    void *data;
 	    unsigned int len;
@@ -125,14 +125,14 @@ write_persist_users(sys_data_t *sys)
 	user_t *users;
 	persist_t *p;
 
-	if (!mc || !ipmi_mc_users_changed(mc))
+	if (!mc || !sys->mc_users_changed(mc))
 	    continue;
 
-	p = alloc_persist("users.mc%2.2x", ipmi_mc_get_ipmb(mc));
+	p = alloc_persist("users.mc%2.2x", sys->mc_get_ipmb(mc));
 	if (!p)
 	    return ENOMEM;
 
-	users = ipmi_mc_get_users(mc);
+	users = sys->mc_get_users(mc);
 	for (j = 0; j <= MAX_USERS; j++) {
 	    add_persist_int(p, users[j].valid, "%d.valid", j);
 	    add_persist_int(p, users[j].link_auth, "%d.link_auth", j);
@@ -835,12 +835,12 @@ read_config(sys_data_t *sys,
 	} else if (strcmp(tok, "serial") == 0) {
 	    err = serserv_read_config(&tokptr, sys, &errstr);
 	} else if (strcmp(tok, "sol") == 0) {
-	    err = sol_read_config(&tokptr, sys, &errstr);
+	    err = sys->sol_read_config(&tokptr, sys, &errstr);
 	} else if (strcmp(tok, "chassis_control") == 0) {
 	    char *prog;
 	    err = get_delim_str(&tokptr, &prog, &errstr);
 	    if (!err)
-		ipmi_set_chassis_control_prog(sys->mc, prog);
+		sys->set_chassis_control_prog(sys->mc, prog);
 	} else if (strcmp(tok, "name") == 0) {
 	    err = get_delim_str(&tokptr, &sys->name, &errstr);
 	} else if (strcmp(tok, "startcmd") == 0) {
@@ -861,7 +861,7 @@ read_config(sys_data_t *sys,
 	    err = get_uchar(&tokptr, &ipmb, &errstr);
 	    if (!err) {
 		lmc_data_t *mc;
-		err = ipmi_mc_alloc_unconfigured(sys, ipmb, &mc);
+		err = sys->mc_alloc_unconfigured(sys, ipmb, &mc);
 		if (err == ENOMEM) {
 		    errstr = "Out of memory";
 		    err = -1;
@@ -870,11 +870,11 @@ read_config(sys_data_t *sys,
 		    err = -1;
 		} else {
 		    sys->mc = mc;
-		    sys->cusers = ipmi_mc_get_users(mc);
-		    sys->chan_set = ipmi_mc_get_channelset(mc);
-		    sys->cpef = ipmi_mc_get_pef(mc);
-		    sys->startcmd = ipmi_mc_get_startcmdinfo(mc);
-		    sys->sol = ipmi_mc_get_sol(mc);
+		    sys->cusers = sys->mc_get_users(mc);
+		    sys->chan_set = sys->mc_get_channelset(mc);
+		    sys->cpef = sys->mc_get_pef(mc);
+		    sys->startcmd = sys->mc_get_startcmdinfo(mc);
+		    sys->sol = sys->mc_get_sol(mc);
 		}
 	    }
 	} else if (strcmp(tok, "console") == 0) {

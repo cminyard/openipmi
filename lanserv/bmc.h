@@ -60,6 +60,7 @@
 #include <semaphore.h>
 #include <OpenIPMI/mcserv.h>
 #include "emu.h"
+#include "ipmi_sim.h"
 
 #define WATCHDOG_SENSOR_NUM 0
 

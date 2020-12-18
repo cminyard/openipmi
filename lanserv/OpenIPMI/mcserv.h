@@ -102,24 +102,13 @@ typedef struct ipmi_sol_s {
     soldata_t *soldata;
 } ipmi_sol_t;
 
-int ipmi_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
-			       lmc_data_t **rmc);
 
-unsigned char ipmi_mc_get_ipmb(lmc_data_t *mc);
-channel_t **ipmi_mc_get_channelset(lmc_data_t *mc);
-ipmi_sol_t *ipmi_mc_get_sol(lmc_data_t *mc);
-startcmd_t *ipmi_mc_get_startcmdinfo(lmc_data_t *mc);
-user_t *ipmi_mc_get_users(lmc_data_t *mc);
-pef_data_t *ipmi_mc_get_pef(lmc_data_t *mc);
 int ipmi_mc_is_power_on(lmc_data_t *mc);
 
 void ipmi_mc_destroy(lmc_data_t *mc);
 
 void ipmi_mc_disable(lmc_data_t *mc);
 void ipmi_mc_enable(lmc_data_t *mc);
-
-void ipmi_resend_atn(channel_t *chan);
-msg_t *ipmi_mc_get_next_recv_q(channel_t *chan);
 
 int ipmi_emu_set_mc_guid(lmc_data_t *mc,
 			 unsigned char guid[16],
@@ -307,15 +296,11 @@ void ipmi_set_mfg_id(lmc_data_t *emu, unsigned char mfg_id[3]);
 void ipmi_get_mfg_id(lmc_data_t *emu, unsigned char mfg_id[3]);
 void ipmi_set_product_id(lmc_data_t *emu, unsigned char product_id[3]);
 void ipmi_get_product_id(lmc_data_t *emu, unsigned char product_id[3]);
-void ipmi_set_chassis_control_prog(lmc_data_t *mc, const char *prog);
 
 void read_persist_users(sys_data_t *sys);
 int write_persist_users(sys_data_t *sys);
 int read_sol_config(sys_data_t *sys);
 int write_sol_config(lmc_data_t *mc);
-int sol_read_config(char **tokptr, sys_data_t *sys, const char **err);
-
-int ipmi_mc_users_changed(lmc_data_t *mc);
 
 /*
  * Types and functions for registering handlers with the MC emulator.
@@ -369,13 +354,6 @@ void ipmi_sol_deactivate(lmc_data_t    *mc,
 
 int sol_init_mc(sys_data_t *sys, lmc_data_t *mc);
 int sol_init(sys_data_t *sys);
-unsigned char *sol_set_frudata(lmc_data_t *mc, unsigned int *size);
-void sol_free_frudata(lmc_data_t *mc, unsigned char *data);
-
-typedef unsigned char *(*get_frudata_f)(lmc_data_t *mc, unsigned int *size);
-typedef void (*free_frudata_f)(lmc_data_t *mc, unsigned char *data);
-int ipmi_mc_set_frudata_handler(lmc_data_t *mc, unsigned int fru,
-				get_frudata_f handler, free_frudata_f freefunc);
 
 
 #define CHASSIS_CONTROL_POWER 0
