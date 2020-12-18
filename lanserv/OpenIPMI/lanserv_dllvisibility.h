@@ -1,13 +1,13 @@
 /*
- * serserv.h
+ * lanserv.h
  *
- * MontaVista IPMI serial server include file
+ * MontaVista IPMI LAN server include file
  *
  * Author: MontaVista Software, Inc.
  *         Corey Minyard <minyard@mvista.com>
  *         source@mvista.com
  *
- * Copyright 2012 MontaVista Software Inc.
+ * Copyright 2003,2004,2005 MontaVista Software Inc.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -20,7 +20,7 @@
  *  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
  *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
- *  OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+` *  OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
  *  ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
  *  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
  *  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -53,71 +53,32 @@
  *      written permission.
  */
 
-#ifndef __SERSERV_H
-#define __SERSERV_H
+#ifndef __LANSERV_DLLVISIBILITY_H
+#define __LANSERV_DLLVISIBILITY_H
 
-#include <OpenIPMI/lanserv.h>
-#include <OpenIPMI/os_handler.h>
+#if defined _WIN32 || defined __CYGWIN__
+  #ifdef BUILDING_IPMI_LANSERV_DLL
+    #ifdef __GNUC__
+      #define IPMI_LANSERV_DLL_PUBLIC __attribute__ ((dllexport))
+    #else
+      #define IPMI_LANSERV_DLL_PUBLIC __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #else
+    #ifdef __GNUC__
+      #define IPMI_LANSERV_DLL_PUBLIC __attribute__ ((dllimport))
+    #else
+      #define IPMI_LANSERV_DLL_PUBLIC __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+    #endif
+  #endif
+  #define IPMI_LANSERV_DLL_LOCAL
+#else
+  #if __GNUC__ >= 4
+    #define IPMI_LANSERV_DLL_PUBLIC __attribute__ ((visibility ("default")))
+    #define IPMI_LANSERV_DLL_LOCAL  __attribute__ ((visibility ("hidden")))
+  #else
+    #define IPMI_LANSERV_DLL_PUBLIC
+    #define IPMI_LANSERV_DLL_LOCAL
+  #endif
+#endif
 
-typedef struct serserv_data_s serserv_data_t;
-
-typedef struct ser_codec_s {
-    const char *name;
-    void (*handle_char)(unsigned char ch, serserv_data_t *si);
-    void (*send)(msg_t *msg, serserv_data_t *si);
-    int (*setup)(serserv_data_t *si);
-    void (*connected)(serserv_data_t *si);
-    void (*disconnected)(serserv_data_t *si);
-} ser_codec_t;
-
-typedef struct ser_oem_handler_s {
-    const char *name;
-    int (*handler)(channel_t *chan, msg_t *msg, unsigned char *rdata,
-		   unsigned int *rdata_len);
-    void (*init)(serserv_data_t *si);
-} ser_oem_handler_t;
-
-struct serserv_data_s {
-    lan_addr_t addr;
-
-    channel_t channel;
-
-    os_handler_t *os_hnd;
-
-    sys_data_t *sysinfo;
-
-    void *user_info;
-
-    int bind_fd;
-    int con_fd;
-
-    int connected;
-
-    void (*send_out)(serserv_data_t *si, unsigned char *data,
-		     unsigned int data_len);
-
-    ser_codec_t *codec;
-    void *codec_info;
-
-    ser_oem_handler_t *oem;
-    void *oem_info;
-
-    /* Settings */
-    int           debug;
-    unsigned int  do_connect : 1;
-    unsigned int  echo : 1;
-    unsigned int  do_attn : 1;
-    unsigned char my_ipmb;
-    unsigned char global_enables;
-    unsigned char attn_chars[8];
-    unsigned int  attn_chars_len;
-};
-
-IPMI_LANSERV_DLL_PUBLIC
-int serserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr);
-IPMI_LANSERV_DLL_PUBLIC
-int serserv_init(serserv_data_t *ser);
-IPMI_LANSERV_DLL_PUBLIC
-void serserv_handle_data(serserv_data_t *ser, uint8_t *data, unsigned int len);
-
-#endif /* __SERSERV_H */
+#endif /* __LANSERV_DLLVISIBILITY_H */

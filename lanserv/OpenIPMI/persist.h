@@ -56,23 +56,37 @@
 #ifndef __PERSIST_H__
 #define __PERSIST_H__
 
+#include <OpenIPMI/lanserv_dllvisibility.h>
+
 typedef struct persist_s persist_t;
 
+IPMI_LANSERV_DLL_PUBLIC
 int persist_init(const char *app, const char *instance, const char *basedir);
 
+IPMI_LANSERV_DLL_PUBLIC
 persist_t *alloc_persist(const char *name, ...);
+IPMI_LANSERV_DLL_PUBLIC
 persist_t *read_persist(const char *name, ...);
+IPMI_LANSERV_DLL_PUBLIC
 int write_persist(persist_t *p);
+IPMI_LANSERV_DLL_PUBLIC
 int write_persist_file(persist_t *p, FILE *f);
+IPMI_LANSERV_DLL_PUBLIC
 void free_persist(persist_t *p);
 
+IPMI_LANSERV_DLL_PUBLIC
 int add_persist_data(persist_t *p, void *data, unsigned int len,
 		     const char *name, ...);
+IPMI_LANSERV_DLL_PUBLIC
 int read_persist_data(persist_t *p, void **data, unsigned int *len,
 		      const char *name, ...);
+IPMI_LANSERV_DLL_PUBLIC
 int add_persist_int(persist_t *p, long val, const char *name, ...);
+IPMI_LANSERV_DLL_PUBLIC
 int read_persist_int(persist_t *p, long *val, const char *name, ...);
+IPMI_LANSERV_DLL_PUBLIC
 int add_persist_str(persist_t *p, const char *val, const char *name, ...);
+IPMI_LANSERV_DLL_PUBLIC
 int read_persist_str(persist_t *p, char **val, const char *name, ...);
 
 /*
@@ -82,6 +96,7 @@ int read_persist_str(persist_t *p, char **val, const char *name, ...);
  */
 #define ITER_PERSIST_CONTINUE 0
 #define ITER_PERSIST_STOP 1
+IPMI_LANSERV_DLL_PUBLIC
 int iterate_persist(persist_t *p,
 		    void *cb_data,
 		    int (*data_func)(const char *name,
@@ -91,10 +106,13 @@ int iterate_persist(persist_t *p,
 				    long val, void *cb_data));
 
 /* Free the values return by read_persist_data() and read_persist_str() */
+IPMI_LANSERV_DLL_PUBLIC
 void free_persist_data(void *data);
+IPMI_LANSERV_DLL_PUBLIC
 void free_persist_str(char *str);
 
 /* Can be set to zero to disable persistence. */
+IPMI_LANSERV_DLL_PUBLIC
 extern int persist_enable;
 
 #endif /* __PERSIST_H__ */
