@@ -49,7 +49,7 @@
 
 #include <stdlib.h>
 
-#include <OpenIPMI/ipmi_auth.h>
+#include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/serv.h>
 
 typedef struct force_oem_data_s

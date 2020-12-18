@@ -95,5 +95,8 @@ int extcmd_setvals(sys_data_t *sys,
 int extcmd_checkvals(sys_data_t *sys, void *baseloc, const char *cmd,
 		     extcmd_info_t *ts, unsigned int count);
 
+int ipmi_cmd_permitted(unsigned char priv,
+		       unsigned char netfn,
+		       unsigned char cmd);
 
 #endif /* _EXTCMD_H_ */

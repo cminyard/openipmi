@@ -140,11 +140,6 @@ const char *ipmi_privilege_string(int privilege);
 #define IPMI_PRIV_SEND		2 /* Special send message handling needed. */
 #define IPMI_PRIV_BOOT		3 /* Special set system boot options handling.*/
 
-IPMI_DLL_PUBLIC
-int ipmi_cmd_permitted(unsigned char priv,
-		       unsigned char netfn,
-		       unsigned char cmd);
-
 #ifdef __cplusplus
 }
 #endif

@@ -55,6 +55,7 @@
  */
 
 #include <OpenIPMI/ipmi_auth.h>
+#include <OpenIPMI/extcmd.h>
 #include <OpenIPMI/ipmi_msgbits.h>
 
 #define PRIV_ENTRY(c,u,o,a) ((c) | ((u)<<4) | ((o)<<8) | ((a)<<12))

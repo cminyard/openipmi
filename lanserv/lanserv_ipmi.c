@@ -63,7 +63,6 @@
 #endif
 
 #include <OpenIPMI/ipmi_msgbits.h>
-#include <OpenIPMI/ipmi_auth.h>
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_lan.h>
