@@ -280,8 +280,6 @@ int ipmi_mc_set_power(lmc_data_t *mc, unsigned char power, int gen_int);
 int ipmi_mc_set_num_leds(lmc_data_t   *mc,
 			 unsigned int count);
 
-void read_persist_users(sys_data_t *sys);
-int write_persist_users(sys_data_t *sys);
 int read_sol_config(sys_data_t *sys);
 int write_sol_config(lmc_data_t *mc);
 

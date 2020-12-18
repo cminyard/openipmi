@@ -811,6 +811,11 @@ int ipmi_emu_add_cmd(const char *name, unsigned int flags,
 		     ipmi_emu_cmd_handler handler);
 
 
+IPMI_LANSERV_DLL_PUBLIC
+void read_persist_users(sys_data_t *sys);
+IPMI_LANSERV_DLL_PUBLIC
+int write_persist_users(sys_data_t *sys);
+
 #ifdef __cplusplus
 }
 #endif
