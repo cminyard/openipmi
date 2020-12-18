@@ -57,6 +57,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #ifdef HAVE_OPENSSL
 #include <openssl/hmac.h>
@@ -272,7 +273,7 @@ raw_send(lanserv_data_t *lan,
 static void
 return_rmcpp_rsp(lanserv_data_t *lan, session_t *session, msg_t *msg,
 		 unsigned int payload, unsigned char *data, unsigned int len,
-		 unsigned char iana[3], unsigned int payload_id)
+		 unsigned char *iana, unsigned int payload_id)
 {
     uint8_t d[IPMI_LAN_MAX_HEADER_SIZE+IPMI_LAN_MAX_HEADER_SIZE
 	      +IPMI_LAN_MAX_TRAILER_SIZE+1];
@@ -384,6 +385,7 @@ return_rmcpp_rsp(lanserv_data_t *lan, session_t *session, msg_t *msg,
 
     tpos = pos + 6;
     if (payload == 2) {
+	assert(iana);
 	memcpy(tpos, iana, 3);
 	tpos[3] = 0;
 	ipmi_set_uint16(tpos+4, payload_id);
