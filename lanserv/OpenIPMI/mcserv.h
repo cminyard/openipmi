@@ -352,7 +352,6 @@ void ipmi_sol_deactivate(lmc_data_t    *mc,
 			 unsigned char *rdata,
 			 unsigned int  *rdata_len);
 
-int sol_init_mc(sys_data_t *sys, lmc_data_t *mc);
 int sol_init(sys_data_t *sys);
 
 

@@ -72,6 +72,8 @@
 #include <OpenIPMI/internal/winsock_compat.h>
 #include "ipmi_sim.h"
 
+static int sol_init_mc(sys_data_t *sys, lmc_data_t *mc);
+
 /* FIXME - move to configure handling */
 #define USE_UUCP_LOCKING
 
@@ -1872,7 +1874,7 @@ handle_sol_shutdown(void *info, int sig)
     fclose(f);
 }
 
-int
+static int
 sol_init_mc(sys_data_t *sys, lmc_data_t *mc)
 {
     ipmi_sol_t *sol = is_mc_get_sol(mc);
