@@ -56,120 +56,33 @@
 #ifndef __MCSERV_H
 #define __MCSERV_H
 
-#include <OpenIPMI/msg.h>
-#include <OpenIPMI/os_handler.h>
+#include <OpenIPMI/lanserv.h>
+typedef struct sensor_s sensor_t;
 
-typedef struct lmc_data_s lmc_data_t;
-
-typedef struct solparm_s {
-    int enabled;
-    int bitrate;
-    int bitrate_nonv;
-    int default_bitrate;
-} solparm_t;
-
-typedef struct soldata_s soldata_t;
-
-typedef struct ipmi_sol_s {
-    int configured;
-
-    char *device;
-
-    /* TCP-specific information. */
-    const char *tcpdest;
-    const char *tcpport;
-    int do_telnet;
-
-    int set_in_progress;
-    solparm_t solparm;
-    solparm_t solparm_rollback;
-    void (*update_bitrate)(lmc_data_t *mc);
-
-    int active;
-    uint32_t session_id;
-
-    /* A history buffer, hooking to instance 2 will dump it, if it's non-zero */
-    unsigned int history_size;
-    int history_active;
-    uint32_t history_session_id;
-
-    /* History is stored in this file is the program fails. */
-    char *backupfile;
-
-    int use_rtscts;
-    int readclear;
-
-    soldata_t *soldata;
-} ipmi_sol_t;
+#define MC	1
+#define NOMC	0
+typedef int (*ipmi_emu_cmd_handler)(emu_out_t  *out,
+				    emu_data_t *emu,
+				    lmc_data_t *mc,
+				    char       **toks);
+int ipmi_emu_add_cmd(const char *name, unsigned int flags,
+		     ipmi_emu_cmd_handler handler);
 
 
-int ipmi_mc_is_power_on(lmc_data_t *mc);
-
-void ipmi_mc_destroy(lmc_data_t *mc);
-
-void ipmi_mc_disable(lmc_data_t *mc);
-void ipmi_mc_enable(lmc_data_t *mc);
-
-int ipmi_emu_set_mc_guid(lmc_data_t *mc,
-			 unsigned char guid[16],
-			 int force);
-
-int ipmi_mc_enable_sel(lmc_data_t    *emu,
-		       int           max_entries,
-		       unsigned char flags);
-
-int ipmi_mc_add_to_sel(lmc_data_t    *emu,
-		       unsigned char record_type,
-		       unsigned char event[13],
-		       unsigned int  *recid);
-
-int ipmi_mc_add_main_sdr(lmc_data_t    *mc,
-			 unsigned char *data,
-			 unsigned int  data_len);
-
-int ipmi_mc_add_device_sdr(lmc_data_t    *mc,
-			   unsigned char lun,
-			   unsigned char *data,
-			   unsigned int  data_len);
-
-enum fru_io_cb_op { FRU_IO_READ, FRU_IO_WRITE };
-
-typedef int (*fru_io_cb)(void *cb_data,
-			 enum fru_io_cb_op op,
-			 unsigned char *data,
-			 unsigned int offset,
-			 unsigned int length);
-
-/*
- * Add a fru inventory device to the MC.  If fru_io_cb is NULL, the data
- * and length is the initial data for the FRU.  Otherwise, fru_io_cb is
- * called for reads and writes, and the data is the callback data for
- * fru_io_cb.
- */
-int ipmi_mc_add_fru_data(lmc_data_t    *mc,
-			 unsigned char device_id,
-			 unsigned int  length,
-			 fru_io_cb     fru_io_cb,
-			 void          *data);
-
-/*
- * Add a fru inventory device to the MC, mapping it to a file at the
- * given filename, starting in the file at the given offset.
- */
-int ipmi_mc_add_fru_file(lmc_data_t    *mc,
-			 unsigned char device_id,
-			 unsigned int  length,
-			 unsigned int  file_offset,
-			 const char    *filename);
-
-int ipmi_mc_get_fru_data_len(lmc_data_t    *mc,
-			     unsigned char device_id,
-			     unsigned int  *length);
-
-int ipmi_mc_get_fru_data(lmc_data_t    *mc,
-			 unsigned char device_id,
-			 unsigned int  length,
-			 unsigned char *data);
+#define CHASSIS_CONTROL_POWER 0
+#define CHASSIS_CONTROL_RESET 1
+#define CHASSIS_CONTROL_BOOT  2
+#define CHASSIS_CONTROL_BOOT_INFO_ACK  3
+#define CHASSIS_CONTROL_GRACEFUL_SHUTDOWN  4
+#define CHASSIS_CONTROL_IDENTIFY 5
+void ipmi_mc_set_chassis_control_func(lmc_data_t *mc,
+				      int (*set)(lmc_data_t *mc, int op,
+						 unsigned char *val,
+						 void *cb_data),
+				      int (*get)(lmc_data_t *mc, int op,
+						 unsigned char *val,
+						 void *cb_data),
+				      void *cb_data);
 
 /*
  * FRUs have a semaphore that can be use to grant exclusive access.
@@ -180,6 +93,11 @@ int ipmi_mc_get_fru_data(lmc_data_t    *mc,
 int ipmi_mc_fru_sem_wait(lmc_data_t *mc, unsigned char device_id);
 int ipmi_mc_fru_sem_trywait(lmc_data_t *mc, unsigned char device_id);
 int ipmi_mc_fru_sem_post(lmc_data_t *mc, unsigned char device_id);
+
+int ipmi_mc_sensor_set_enabled(lmc_data_t    *mc,
+			       unsigned char lun,
+			       unsigned char sens_num,
+			       unsigned char enabled);
 
 int ipmi_mc_sensor_set_bit(lmc_data_t   *mc,
 			   unsigned char lun,
@@ -193,11 +111,6 @@ int ipmi_mc_sensor_set_bit_clr_rest(lmc_data_t   *mc,
 				    unsigned char sens_num,
 				    unsigned char bit,
 				    int           gen_event);
-
-int ipmi_mc_sensor_set_enabled(lmc_data_t    *mc,
-			       unsigned char lun,
-			       unsigned char sens_num,
-			       unsigned char enabled);
 
 int ipmi_mc_sensor_set_value(lmc_data_t    *mc,
 			     unsigned char lun,
@@ -241,47 +154,24 @@ int ipmi_mc_sensor_set_event_support(lmc_data_t    *mc,
 				     uint16_t assert_enabled,
 				     uint16_t deassert_enabled);
 
-struct ipmi_sensor_handler_s
-{
-    char *name;
-    int (*poll)(void *cb_data, unsigned int *val, const char **errstr);
-    int (*init)(lmc_data_t *mc, unsigned char lun, unsigned char sensor_num,
-		char **toks, void *cb_data, void **rcb_data,
-		const char **errstr);
-    int (*postinit)(void *cb_data, const char **errstr);
-    void *cb_data;
+/*
+ * Message handling.
+ */
 
-    struct ipmi_sensor_handler_s *next;
-};
-typedef struct ipmi_sensor_handler_s ipmi_sensor_handler_t;
+void handle_invalid_cmd(lmc_data_t    *mc,
+			unsigned char *rdata,
+			unsigned int  *rdata_len);
+int check_msg_length(msg_t         *msg,
+		     unsigned int  len,
+		     unsigned char *rdata,
+		     unsigned int  *rdata_len);
 
-int ipmi_sensor_add_handler(ipmi_sensor_handler_t *handler);
-ipmi_sensor_handler_t *ipmi_sensor_find_handler(const char *name);
-
-int ipmi_mc_add_sensor(lmc_data_t    *mc,
-		       unsigned char lun,
-		       unsigned char sens_num,
-		       unsigned char type,
-		       unsigned char event_reading_code,
-		       int           event_only);
-
-int ipmi_mc_add_polled_sensor(lmc_data_t    *mc,
-			      unsigned char lun,
-			      unsigned char sens_num,
-			      unsigned char type,
-			      unsigned char event_reading_code,
-			      unsigned int poll_rate,
-			      int (*poll)(void *cb_data, unsigned int *val,
-					  const char **errstr),
-			      void *cb_data);
-
-int ipmi_mc_set_power(lmc_data_t *mc, unsigned char power, int gen_int);
-
-int ipmi_mc_set_num_leds(lmc_data_t   *mc,
-			 unsigned int count);
-
-int read_sol_config(sys_data_t *sys);
-int write_sol_config(lmc_data_t *mc);
+void ipmi_mc_set_dev_revision(lmc_data_t *mc, unsigned char dev_revision);
+void ipmi_mc_set_fw_revision(lmc_data_t *mc, unsigned char fw_revision_major,
+			     unsigned char fw_revision_minor);
+void ipmi_mc_set_aux_fw_revision(lmc_data_t *mc,
+				 unsigned char aux_fw_revision[4]);
+const char *get_lanserv_version(void);
 
 /*
  * Types and functions for registering handlers with the MC emulator.
@@ -317,57 +207,8 @@ void ipmi_emu_register_group_extension_handler(uint8_t group_extension,
 					       cmd_handler_f handler,
 					       void *cb_data);
 
-/*
- * SOL handling
- */
-
-void ipmi_sol_activate(lmc_data_t    *mc,
-		       channel_t     *channel,
-		       msg_t         *msg,
-		       unsigned char *rdata,
-		       unsigned int  *rdata_len);
-
-void ipmi_sol_deactivate(lmc_data_t    *mc,
-			 channel_t     *channel,
-			 msg_t         *msg,
-			 unsigned char *rdata,
-			 unsigned int  *rdata_len);
-
-int sol_init(sys_data_t *sys);
-
-
-#define CHASSIS_CONTROL_POWER 0
-#define CHASSIS_CONTROL_RESET 1
-#define CHASSIS_CONTROL_BOOT  2
-#define CHASSIS_CONTROL_BOOT_INFO_ACK  3
-#define CHASSIS_CONTROL_GRACEFUL_SHUTDOWN  4
-#define CHASSIS_CONTROL_IDENTIFY 5
-void ipmi_mc_set_chassis_control_func(lmc_data_t *mc,
-				      int (*set)(lmc_data_t *mc, int op,
-						 unsigned char *val,
-						 void *cb_data),
-				      int (*get)(lmc_data_t *mc, int op,
-						 unsigned char *val,
-						 void *cb_data),
-				      void *cb_data);
-
-/*
- * Message handling.
- */
-
-void handle_invalid_cmd(lmc_data_t    *mc,
-			unsigned char *rdata,
-			unsigned int  *rdata_len);
-int check_msg_length(msg_t         *msg,
-		     unsigned int  len,
-		     unsigned char *rdata,
-		     unsigned int  *rdata_len);
-
-void ipmi_mc_set_dev_revision(lmc_data_t *mc, unsigned char dev_revision);
-void ipmi_mc_set_fw_revision(lmc_data_t *mc, unsigned char fw_revision_major,
-			     unsigned char fw_revision_minor);
-void ipmi_mc_set_aux_fw_revision(lmc_data_t *mc,
-				 unsigned char aux_fw_revision[4]);
-const char *get_lanserv_version(void);
+void mc_new_event(lmc_data_t *mc,
+		  unsigned char record_type,
+		  unsigned char event[13]);
 
 #endif /* __MCSERV_H */

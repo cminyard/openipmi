@@ -30,7 +30,7 @@ bin_PROGRAMS = ipmi_sim $(IPMILAN_PROG)
 
 noinst_PROGRAMS = ipmi_checksum
 
-noinst_HEADERS = emu.h bmc.h ipmi_sim.h
+noinst_HEADERS = emu.h bmc.h ipmi_sim.h sol.h
 
 libIPMIlanserv_la_SOURCES = lanserv_ipmi.c lanserv_asf.c priv_table.c \
 	lanserv_oem_force.c lanserv_config.c config.c serv.c serial_ipmi.c \

@@ -1,5 +1,5 @@
 /*
- * bmc.h
+ * sol.h
  *
  * MontaVista IPMI LAN server include file
  *
@@ -7,7 +7,7 @@
  *         Corey Minyard <minyard@mvista.com>
  *         source@mvista.com
  *
- * Copyright 2020 MontaVista Software Inc.
+ * Copyright 2003,2004,2005 MontaVista Software Inc.
  *
  * This software is available to you under a choice of one of two
  * licenses.  You may choose to be licensed under the terms of the GNU
@@ -52,53 +52,64 @@
  *      products derived from this software without specific prior
  *      written permission.
  */
-
-#ifndef IPMI_SIM_H
-#define IPMI_SIM_H
-
-int is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
-			     lmc_data_t **rmc);
-unsigned char is_mc_get_ipmb(lmc_data_t *mc);
-channel_t **is_mc_get_channelset(lmc_data_t *mc);
-ipmi_sol_t *is_mc_get_sol(lmc_data_t *mc);
-startcmd_t *is_mc_get_startcmdinfo(lmc_data_t *mc);
-user_t *is_mc_get_users(lmc_data_t *mc);
-int is_mc_users_changed(lmc_data_t *mc);
-pef_data_t *is_mc_get_pef(lmc_data_t *mc);
-msg_t *is_mc_get_next_recv_q(channel_t *chan);
-int is_sol_read_config(char **tokptr, sys_data_t *sys, const char **err);
-void is_set_chassis_control_prog(lmc_data_t *mc, const char *prog);
-void is_resend_atn(channel_t *chan);
-
-typedef unsigned char *(*get_frudata_f)(lmc_data_t *mc, unsigned int *size);
-typedef void (*free_frudata_f)(lmc_data_t *mc, unsigned char *data);
-int ipmi_mc_set_frudata_handler(lmc_data_t *mc, unsigned int fru,
-				get_frudata_f handler, free_frudata_f freefunc);
-
-typedef struct ipmi_child_quit_s {
-    void (*handler)(void *info, pid_t pid);
-    void *info;
-    struct ipmi_child_quit_s *next;
-} ipmi_child_quit_t;
-
-void ipmi_register_child_quit_handler(ipmi_child_quit_t *handler);
-
-typedef struct ipmi_shutdown_s {
-    void (*handler)(void *info, int sig);
-    void *info;
-    struct ipmi_shutdown_s *next;
-} ipmi_shutdown_t;
-
-void ipmi_register_shutdown_handler(ipmi_shutdown_t *handler);
+#ifndef SOL_H
+#define SOL_H
 
 /*
- * Start the "startcmd" specified in the configuration file.
+ * SOL handling
  */
-void ipmi_do_start_cmd(startcmd_t *startcmd);
-void ipmi_do_kill(startcmd_t *startcmd, int noblock);
 
-int sol_init(sys_data_t *sys);
-int read_sol_config(sys_data_t *sys);
-int write_sol_config(lmc_data_t *mc);
+typedef struct solparm_s {
+    int enabled;
+    int bitrate;
+    int bitrate_nonv;
+    int default_bitrate;
+} solparm_t;
 
-#endif /* IPMI_SIM_H */
+typedef struct soldata_s soldata_t;
+
+typedef struct ipmi_sol_s {
+    int configured;
+
+    char *device;
+
+    /* TCP-specific information. */
+    const char *tcpdest;
+    const char *tcpport;
+    int do_telnet;
+
+    int set_in_progress;
+    solparm_t solparm;
+    solparm_t solparm_rollback;
+    void (*update_bitrate)(lmc_data_t *mc);
+
+    int active;
+    uint32_t session_id;
+
+    /* A history buffer, hooking to instance 2 will dump it, if it's non-zero */
+    unsigned int history_size;
+    int history_active;
+    uint32_t history_session_id;
+
+    /* History is stored in this file is the program fails. */
+    char *backupfile;
+
+    int use_rtscts;
+    int readclear;
+
+    soldata_t *soldata;
+} ipmi_sol_t;
+
+void ipmi_sol_activate(lmc_data_t    *mc,
+		       channel_t     *channel,
+		       msg_t         *msg,
+		       unsigned char *rdata,
+		       unsigned int  *rdata_len);
+
+void ipmi_sol_deactivate(lmc_data_t    *mc,
+			 channel_t     *channel,
+			 msg_t         *msg,
+			 unsigned char *rdata,
+			 unsigned int  *rdata_len);
+
+#endif /* SOL_H */

@@ -70,6 +70,8 @@
 #include <OpenIPMI/persist.h>
 #include <OpenIPMI/internal/winsock_compat.h>
 #include "ipmi_sim.h"
+#include "sol.h"
+#include "emu.h"
 
 static int sol_init_mc(sys_data_t *sys, lmc_data_t *mc);
 

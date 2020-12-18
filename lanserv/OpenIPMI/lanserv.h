@@ -800,17 +800,6 @@ typedef struct emu_out_s
     void *data;
 } emu_out_t;
 
-#define MC	1
-#define NOMC	0
-typedef int (*ipmi_emu_cmd_handler)(emu_out_t  *out,
-				    emu_data_t *emu,
-				    lmc_data_t *mc,
-				    char       **toks);
-IPMI_LANSERV_DLL_PUBLIC
-int ipmi_emu_add_cmd(const char *name, unsigned int flags,
-		     ipmi_emu_cmd_handler handler);
-
-
 IPMI_LANSERV_DLL_PUBLIC
 void read_persist_users(sys_data_t *sys);
 IPMI_LANSERV_DLL_PUBLIC

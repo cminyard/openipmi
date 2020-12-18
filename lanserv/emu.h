@@ -120,4 +120,109 @@ int read_command_file(emu_out_t *out, emu_data_t *emu,
 
 void emu_set_debug_level(emu_data_t *emu, unsigned int debug_level);
 
+int ipmi_emu_set_mc_guid(lmc_data_t *mc,
+			 unsigned char guid[16],
+			 int force);
+
+void ipmi_mc_destroy(lmc_data_t *mc);
+
+void ipmi_mc_disable(lmc_data_t *mc);
+void ipmi_mc_enable(lmc_data_t *mc);
+
+int ipmi_mc_enable_sel(lmc_data_t    *emu,
+		       int           max_entries,
+		       unsigned char flags);
+
+int ipmi_mc_add_to_sel(lmc_data_t    *emu,
+		       unsigned char record_type,
+		       unsigned char event[13],
+		       unsigned int  *recid);
+
+int ipmi_mc_add_main_sdr(lmc_data_t    *mc,
+			 unsigned char *data,
+			 unsigned int  data_len);
+
+int ipmi_mc_add_device_sdr(lmc_data_t    *mc,
+			   unsigned char lun,
+			   unsigned char *data,
+			   unsigned int  data_len);
+
+enum fru_io_cb_op { FRU_IO_READ, FRU_IO_WRITE };
+
+typedef int (*fru_io_cb)(void *cb_data,
+			 enum fru_io_cb_op op,
+			 unsigned char *data,
+			 unsigned int offset,
+			 unsigned int length);
+
+/*
+ * Add a fru inventory device to the MC.  If fru_io_cb is NULL, the data
+ * and length is the initial data for the FRU.  Otherwise, fru_io_cb is
+ * called for reads and writes, and the data is the callback data for
+ * fru_io_cb.
+ */
+int ipmi_mc_add_fru_data(lmc_data_t    *mc,
+			 unsigned char device_id,
+			 unsigned int  length,
+			 fru_io_cb     fru_io_cb,
+			 void          *data);
+
+/*
+ * Add a fru inventory device to the MC, mapping it to a file at the
+ * given filename, starting in the file at the given offset.
+ */
+int ipmi_mc_add_fru_file(lmc_data_t    *mc,
+			 unsigned char device_id,
+			 unsigned int  length,
+			 unsigned int  file_offset,
+			 const char    *filename);
+
+int ipmi_mc_get_fru_data_len(lmc_data_t    *mc,
+			     unsigned char device_id,
+			     unsigned int  *length);
+
+int ipmi_mc_get_fru_data(lmc_data_t    *mc,
+			 unsigned char device_id,
+			 unsigned int  length,
+			 unsigned char *data);
+
+struct ipmi_sensor_handler_s
+{
+    char *name;
+    int (*poll)(void *cb_data, unsigned int *val, const char **errstr);
+    int (*init)(lmc_data_t *mc, unsigned char lun, unsigned char sensor_num,
+		char **toks, void *cb_data, void **rcb_data,
+		const char **errstr);
+    int (*postinit)(void *cb_data, const char **errstr);
+    void *cb_data;
+
+    struct ipmi_sensor_handler_s *next;
+};
+typedef struct ipmi_sensor_handler_s ipmi_sensor_handler_t;
+
+int ipmi_sensor_add_handler(ipmi_sensor_handler_t *handler);
+ipmi_sensor_handler_t *ipmi_sensor_find_handler(const char *name);
+
+int ipmi_mc_add_sensor(lmc_data_t    *mc,
+		       unsigned char lun,
+		       unsigned char sens_num,
+		       unsigned char type,
+		       unsigned char event_reading_code,
+		       int           event_only);
+
+int ipmi_mc_add_polled_sensor(lmc_data_t    *mc,
+			      unsigned char lun,
+			      unsigned char sens_num,
+			      unsigned char type,
+			      unsigned char event_reading_code,
+			      unsigned int poll_rate,
+			      int (*poll)(void *cb_data, unsigned int *val,
+					  const char **errstr),
+			      void *cb_data);
+
+int ipmi_mc_set_power(lmc_data_t *mc, unsigned char power, int gen_int);
+
+int ipmi_mc_set_num_leds(lmc_data_t   *mc,
+			 unsigned int count);
+
 #endif /* __EMU_IPMI_ */

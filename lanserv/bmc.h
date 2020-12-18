@@ -60,6 +60,7 @@
 #include <semaphore.h>
 #include <OpenIPMI/mcserv.h>
 #include "emu.h"
+#include "sol.h"
 #include "ipmi_sim.h"
 
 #define WATCHDOG_SENSOR_NUM 0
@@ -112,7 +113,6 @@ typedef struct sdrs_s
     sdr_t         *sdrs;
 } sdrs_t;
 
-typedef struct sensor_s sensor_t;
 struct sensor_s
 {
     lmc_data_t *mc;
@@ -402,10 +402,6 @@ void iterate_sdrs(lmc_data_t *mc,
 			      unsigned int len, void *cb_data),
 		  void *cb_data);
 
-void mc_new_event(lmc_data_t *mc,
-		  unsigned char record_type,
-		  unsigned char event[13]);
-
 #define IPMI_SDR_DELETE_SDR_SUPPORTED			(1 << 3)
 #define IPMI_SDR_PARTIAL_ADD_SDR_SUPPORTED		(1 << 2)
 #define IPMI_SDR_RESERVE_SDR_SUPPORTED			(1 << 1)
@@ -428,5 +424,9 @@ extern cmd_handler_f oem0_netfn_handlers[256];
 
 #define set_bit(m, b, v) (m) = (v) ? ((m) | (1 << (b))) : ((m) & ~(1 << (b)))
 #define bit_set(m, b) (!!((m) & (1 << (b))))
+
+
+int ipmi_mc_is_power_on(lmc_data_t *mc);
+
 
 #endif /* __BMC_H_ */
