@@ -59,10 +59,11 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <sys/time.h>
 
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_msgbits.h>
-#include <OpenIPMI/serv.h>
+#include <OpenIPMI/lanserv.h>
 
 int
 ipmi_oem_send_msg(channel_t     *chan,

@@ -87,12 +87,10 @@
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/os_handler.h>
 #include <OpenIPMI/ipmi_posix.h>
-#include <OpenIPMI/serv.h>
-#include <OpenIPMI/lanserv.h>
-#include <OpenIPMI/serserv.h>
-#include <OpenIPMI/ipmbserv.h>
 
 #include "emu.h"
+#include <OpenIPMI/serserv.h>
+#include <OpenIPMI/ipmbserv.h>
 #include <OpenIPMI/persist.h>
 #include <OpenIPMI/internal/winsock_compat.h>
 #include "ipmi_sim.h"

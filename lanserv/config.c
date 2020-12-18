@@ -61,7 +61,6 @@
 #include <netdb.h>
 #include <dlfcn.h>
 
-#include <OpenIPMI/serv.h>
 #include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/serserv.h>
 #include <OpenIPMI/ipmbserv.h>

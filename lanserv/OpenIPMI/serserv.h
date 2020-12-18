@@ -56,7 +56,7 @@
 #ifndef __SERSERV_H
 #define __SERSERV_H
 
-#include <OpenIPMI/serv.h>
+#include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/os_handler.h>
 
 typedef struct serserv_data_s serserv_data_t;

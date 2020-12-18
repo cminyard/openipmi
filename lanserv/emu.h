@@ -57,7 +57,7 @@
 #define __EMU_IPMI_
 
 #include <sys/time.h>
-#include <OpenIPMI/serv.h>
+#include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/mcserv.h>
 
 void ipmi_emu_tick(emu_data_t *emu, unsigned int seconds);

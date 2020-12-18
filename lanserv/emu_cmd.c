@@ -58,7 +58,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <OpenIPMI/serv.h>
 #include "emu.h"
 #include <OpenIPMI/persist.h>
 

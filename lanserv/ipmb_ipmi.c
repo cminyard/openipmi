@@ -51,7 +51,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <OpenIPMI/serv.h>
 #include <OpenIPMI/ipmbserv.h>
 #include <OpenIPMI/ipmi_mc.h>
 

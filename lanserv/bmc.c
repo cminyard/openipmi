@@ -61,6 +61,7 @@
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_lan.h>
 #include <OpenIPMI/extcmd.h>
+#include "ipmi_sim.h"
 
 static void ipmi_mc_start_cmd(lmc_data_t *mc);
 

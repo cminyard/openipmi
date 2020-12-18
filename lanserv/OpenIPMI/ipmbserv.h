@@ -52,7 +52,7 @@
 #ifndef __IPMBSERV_H
 #define __IPMBSERV_H
 
-#include <OpenIPMI/serv.h>
+#include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/os_handler.h>
 
 typedef struct ipmbserv_data_s ipmbserv_data_t;

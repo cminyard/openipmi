@@ -63,7 +63,7 @@
 #include <malloc.h>
 #include <stdlib.h>
 
-#include <OpenIPMI/serv.h>
+#include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/extcmd.h>
 
 #ifdef HAVE_NETINET_ETHER_H

@@ -75,4 +75,26 @@ typedef void (*free_frudata_f)(lmc_data_t *mc, unsigned char *data);
 int ipmi_mc_set_frudata_handler(lmc_data_t *mc, unsigned int fru,
 				get_frudata_f handler, free_frudata_f freefunc);
 
+typedef struct ipmi_child_quit_s {
+    void (*handler)(void *info, pid_t pid);
+    void *info;
+    struct ipmi_child_quit_s *next;
+} ipmi_child_quit_t;
+
+void ipmi_register_child_quit_handler(ipmi_child_quit_t *handler);
+
+typedef struct ipmi_shutdown_s {
+    void (*handler)(void *info, int sig);
+    void *info;
+    struct ipmi_shutdown_s *next;
+} ipmi_shutdown_t;
+
+void ipmi_register_shutdown_handler(ipmi_shutdown_t *handler);
+
+/*
+ * Start the "startcmd" specified in the configuration file.
+ */
+void ipmi_do_start_cmd(startcmd_t *startcmd);
+void ipmi_do_kill(startcmd_t *startcmd, int noblock);
+
 #endif /* IPMI_SIM_H */

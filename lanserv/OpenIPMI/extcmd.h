@@ -56,7 +56,7 @@
 #ifndef _EXTCMD_H_
 #define _EXTCMD_H_
 
-#include <OpenIPMI/serv.h>
+#include <OpenIPMI/lanserv.h>
 #include <stddef.h>
 
 enum extcmd_info_type_e {

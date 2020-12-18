@@ -69,7 +69,7 @@
 
 #include <OpenIPMI/ipmi_msgbits.h>
 #include <OpenIPMI/ipmi_bits.h>
-#include <OpenIPMI/serv.h>
+#include <OpenIPMI/lanserv.h>
 
 #include "wiw.h"
 
