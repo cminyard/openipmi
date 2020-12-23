@@ -54,10 +54,15 @@ ipmi_dump_sensors_LDADD = $(top_builddir)/utils/libOpenIPMIutils.la \
 		$(top_builddir)/unix/libOpenIPMIposix.la \
 		$(OPENSSLLIBS)
 
+if HAVE_GLIB
+def_os_hnd = $(top_builddir)/glib/libOpenIPMIglib.la
+else
+def_os_hnd = $(top_builddir)/unix/libOpenIPMIposix.la
+endif
+
 openipmicmd_SOURCES = ipmicmd.c
 openipmicmd_LDADD = $(top_builddir)/utils/libOpenIPMIutils.la \
-		$(top_builddir)/lib/libOpenIPMI.la \
-		$(top_builddir)/unix/libOpenIPMIposix.la \
+		$(top_builddir)/lib/libOpenIPMI.la $(def_os_hnd) \
 		$(OPENSSLLIBS)
 openipmicmd_LDFLAGS = -rdynamic
 

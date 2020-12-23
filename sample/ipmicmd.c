@@ -38,11 +38,12 @@
 /* To use the program, run it, and you will receive a prompt.  Then enter
    ipmi commands.  Type "help" for more details. */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
-#include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -51,45 +52,25 @@
 #include <OpenIPMI/ipmi_smi.h>
 #include <OpenIPMI/ipmi_auth.h>
 #include <OpenIPMI/ipmi_msgbits.h>
-#include <OpenIPMI/ipmi_posix.h>
 #include <OpenIPMI/mxp.h>
+#ifdef HAVE_GLIB
+#include <OpenIPMI/ipmi_glib.h>
+#define setup_os_handler() ipmi_glib_get_os_handler(0)
+#else
 #include <OpenIPMI/ipmi_posix.h>
+#define setup_os_handler() ipmi_posix_setup_os_handler()
+#endif
 
 #include <OpenIPMI/internal/ipmi_event.h>
-
-void ipmi_oem_force_conn_init(void);
-int ipmi_oem_motorola_mxp_init(void);
 
 static int   interactive        = 1;
 static int   interactive_done   = 0;
 
 char *progname;
-struct selector_s *sel;
 os_handler_t *os_hnd;
 static ipmi_con_t *con;
 static int continue_operation = 1;
-
-/* We cobbled everything in the next section together to provide the
-   things that the low-level handlers need. */
-void
-ipmi_write_lock()
-{
-}
-
-void
-ipmi_write_unlock()
-{
-}
-
-void
-ipmi_read_lock()
-{
-}
-
-void
-ipmi_read_unlock()
-{
-}
+os_hnd_fd_id_t *fd_id;
 
 static void
 leave(int ret)
@@ -98,9 +79,9 @@ leave(int ret)
 	con->close_connection(con);
 	con = NULL;
     }
-    if (sel) {
-	sel_free_selector(sel);
-	sel = NULL;
+    if (os_hnd) {
+	os_hnd->free_os_handler(os_hnd);
+	os_hnd = NULL;
     }
     exit(ret);
 }
@@ -582,7 +563,7 @@ static char input_line[256];
 static int pos = 0;
 
 static void
-user_input_ready(int fd, void *data)
+user_input_ready(int fd, void *data, struct os_hnd_fd_id_s *id)
 {
     int count = read(0, input_line+pos, 255-pos);
     int i, j;
@@ -669,21 +650,11 @@ main(int argc, char *argv[])
        it needs OpenIPMI initialized. */
 
     /* OS handler allocated first. */
-    os_hnd = ipmi_posix_get_os_handler();
+    os_hnd = setup_os_handler();
     if (!os_hnd) {
 	fprintf(stderr, "ipmi_smi_setup_con: Unable to allocate os handler\n");
 	exit(1);
     }
-
-    /* Create selector with os handler. */
-    rv = sel_alloc_selector_nothread(&sel);
-    if (rv) {
-	fprintf(stderr, "Error allocating selector: 0x%x\n", rv);
-	exit(1);
-    }
-
-    /* The OS handler has to know about the selector. */
-    ipmi_posix_os_handler_set_sel(os_hnd, sel);
 
     /* Initialize the OEM handlers. */
     rv = ipmi_init(os_hnd);
@@ -737,7 +708,7 @@ main(int argc, char *argv[])
 	exit(1);
     }
 
-    rv = ipmi_args_setup_con(args, os_hnd, sel, &con);
+    rv = ipmi_args_setup_con(args, os_hnd, NULL, &con);
     if (rv) {
         fprintf(stderr, "ipmi_ip_setup_con: %s\n", strerror(rv));
 	exit(1);
@@ -749,9 +720,8 @@ main(int argc, char *argv[])
 	    fprintf(stderr, "Could not set to get events: %x\n", rv);
 	}
 
-	sel_set_fd_handlers(sel, 0, NULL, user_input_ready, NULL, NULL,
-			    NULL);
-	sel_set_fd_read_handler(sel, 0, SEL_FD_HANDLER_ENABLED);
+	os_hnd->add_fd_to_wait_for(os_hnd, 0, user_input_ready, NULL, NULL,
+				   &fd_id);
     }
 
     con->add_con_change_handler(con, con_changed_handler, NULL);

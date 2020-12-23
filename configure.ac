@@ -337,7 +337,8 @@ else
    GLIB_LIBS="$gliblibs"
 fi
 echo "checking for glib... $haveglib"
-   
+
+AM_CONDITIONAL([HAVE_GLIB], [test "x$haveglib" = "xyes"])
 if test "x$haveglib" = "xyes"; then
    AC_DEFINE([HAVE_GLIB], [], [Have GLIB libraries])
    GLIB_LIB='$(top_builddir)/glib/libOpenIPMIglib.la'
