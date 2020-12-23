@@ -43,6 +43,7 @@
 #ifndef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
 #endif
+typedef int sigset_t;
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__
