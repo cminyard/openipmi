@@ -64,7 +64,6 @@ openipmicmd_SOURCES = ipmicmd.c
 openipmicmd_LDADD = $(top_builddir)/utils/libOpenIPMIutils.la \
 		$(top_builddir)/lib/libOpenIPMI.la $(def_os_hnd) \
 		$(OPENSSLLIBS)
-openipmicmd_LDFLAGS = -rdynamic
 
 solterm_SOURCES = solterm.c
 solterm_LDADD = $(POPTLIBS) $(top_builddir)/utils/libOpenIPMIutils.la \
