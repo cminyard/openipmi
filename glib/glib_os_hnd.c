@@ -611,14 +611,20 @@ perform_one_op(os_handler_t   *os_hnd,
 	       struct timeval *timeout)
 {
     int timedout = 0;
+    int time_ms;
+    guint guid;
 
-    /* Note that this is not technically 100% correct in a
-       multi-threaded environment, since another thread may run
-       it, but it is pretty close, I guess. */
-    int   time_ms = (timeout->tv_sec * 1000) + ((timeout->tv_usec+500) / 1000);
-    guint guid = g_timeout_add(time_ms, timeout_callback, &timedout);
+    if (timeout) {
+	/* Note that this is not technically 100% correct in a
+	   multi-threaded environment, since another thread may run
+	   it, but it is pretty close, I guess. */
+	time_ms = (timeout->tv_sec * 1000) + ((timeout->tv_usec+500) / 1000);
+	guid = g_timeout_add(time_ms, timeout_callback, &timedout);
+    }
+
     g_main_iteration(TRUE);
-    g_source_remove(guid);
+    if (timeout)
+	g_source_remove(guid);
     if (timedout)
 	return ETIMEDOUT;
     return 0;
