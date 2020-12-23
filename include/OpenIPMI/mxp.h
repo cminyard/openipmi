@@ -41,7 +41,11 @@
    to this MXP must have a different swid.  fail_con_cb is called with
    cb_data when a connection goes down. */
 #include <OpenIPMI/ipmiif.h>
+#ifdef _WIN32
+#include <winsock2.h>
+#else
 #include <netinet/in.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

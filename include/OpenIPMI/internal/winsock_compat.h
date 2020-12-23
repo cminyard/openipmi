@@ -17,7 +17,33 @@
     ioctlsocket(sock, FIONBIO, &flags);	  \
     })
 
-#define gen_random(data, len)
+#include <bcrypt.h>
+#include <ntstatus.h>
+
+#define gen_random(data, len)		\
+    ({									\
+    NTSTATUS grv;							\
+    BCRYPT_ALG_HANDLE alg;						\
+    grv = BCryptOpenAlgorithmProvider(&alg, BCRYPT_RSA_ALGORITHM,	\
+				      MS_PRIMITIVE_PROVIDER, 0);	\
+    if (grv != STATUS_SUCCESS)						\
+	return grv;							\
+    grv = BCryptGenRandom(alg, data, len, 0);				\
+    BCryptCloseAlgorithmProvider(alg, 0);				\
+    grv;								\
+    })
+
+#define network_init()	\
+    ({									\
+    WSADATA wsaData;							\
+    int err;								\
+    err = WSAStartup(MAKEWORD(2, 2), &wsaData);				\
+    if (err != 0)							\
+	err = ENOTSUP;							\
+    err;								\
+    })
+
+#define network_shutdown() WSACleanup();
 
 #else
 #include <unistd.h>
@@ -53,6 +79,9 @@
     close(fd);						\
     rv;							\
     })
+
+#define network_init() 0
+#define network_shutdown() do {} while(0)
 
 #endif
 

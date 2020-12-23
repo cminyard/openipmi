@@ -40,7 +40,9 @@
 #ifdef _WIN32
 #include <winsock2.h>
 #include <winerror.h>
+#ifndef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
+#endif
 #endif
 
 #if defined _WIN32 || defined __CYGWIN__

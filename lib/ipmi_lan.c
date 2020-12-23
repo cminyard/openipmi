@@ -55,7 +55,6 @@
 #include <OpenIPMI/internal/ipmi_event.h>
 #include <OpenIPMI/internal/ipmi_int.h>
 #include <OpenIPMI/internal/locked_list.h>
-#include <OpenIPMI/internal/winsock_compat.h>
 
 #if defined(DEBUG_MSG) || defined(DEBUG_RAWMSG)
 static void
@@ -7039,6 +7038,10 @@ i_ipmi_lan_init(os_handler_t *os_hnd)
     if (rv)
 	return rv;
 
+    rv = network_init();
+    if (rv)
+	return rv;
+
     lan_os_hnd = os_hnd;
 
     return 0;
@@ -7047,6 +7050,8 @@ i_ipmi_lan_init(os_handler_t *os_hnd)
 void
 i_ipmi_lan_shutdown(void)
 {
+    network_shutdown();
+
     i_ipmi_unregister_con_type("lan", lan_setup);
     i_ipmi_free_con_setup(lan_setup);
     lan_setup = NULL;
