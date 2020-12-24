@@ -30,6 +30,10 @@ case $target_os in
 		# Some solaris systems have epoll, but it's too broken to use.
 		ax_cv_have_epoll_pwait=false
 		;;
+
+	mingw*)
+		LIBS="$LIBS -lws2_32 -liphlpapi -lgdi32 -lbcrypt"
+		;;
 esac
 
 AM_CONDITIONAL([HAVE_OPENIPMI_SMI], [${OPENIPMI_SMI}])
