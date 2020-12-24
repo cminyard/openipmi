@@ -67,8 +67,7 @@ openipmicmd_LDADD = $(top_builddir)/utils/libOpenIPMIutils.la \
 
 solterm_SOURCES = solterm.c
 solterm_LDADD = $(POPTLIBS) $(top_builddir)/utils/libOpenIPMIutils.la \
-                $(top_builddir)/lib/libOpenIPMI.la \
-                $(top_builddir)/unix/libOpenIPMIposix.la \
+                $(top_builddir)/lib/libOpenIPMI.la $(def_os_hnd) \
                 $(OPENSSLLIBS)
 
 rmcp_ping_SOURCES = rmcp_ping.c

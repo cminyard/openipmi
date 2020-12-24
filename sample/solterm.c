@@ -30,6 +30,8 @@
  *  Software Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,7 +50,13 @@
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/ipmi_auth.h>
 #include <OpenIPMI/ipmi_lan.h>
+#ifdef HAVE_GLIB
+#include <OpenIPMI/ipmi_glib.h>
+#define setup_os_handler() ipmi_glib_get_os_handler(0)
+#else
 #include <OpenIPMI/ipmi_posix.h>
+#define setup_os_handler() ipmi_posix_setup_os_handler()
+#endif
 
 #include <OpenIPMI/ipmi_log.h>
 #include <OpenIPMI/ipmi_sol.h>
@@ -737,7 +745,7 @@ int main(int argc, char *argv[])
 	progname = argv[0];
 
 	/* OS handler allocated first. */
-	os_hnd = ipmi_posix_setup_os_handler();
+	os_hnd = setup_os_handler();
 	if (!os_hnd) {
 		fprintf(stderr, "main: Unable to allocate os handler\n");
 		exit(1);
