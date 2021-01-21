@@ -1563,7 +1563,7 @@ int
 ipmi_sol_send_break(ipmi_sol_conn_t *sol,
 		    ipmi_sol_transmit_complete_cb cb, void *cb_data)
 {
-    int rv = EINVAL;
+    int rv = EINVAL, rv2;
 
     ipmi_lock(sol->lock);
     if (sol->state != ipmi_sol_state_connected &&
@@ -1576,7 +1576,9 @@ ipmi_sol_send_break(ipmi_sol_conn_t *sol,
 
     sol->xmit_pending_ops |= IPMI_SOL_OPERATION_GENERATE_BREAK;
     sol->xmit_pending = 1;
-    rv = transmit_next_packet_op(sol);
+    rv2 = transmit_next_packet_op(sol);
+    if (rv2)
+	rv = rv2;
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
@@ -1599,7 +1601,7 @@ ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t               *sol,
 			    ipmi_sol_transmit_complete_cb cb,
 			    void                          *cb_data)
 {
-    int rv = EINVAL;
+    int rv = EINVAL, rv2;
 
     ipmi_lock(sol->lock);
     if (sol->state != ipmi_sol_state_connected &&
@@ -1616,7 +1618,9 @@ ipmi_sol_set_CTS_assertable(ipmi_sol_conn_t               *sol,
 	sol->xmit_pending_ops |= IPMI_SOL_OPERATION_CTS_PAUSE;
     sol->xmit_pending = 1;
 
-    rv = transmit_next_packet_op(sol);
+    rv2 = transmit_next_packet_op(sol);
+    if (rv2)
+	rv = rv2;
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
@@ -1638,7 +1642,7 @@ ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t               *sol,
 			      ipmi_sol_transmit_complete_cb cb,
 			      void                          *cb_data)
 {
-    int rv = EINVAL;
+    int rv = EINVAL, rv2;
 
     ipmi_lock(sol->lock);
     if (sol->state != ipmi_sol_state_connected &&
@@ -1655,7 +1659,9 @@ ipmi_sol_set_DCD_DSR_asserted(ipmi_sol_conn_t               *sol,
 	sol->xmit_pending_ops |= IPMI_SOL_OPERATION_DROP_DCD_DSR;
     sol->xmit_pending = 1;
 
-    rv = transmit_next_packet_op(sol);
+    rv2 = transmit_next_packet_op(sol);
+    if (rv2)
+	rv = rv2;
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
@@ -1676,7 +1682,7 @@ ipmi_sol_set_RI_asserted(ipmi_sol_conn_t               *sol,
 			 ipmi_sol_transmit_complete_cb cb,
 			 void                          *cb_data)
 {
-    int rv = EINVAL;
+    int rv = EINVAL, rv2;
 
     ipmi_lock(sol->lock);
     if (sol->state != ipmi_sol_state_connected &&
@@ -1693,7 +1699,9 @@ ipmi_sol_set_RI_asserted(ipmi_sol_conn_t               *sol,
 	sol->xmit_pending_ops &= ~IPMI_SOL_OPERATION_RING_REQUEST;
     sol->xmit_pending = 1;
 
-    rv = transmit_next_packet_op(sol);
+    rv2 = transmit_next_packet_op(sol);
+    if (rv2)
+	rv = rv2;
  out_unlock:
     ipmi_unlock(sol->lock);
     return rv;
