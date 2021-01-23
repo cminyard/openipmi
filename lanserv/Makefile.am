@@ -79,6 +79,7 @@ SUFFIXES = .bsdr .sdrs
 ipmisim1.bsdr: $(top_srcdir)/lanserv/ipmisim1.sdrs sdrcomp/sdrcomp_build
 
 uninstall-local:
+	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/ipmisim1.emu"
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/lan.conf"
 	-rm -f "$(DESTDIR)$(sysconfdir)/ipmi/sim.emu"
 	-rmdir "$(DESTDIR)$(sysconfdir)/ipmi" 2>/dev/null
