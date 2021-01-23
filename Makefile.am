@@ -37,3 +37,10 @@ rungui:
 DISTCLEANFILES=OpenIPMI.spec OpenIPMIcmdlang.pc OpenIPMI.pc OpenIPMItcl.pc \
 	OpenIPMIglib12.pc OpenIPMIposix.pc OpenIPMIui.pc OpenIPMIglib.pc \
 	OpenIPMIpthread.pc OpenIPMIutils.pc
+
+# Set distcheck up so perl/python files get installed someplace that will
+# work.
+AM_DISTCHECK_CONFIGURE_FLAGS = \
+	--with-pythoninstall=$(abs_top_builddir)/$(distdir)/_inst/lib/python \
+	--with-pythoninstalllib=$(abs_top_builddir)/$(distdir)/_inst/lib/python\
+	--with-perlinstall=$(abs_top_builddir)/$(distdir)/_inst/lib/perl
