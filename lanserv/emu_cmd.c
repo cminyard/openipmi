@@ -913,6 +913,9 @@ mc_add_fru_data(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
     if (rv)
 	return rv;
 
+    if (length > MAX_FRU_SIZE)
+	return EINVAL;
+
     tok = mystrtok(NULL, " \t\n", toks);
     if (!tok) {
 	out->eprintf(out, "**No FRU data type given");

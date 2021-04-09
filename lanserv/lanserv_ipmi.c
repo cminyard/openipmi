@@ -3143,7 +3143,7 @@ get_associated_mc(channel_t *chan, uint32_t session_id, unsigned int payload)
     lanserv_data_t *lan = chan->chan_info;
     session_t *session = sid_to_session(lan, session_id);
 
-    if (payload >= LANSERV_NUM_CLOSERS)
+    if (payload >= LANSERV_NUM_CLOSERS || session == NULL)
 	return NULL;
 
     return session->closers[payload].mc;
