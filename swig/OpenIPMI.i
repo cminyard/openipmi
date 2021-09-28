@@ -3123,6 +3123,7 @@ init_glib(void)
     init_lang();
 #endif
     swig_os_hnd = init_glib_shim("");
+    return 0;
 #else
     return ENOSYS;
 #endif
@@ -3138,6 +3139,7 @@ init_glib12(void)
     init_lang();
 #endif
     swig_os_hnd = init_glib_shim("12");
+    return 0;
 #else
     return ENOSYS;
 #endif
