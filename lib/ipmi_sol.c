@@ -1210,7 +1210,7 @@ transmit_next_packet(ipmi_sol_conn_t *sol)
 
 	/*
 	 * Wait until after we start the timer to copy over the data,
-	 * after the timer start we can't fail.
+	 * after the timer starts we can't fail.
 	 */
 	if (data_len) {
 	    memcpy(sol->xmit_pkt + 4, sol->xmit_buf, data_len);
@@ -1738,7 +1738,7 @@ ipmi_sol_flush(ipmi_sol_conn_t            *sol,
 	goto out_unlock;
 
     rv = EAGAIN;
-    if (sol->flush_cb.pos)
+    if (sol->flush_cb.inuse)
 	goto out_unlock;
     sol->flush_cb.flush_cb = cb;
     sol->flush_cb.cb_data = cb_data;
