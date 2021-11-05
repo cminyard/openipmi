@@ -582,15 +582,19 @@ AC_SUBST(PYTHON_SWIG_FLAGS)
 
 # Check for Tkinter/Tix
 if test "x$tkinter" = "x"; then
-   if test "x$pythonprog" != "x"; then
+   if test "x$PYTHON" != "x"; then
       cat - <<_ACEOF >conftest.py
 try:
   import Tix
   print('yes')
 except:
-  print('no')
+  try:
+    import tkinter
+    print('yes')
+  except:
+    print('no')
 _ACEOF
-      tkinter=`python conftest.py`
+      tkinter=`${PYTHON} conftest.py`
       rm -f conftest.py
    fi
 fi
@@ -617,6 +621,11 @@ if test "x$tryswig" = "xyes"; then
 fi
 AC_SUBST(SWIG_DIR)
 AC_SUBST(SWIG)
+
+# Check for readline
+AC_CHECK_LIB(readline, rl_initialize, READLINE_LIBS=-lreadline,
+      [AC_MSG_ERROR([libreadline is required!])])
+AC_SUBST(READLINE_LIBS)
 
 # Handle SNMP support
 if test "x$tryucdsnmp" != "xno"; then
