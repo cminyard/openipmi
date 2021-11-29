@@ -1033,6 +1033,12 @@ ent_use_frudev_for_presence(ipmi_entity_t *ent)
 static void
 internal_fru_fetch_done(ipmi_entity_t *ent, void *cb_data)
 {
+    /*
+     * Hold the entity in the cb_data so if the entity is deleted, we
+     * can still get to it to put the value.
+     */
+    ent = cb_data;
+
     ent_lock(ent);
     ent->in_fru_fetch = 0;
     ent_unlock(ent);
@@ -1144,7 +1150,7 @@ i_ipmi_entity_put(ipmi_entity_t *ent)
 	ent->in_fru_fetch = 1;
 	i_ipmi_entity_get(ent);
 	ent_unlock(ent);
-	rv = ipmi_entity_fetch_frus_cb(ent, internal_fru_fetch_done, NULL);
+	rv = ipmi_entity_fetch_frus_cb(ent, internal_fru_fetch_done, ent);
 	if (rv) {
 	    ent_lock(ent);
 	    ent->in_fru_fetch = 0;
@@ -1917,7 +1923,7 @@ presence_changed(ipmi_entity_t *ent, int present)
 	    ent->in_fru_fetch = 1;
 	    i_ipmi_entity_get(ent);
 	    ent_unlock(ent);
-	    rv = ipmi_entity_fetch_frus_cb(ent, internal_fru_fetch_done, NULL);
+	    rv = ipmi_entity_fetch_frus_cb(ent, internal_fru_fetch_done, ent);
 	    if (rv) {
 		ent_lock(ent);
 		ent->in_fru_fetch = 0;
