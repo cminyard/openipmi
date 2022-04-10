@@ -269,7 +269,7 @@ static char *unit_types[] =
     "millimeters",
     "centimeters",
     "meters",
-    "cubic centimeters"
+    "cubic centimeters",
     "cubic meters",
     "liters",
     "fluid ounces",
