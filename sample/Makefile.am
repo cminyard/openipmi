@@ -81,7 +81,7 @@ EXTRA_DIST = example_oem.c
 
 # We need to make a link from ipmicmd to openipmicmd for backwards
 # compatability.
-install-data-local:
+install-exec-hook:
 	rm -f $(DESTDIR)$(bindir)/ipmicmd
 	$(LN_S) openipmicmd $(DESTDIR)$(bindir)/ipmicmd
 

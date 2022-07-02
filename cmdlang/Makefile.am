@@ -39,7 +39,7 @@ openipmish_CFLAGS = -Wall -Wsign-compare -I$(top_builddir)/include \
 
 # We need to make a link from ipmish to openipmish for backwards
 # compatability.
-install-data-local:
+install-exec-hook:
 	rm -f $(DESTDIR)$(bindir)/ipmish
 	$(LN_S) openipmish $(DESTDIR)$(bindir)/ipmish
 
