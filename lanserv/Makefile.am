@@ -67,8 +67,8 @@ EXTRA_DIST = atca.emu lan.conf ipmisim1.emu ipmisim1.sdrs \
 
 install-data-local:
 	$(INSTALL) -m 755 -d "$(DESTDIR)$(sysconfdir)/ipmi/"; \
-	$(INSTALL) -m 644 $(srcdir)/lan.conf "$(DESTDIR)$(sysconfdir)/ipmi/"; 
-	$(INSTALL) -m 644 $(srcdir)/ipmisim1.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; 
+	$(INSTALL) -m 600 $(srcdir)/lan.conf "$(DESTDIR)$(sysconfdir)/ipmi/"; 
+	$(INSTALL) -m 600 $(srcdir)/ipmisim1.emu "$(DESTDIR)$(sysconfdir)/ipmi/"; 
 
 noinst_DATA = ipmisim1.bsdr
 
