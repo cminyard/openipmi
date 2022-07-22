@@ -1,8 +1,8 @@
 OPENIPMI_PKG_NAME=OpenIPMI
-AC_INIT([OpenIPMI], [2.0.33], [minyard@acm.org], [OpenIPMI])
+AC_INIT([OpenIPMI],[2.0.33],[minyard@acm.org],[OpenIPMI])
 AC_CANONICAL_TARGET
 AM_INIT_AUTOMAKE([-Wall])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 AM_PROG_AR
 
 AC_CONFIG_MACRO_DIR([m4])
@@ -272,8 +272,7 @@ AC_ARG_WITH(marvell-bmc,
 AC_SUBST([MARVELL_BMC_DIR])
 
 AM_PROG_CC_C_O
-AC_PROG_LIBTOOL
-AC_STDC_HEADERS
+LT_INIT
 
 AC_CHECK_HEADERS(execinfo.h)
 AC_CHECK_HEADERS([netinet/ether.h])
@@ -721,7 +720,7 @@ AC_SUBST(SOCKETLIB)
 AC_CHECK_LIB(socket, getaddrinfo, [AC_DEFINE([HAVE_GETADDRINFO], 1)],
              [AC_CHECK_FUNCS(getaddrinfo)])
 
-AC_HAVE_FUNCS(syslog)
+AC_CHECK_FUNCS([syslog])
 
 # Now check for dia and the dia version.  They changed the output format
 # specifier without leaving backwards-compatible handling, so lots of ugly
@@ -792,7 +791,7 @@ else
 fi
 AC_SUBST([BUILD_CC])
 
-AC_OUTPUT(Makefile
+AC_CONFIG_FILES([Makefile
 	  utils/Makefile
 	  lib/Makefile
 	  unix/Makefile
@@ -823,4 +822,5 @@ AC_OUTPUT(Makefile
 	  OpenIPMIglib.pc
 	  OpenIPMItcl.pc
 	  OpenIPMIcmdlang.pc
-	  OpenIPMIui.pc)
+	  OpenIPMIui.pc])
+AC_OUTPUT
