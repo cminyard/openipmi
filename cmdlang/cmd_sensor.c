@@ -115,7 +115,7 @@ sensor_dump(ipmi_sensor_t *sensor, ipmi_cmd_info_t *cmd_info)
     case IPMI_EVENT_SUPPORT_ENTIRE_SENSOR:
 	ipmi_cmdlang_out(cmd_info, "Event Support", "entire sensor");
 	break;
-    case IPMI_EVENT_SUPPORT_GLOBAL_ENABLE:
+    case IPMI_EVENT_SUPPORT_GLOBAL_DISABLE:
 	ipmi_cmdlang_out(cmd_info, "Event Support", "global");
 	break;
     default:

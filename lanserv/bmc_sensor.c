@@ -564,7 +564,7 @@ handle_set_sensor_event_enable(lmc_data_t    *mc,
 
     sensor = mc->sensors[msg->rs_lun][sens_num];
     if ((sensor->event_support == IPMI_EVENT_SUPPORT_NONE)
-	|| (sensor->event_support == IPMI_EVENT_SUPPORT_GLOBAL_ENABLE))
+	|| (sensor->event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE))
     {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
@@ -651,7 +651,7 @@ handle_get_sensor_event_enable(lmc_data_t    *mc,
 
     sensor = mc->sensors[msg->rs_lun][sens_num];
     if ((sensor->event_support == IPMI_EVENT_SUPPORT_NONE)
-	|| (sensor->event_support == IPMI_EVENT_SUPPORT_GLOBAL_ENABLE))
+	|| (sensor->event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE))
     {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;

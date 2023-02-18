@@ -537,7 +537,7 @@ sensor_change(enum ipmi_update_e op,
 	switch (sdata->state_sup)
 	{
 	    case IPMI_EVENT_SUPPORT_NONE:
-	    case IPMI_EVENT_SUPPORT_GLOBAL_ENABLE:
+	    case IPMI_EVENT_SUPPORT_GLOBAL_DISABLE:
 		/* No events to set up. */
 		printf("Sensor %s has no event support\n", sdata->name);
 		goto get_thresh;

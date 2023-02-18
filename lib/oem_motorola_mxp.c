@@ -1386,7 +1386,7 @@ mxp_alloc_basic_sensor(void          *data,
     ipmi_sensor_set_supports_auto_rearm(*sensor, 1);
     if (assert_events || deassert_events)
 	ipmi_sensor_set_event_support(*sensor, 
-				      IPMI_EVENT_SUPPORT_GLOBAL_ENABLE);
+				      IPMI_EVENT_SUPPORT_GLOBAL_DISABLE);
     else
 	ipmi_sensor_set_event_support(*sensor, IPMI_EVENT_SUPPORT_NONE);
 

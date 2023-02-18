@@ -119,6 +119,14 @@ const char *ipmi_get_threshold_access_support_string(unsigned int val);
 #define IPMI_EVENT_SUPPORT_PER_STATE		0
 #define IPMI_EVENT_SUPPORT_ENTIRE_SENSOR	1
 #define IPMI_EVENT_SUPPORT_GLOBAL_ENABLE	2
+/*
+ * In the spec, this was called "global disable", but it was added for
+ * some reason as global enable above.  The following was added later
+ * for consistency with the spec, but "global enable" and "global
+ * disable" really mean the same thing, so I'm leaving the above for
+ * backwards compatibility.
+ */
+#define IPMI_EVENT_SUPPORT_GLOBAL_DISABLE	2
 #define IPMI_EVENT_SUPPORT_NONE			3
 IPMI_DLL_PUBLIC
 const char *ipmi_get_event_support_string(unsigned int val);

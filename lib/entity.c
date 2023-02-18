@@ -2697,7 +2697,7 @@ handle_new_presence_sensor(ipmi_entity_t *ent, ipmi_sensor_t *sensor)
 					   ent);
 
     /* Nothing to do, it will just be on. */
-    if (event_support == IPMI_EVENT_SUPPORT_GLOBAL_ENABLE)
+    if (event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE)
 	goto out;
 
     /* Turn events and scanning on. */
@@ -2760,7 +2760,7 @@ handle_new_presence_bit_sensor(ipmi_entity_t *ent, ipmi_sensor_t *sensor,
 					   ent);
 
     /* Nothing to do, it will just be on. */
-    if (event_support == IPMI_EVENT_SUPPORT_GLOBAL_ENABLE)
+    if (event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE)
 	goto out;
 
     /* Turn events and scanning on. */
@@ -7088,7 +7088,7 @@ handle_new_hot_swap_requester(ipmi_entity_t *ent, ipmi_sensor_t *sensor)
     ent->hot_swap_requester = sensor;
 
     /* Nothing to do, events will just be on. */
-    if (event_support == IPMI_EVENT_SUPPORT_GLOBAL_ENABLE)
+    if (event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE)
 	goto out;
 
     /* Turn events and scanning on. */

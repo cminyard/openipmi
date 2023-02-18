@@ -3960,7 +3960,7 @@ check_events_capability(ipmi_sensor_t      *sensor,
 
     event_support = ipmi_sensor_get_event_support(sensor);
     if ((event_support == IPMI_EVENT_SUPPORT_NONE)
-	|| (event_support == IPMI_EVENT_SUPPORT_GLOBAL_ENABLE))
+	|| (event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE))
     {
 	/* We don't support setting events for this sensor. */
 	return EINVAL;
