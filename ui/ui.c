@@ -586,7 +586,6 @@ leave(int rv, char *format, ...)
 {
     va_list ap;
 
-    ipmi_shutdown();
 
     ipmi_ui_os_hnd->stop_timer(ipmi_ui_os_hnd, redisplay_timer);
     ipmi_ui_os_hnd->free_timer(ipmi_ui_os_hnd, redisplay_timer);
@@ -628,6 +627,7 @@ leave(int rv, char *format, ...)
     va_start(ap, format);
     vfprintf(stderr, format, ap);
     va_end(ap);
+    ipmi_shutdown();
 
     ipmi_debug_malloc_cleanup();
     exit(rv);
