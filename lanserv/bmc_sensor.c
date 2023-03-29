@@ -1536,6 +1536,11 @@ sensor_poll(void *cb_data)
 	} else {
 	    unsigned int i;
 	    
+	    /*
+	     * Techincally the sensor value on discrete sensors is ignored,
+	     * but throw the low 8 bits in there for good measure.
+	     */
+	    sensor->value = (unsigned char) val;
 	    for (i = 0; i < 15; i++)
 		set_sensor_bit(mc, sensor,
 			       i, ((val >> i) & 1), 0, 0xff, 0xff, 1);
