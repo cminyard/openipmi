@@ -1355,7 +1355,7 @@ sel_select(struct selector_s *sel,
 
     err = sel_select_intr_sigmask(sel, send_sig, thread_id, cb_data, timeout,
 				  NULL);
-    if (err < 0 && errno == EINTR)
+    if (err < 0 && (errno == EINTR || errno == EAGAIN))
 	/*
 	 * If we get an EINTR, we don't want to report a timeout.  Just
 	 * return that we did something.
@@ -1377,7 +1377,7 @@ sel_select_loop(struct selector_s *sel,
 
     for (;;) {
 	err = sel_select(sel, send_sig, thread_id, cb_data, NULL);
-	if ((err < 0) && (errno != EINTR)) {
+	if (err < 0 && errno != EINTR && errno != EAGAIN) {
 	    err = errno;
 	    /* An error occurred. */
 	    /* An error is bad, we need to abort. */
