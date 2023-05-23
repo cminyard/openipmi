@@ -740,6 +740,12 @@ handle_get_sensor_reading(lmc_data_t    *mc,
 	return;
     }
 
+    if (!sensor->data_ready) {
+	rdata[0] = IPMI_COULD_NOT_PROVIDE_RESPONSE_CC;
+	*rdata_len = 1;
+	return;
+    }
+
     rdata[0] = 0;
     rdata[1] = sensor->value;
     rdata[2] = ((sensor->events_enabled << 7)
@@ -1159,6 +1165,7 @@ ipmi_mc_add_sensor(lmc_data_t    *mc,
     sensor->sensor_type = type;
     sensor->event_reading_code = event_reading_code;
     sensor->event_only = event_only;
+    sensor->data_ready = 0;
     mc->sensors[lun][sens_num] = sensor;
 
     if (mc->emu->atca_mode && (type == 0xf0)) {
@@ -1537,7 +1544,7 @@ sensor_poll(void *cb_data)
 	    unsigned int i;
 	    
 	    /*
-	     * Techincally the sensor value on discrete sensors is ignored,
+	     * Technically the sensor value on discrete sensors is ignored,
 	     * but throw the low 8 bits in there for good measure.
 	     */
 	    sensor->value = (unsigned char) val;
@@ -1545,7 +1552,7 @@ sensor_poll(void *cb_data)
 		set_sensor_bit(mc, sensor,
 			       i, ((val >> i) & 1), 0, 0xff, 0xff, 1);
 	}
-
+	sensor->data_ready = 1;
       out_restart:
 	mc->sysinfo->start_timer(sensor->poll_timer, &sensor->poll_timer_time);
     }
