@@ -289,12 +289,48 @@ lan_data_ready(int lan_fd, void *cb_data, os_hnd_fd_id_t *id)
     return;
 }
 
+/*
+ * For assigning zero ports.
+ */
+#define IP_DYNRANGE_START	49152
+#define IP_DYNRANGE_END		65535
+
 static int
-open_lan_fd(struct sockaddr *addr, socklen_t addr_len)
+open_lan_fd(struct sockaddr *addr, socklen_t addr_len, unsigned short *rport)
 {
     int fd;
     int rv;
-    int opt;
+    int port, curr_port = IP_DYNRANGE_START;
+    struct sockaddr_storage sas;
+    struct sockaddr *sa;
+    socklen_t addrlen;
+
+    if (addr_len > sizeof(sas)) {
+	fprintf(stderr, "Address too large: %ld", (long) addr_len);
+	exit(1);
+    }
+    memcpy(&sas, addr, addr_len);
+
+    sa = (struct sockaddr *) &sas;
+    switch (sa->sa_family) {
+    case AF_INET: {
+	struct sockaddr_in *sai = (struct sockaddr_in *) sa;
+
+	port = ntohs(sai->sin_port);
+	break;
+    }
+
+    case AF_INET6: {
+	struct sockaddr_in6 *sai6 = (struct sockaddr_in6 *) sa;
+
+	port = ntohs(sai6->sin6_port);
+	break;
+    }
+
+    default:
+	fprintf(stderr, "Invalid socket address family: %d\n", sa->sa_family);
+	exit(1);
+    }
 
     fd = socket(addr->sa_family, SOCK_DGRAM, IPPROTO_UDP);
     if (fd == -1) {
@@ -302,18 +338,73 @@ open_lan_fd(struct sockaddr *addr, socklen_t addr_len)
 	exit(1);
     }
 
-    opt = 1;
-    rv = setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+    /* Don't set reuseaddr for UDP, you can get a shared port. */
+ retry:
+    if (port == 0) {
+	printf("Trying port %d\n", curr_port);
+	switch (sa->sa_family) {
+	case AF_INET: {
+	    struct sockaddr_in *sai = (struct sockaddr_in *) sa;
+
+	    sai->sin_port = htons(curr_port);
+	    break;
+	}
+
+	case AF_INET6: {
+	    struct sockaddr_in6 *sai6 = (struct sockaddr_in6 *) sa;
+
+	    sai6->sin6_port = htons(curr_port);
+	    break;
+	}
+
+	default:
+	    close(fd);
+	    fprintf(stderr, "Invalid socket address family: %d\n",
+		    sa->sa_family);
+	    exit(1);
+	}
+    }
+
+    rv = bind(fd, sa, addr_len);
     if (rv == -1) {
-	fprintf(stderr, "Unable to set SO_REUSEADDR: %s\n",
+	if (port == 0) {
+	    curr_port++;
+	    if (curr_port <= IP_DYNRANGE_END)
+		goto retry;
+	}
+	fprintf(stderr, "Unable to bind to LAN port: %s\n",
 		strerror(errno));
 	exit(1);
     }
 
-    rv = bind(fd, addr, addr_len);
-    if (rv == -1) {
-	fprintf(stderr, "Unable to bind to LAN port: %s\n",
+    addrlen = sizeof(sas);
+    rv = getsockname(fd, (struct sockaddr *) &sas, &addrlen);
+    if (rv) {
+	close(fd);
+	fprintf(stderr, "Unable to get socket address: %s\n",
 		strerror(errno));
+	exit(1);
+    }
+
+    sa = (struct sockaddr *) &sas;
+    switch (sa->sa_family) {
+    case AF_INET: {
+	struct sockaddr_in *sai = (struct sockaddr_in *) sa;
+
+	*rport = ntohs(sai->sin_port);
+	break;
+    }
+
+    case AF_INET6: {
+	struct sockaddr_in6 *sai6 = (struct sockaddr_in6 *) sa;
+
+	*rport = ntohs(sai6->sin6_port);
+	break;
+    }
+
+    default:
+	close(fd);
+	fprintf(stderr, "Invalid socket address family: %d\n", sa->sa_family);
 	exit(1);
     }
 
@@ -350,7 +441,7 @@ lan_channel_init(void *info, channel_t *chan)
 
     if (lan->lan_addr_set) {
 	lan_fd = open_lan_fd(&lan->lan_addr.addr.s_ipsock.s_addr0,
-			     lan->lan_addr.addr_len);
+			     lan->lan_addr.addr_len, &lan->port);
 	if (lan_fd == -1) {
 	    fprintf(stderr, "Unable to open LAN address\n");
 	    exit(1);
@@ -370,6 +461,8 @@ lan_channel_init(void *info, channel_t *chan)
 	    fprintf(stderr, "Unable to add socket wait: 0x%x\n", err);
 	    exit(1);
 	}
+	printf("Opened UDP port %d\n\r", lan->port);
+	fflush(stdout);
     }
 
     return err;
@@ -1467,7 +1560,8 @@ main(int argc, const char *argv[])
     }
     poptFreeContext(poptCtx);
 
-    printf("IPMI Simulator version %s\n", PVERSION);
+    printf("IPMI Simulator version %s\n\r", PVERSION);
+    fflush(stdout);
 
     global_misc_data = &data;
 
