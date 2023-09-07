@@ -41,6 +41,9 @@ AM_TESTS_ENVIRONMENT = mkdir -p tmppersist && mkdir -p auto/OpenIPMI && cp OpenI
 TESTS = test_fru test_chan test_lanparm test_pet test_pef
 REAL_TESTS = test_fru.p test_chan.p test_lanparm.p test_pet.p test_pef.p
 
+testenv:
+	echo "$(AM_TESTS_ENVIRONMENT)"
+
 EXTRA_DIST = OpenIPMI_perl.c OpenIPMI_lang.i OpenIPMI.h \
 	sample ipmi_powerctl $(TESTS) $(REAL_TESTS) \
 	Lanserv.pm lan.conf
