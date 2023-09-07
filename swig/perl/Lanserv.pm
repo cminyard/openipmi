@@ -107,6 +107,10 @@ sub reader {
 		    $buf = substr($buf, 2);
 		}
 
+		if (index($buf, "\r") == 0) {
+		    $buf = substr($buf, 1);
+		}
+
 		$pos = index($buf, "\n");
 	    }
 	}
