@@ -292,7 +292,9 @@
 	$1.val = NULL;
 	$1.len = 0;
     } else {
-	$1.val = SvPV(tempsv, $1.len);
+	STRLEN len;
+	$1.val = SvPV(tempsv, len);
+	$1.len = len;
     }
 }
 

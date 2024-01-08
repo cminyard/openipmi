@@ -359,7 +359,7 @@ typedef struct iargarray
 %}
 typedef struct strconstarray
 {
-    char **val;
+    const char **val;
     int len;
 } strconstarray;
 typedef struct argarray
