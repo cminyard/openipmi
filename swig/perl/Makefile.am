@@ -1,4 +1,7 @@
 
+# Tests must be run in sequence.
+.NOTPARALLEL:
+
 # Having to -include this is stupid, but perl stupidly has a config.h
 # file in it's include directory.
 AM_CFLAGS = -include $(top_builddir)/config.h \
