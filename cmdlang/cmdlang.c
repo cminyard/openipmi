@@ -1716,8 +1716,7 @@ ipmi_cmdlang_cmd_info_put(ipmi_cmd_info_t *cmd_info)
 
 	cmd_info->cmdlang->done(cmd_info->cmdlang);
 	ipmi_cmdlang_unlock(cmd_info);
-	if (cmd_info->lock)
-	    ipmi_destroy_lock(cmd_info->lock);
+	ipmi_destroy_lock(cmd_info->lock);
 	ipmi_mem_free(cmd_info);
     } else
 	ipmi_cmdlang_unlock(cmd_info);
