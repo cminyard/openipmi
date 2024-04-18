@@ -1787,12 +1787,12 @@ ipmi_sensor_handle_sdrs(ipmi_domain_t   *domain,
     }
 
     /* Check for duplicate sensor numbers in the new sensor set. */
-    sens_tmp = ipmi_mem_alloc(256 * sizeof(ipmi_sensor_t **));
+    sens_tmp = ipmi_mem_alloc(256 * sizeof(ipmi_sensor_t *));
     if (!sens_tmp) {
 	rv = ENOMEM;
 	goto out_err_free;
     }
-    memset(sens_tmp, 0, 256 * sizeof(ipmi_sensor_t **));
+    memset(sens_tmp, 0, 256 * sizeof(ipmi_sensor_t *));
     ent_item = new_sensors;
     while (ent_item) {
 	ipmi_sensor_t *nsensor = ent_item->sensor;
