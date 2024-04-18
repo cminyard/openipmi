@@ -1174,7 +1174,5 @@ main(int argc, char *argv[])
 	printf("\n");
     fflush(stdout);
 
-    if (rv)
-	return 1;
     return 0;
 }
