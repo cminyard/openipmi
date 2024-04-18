@@ -172,7 +172,7 @@ handle_iana_netfn(lmc_data_t    *mc,
 
  out:
     /* Insert the IANA back in. */
-    memcpy(rdata + 4, rdata + 1, *rdata_len);
+    memmove(rdata + 4, rdata + 1, *rdata_len);
     rdata[1] = msg->iana & 0xff;
     rdata[2] = (msg->iana >> 8) & 0xff;
     rdata[3] = (msg->iana >> 16) & 0xff;
