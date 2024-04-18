@@ -2176,7 +2176,7 @@ sys_led_get_start(ipmi_control_t *control, int err, void *cb_data)
 				   &(control_info->sdata), control_info);
     if (rv) {
 	if (control_info->done_get)
-	    control_info->done_get(control, err, 0, control_info->cb_data);
+	    control_info->done_get(control, rv, 0, control_info->cb_data);
 	ipmi_control_opq_done(control);
 	ipmi_mem_free(control_info);
 	return;
@@ -3906,7 +3906,7 @@ mxp_fan_reading_cb(ipmi_sensor_t *sensor,
 	    ipmi_set_threshold_out_of_range(&states, IPMI_LOWER_CRITICAL, 1);
 	pres = IPMI_BOTH_VALUES_PRESENT;
 	raw = rsp->data[10];
-	cooked = (double) (468750 / raw);
+	cooked = (double) 468750 / raw;
     } else {
 	/* The cooling sensor is being queried. */
 	if (rsp->data[6] & 0x02)
