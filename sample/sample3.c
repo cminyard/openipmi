@@ -264,12 +264,6 @@ got_discrete_states(ipmi_sensor_t *sensor,
 	goto out;
     }
 
-    if (err) {
-	printf("Error 0x%x getting discrete states for sensor %s\n",
-	       err, sdata->name);
-	goto out;
-    }
-
     printf("Got state reading for sensor %s\n", sdata->name);
     if (ipmi_is_event_messages_enabled(states))
 	printf("  event messages enabled\n");
