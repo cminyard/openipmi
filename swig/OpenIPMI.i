@@ -1260,6 +1260,7 @@ mc_channel_got_users(ipmi_mc_t        *mc,
     swig_cb_val  *cb = cb_data;
     swig_ref     mc_ref;
     swig_ref     *info_ref;
+    int		 free_info_ref = 0;
     int          count;
     swig_ref     dummy;
     int          i;
@@ -1271,6 +1272,8 @@ mc_channel_got_users(ipmi_mc_t        *mc,
 	if (!info_ref) {
 	    count = 0;
 	    info_ref = &dummy;
+	} else {
+	    free_info_ref = 1;
 	}
     } else {
 	count = 0;
@@ -1290,7 +1293,8 @@ mc_channel_got_users(ipmi_mc_t        *mc,
     swig_free_ref_check(mc_ref, ipmi_mc_t);
     for (i=0; i<count; i++)
 	swig_free_ref(info_ref[i]);
-    free(info_ref);
+    if (free_info_ref)
+	free(info_ref);
     /* One-time call, get rid of the CB. */
     deref_swig_cb_val(cb);
 }
@@ -2399,15 +2403,20 @@ control_val_get_light_handler(ipmi_control_t *control, int err,
     swig_cb_val *cb = cb_data;
     swig_ref    control_ref;
     char        *str;
+    int		free_str = 1;
 
     control_ref = swig_make_ref(control, ipmi_control_t);
     str = light_setting_to_str(val);
-    if (!str)
+    if (!str) {
 	str = "err";
+	free_str = 0;
+    }
     swig_call_cb(cb, "control_get_light_cb", "%p%d%s", &control_ref, err, str);
     swig_free_ref_check(control_ref, ipmi_control_t);
     /* One-time call, get rid of the CB. */
     deref_swig_cb_val(cb);
+    if (free_str)
+	free(str);
 }
 
 static void
@@ -7441,7 +7450,7 @@ ipmi_args_t *alloc_parse_args(argarray *args);
 	int                 rv;
 	swig_cb_val         *handler_val = NULL;
 	ipmi_sensor_done_cb sensor_cb = NULL;
-	ipmi_event_state_t  *st;
+	ipmi_event_state_t  *st = NULL;
 
 	IPMI_SWIG_C_CB_ENTRY
 	if (ipmi_sensor_get_event_reading_type(self)
@@ -7464,8 +7473,9 @@ ipmi_args_t *alloc_parse_args(argarray *args);
 	rv = ipmi_sensor_set_event_enables(self, st, sensor_cb, handler_val);
 	if (rv && handler_val)
 	    deref_swig_cb_val(handler_val);
-	free(st);
     out_err:
+	if (st)
+	    free(st);
 	IPMI_SWIG_C_CB_EXIT
 	return rv;
     }
