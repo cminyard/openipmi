@@ -354,6 +354,8 @@ handle_set_watchdog_timer(lmc_data_t    *mc,
 	    *rdata_len = 1;
 	    return;
 	}
+	break;
+
     default:
 	/* We don't support PRE_SMI */
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
