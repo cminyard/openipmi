@@ -296,8 +296,6 @@ return_rmcpp_rsp(lanserv_data_t *lan, session_t *session, msg_t *msg,
 
     if (payload == 0) {
 	/* Add the IPMI header - fixme -cheap hack */
-	if (hdr_left < 6)
-	    return;
 	hdr_left -= 6;
 	pos -= 6;
 	dlen += 6; /* Adding header, increase total length */
