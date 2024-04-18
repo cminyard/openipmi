@@ -662,13 +662,13 @@ static void
 ipmb_data_ready(int fd, void *cb_data, os_hnd_fd_id_t *id)
 {
     ipmbserv_data_t *ipmb = cb_data;
-    unsigned int  len;
+    ssize_t len;
     unsigned char msgd[256];
 
     len = read(fd, msgd, sizeof(msgd));
 
     if (ipmb->sysinfo->debug & DEBUG_MSG)
-        printf(">ipmb_data_ready size %d\n", len);
+        printf(">ipmb_data_ready size %ld\n", (long) len);
     if (len <= 0) {
         if ((len < 0) && (errno == EINTR))
             return;
