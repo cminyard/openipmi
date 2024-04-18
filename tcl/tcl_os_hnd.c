@@ -431,7 +431,7 @@ cond_timedwait(os_handler_t   *handler,
 	Tcl_GetTime(&now);
 	timeout.sec = then.sec - now.sec;
 	timeout.usec = then.usec - now.usec;
-	while (then.usec < 0) {
+	while (timeout.usec < 0) {
 	    timeout.usec += 1000000;
 	    timeout.sec -= 1;
 	}
