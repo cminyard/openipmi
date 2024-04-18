@@ -1317,7 +1317,10 @@ ipmi_cmdlang_sensor_change(enum ipmi_update_e op,
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(sensor_name,
+				"cmd_sensor.c(ipmi_cmdlang_sensor_change)",
+				errstr, rv);
+	return;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "Sensor");
@@ -1362,14 +1365,6 @@ ipmi_cmdlang_sensor_change(enum ipmi_update_e op,
     }
 
     ipmi_cmdlang_cmd_info_put(evi);
-    return;
-
- out_err:
-    ipmi_cmdlang_global_err(sensor_name,
-			    "cmd_sensor.c(ipmi_cmdlang_sensor_change)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
 }
 
 static ipmi_cmdlang_cmd_t *sensor_cmds;
