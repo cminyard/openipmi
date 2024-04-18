@@ -1332,54 +1332,52 @@ ipmi_cmdlang_handle(ipmi_cmdlang_t *cmdlang, char *str)
 
 	cmdlang->help = 1;
 	curr_arg++;
-	for (;;) {
-	next_help:
-	    if (argc == curr_arg) {
-		rv = 0;
-		if (parent) {
-		    cmdlang->out(cmdlang, parent->name, parent->help);
-		    if (parent->help_finish)
-			parent->help_finish(cmdlang);
-		}else
-		    cmdlang->out(cmdlang, "help", NULL);
-		if (cmdlang->err)
-		    goto done_help;
-		cmdlang->down(cmdlang);
-		while (cmd) {
-		    cmdlang->out(cmdlang, cmd->name, cmd->help);
-		    if (cmdlang->err) {
-			cmdlang->up(cmdlang);
-			goto done_help;
-		    }
-		    if (cmd->help_finish)
-			cmd->help_finish(cmdlang);
-		    cmd = cmd->next;
-		}
-		cmdlang->up(cmdlang);
-		break;
+    next_help:
+	if (argc == curr_arg) {
+	    rv = 0;
+	    if (parent) {
+		cmdlang->out(cmdlang, parent->name, parent->help);
+		if (parent->help_finish)
+		    parent->help_finish(cmdlang);
+	    } else {
+		cmdlang->out(cmdlang, "help", NULL);
 	    }
-	    if (!cmd) {
-		cmdlang->errstr = "Command not found";
-		cmdlang->err = ENOSYS;
-		cmdlang->location = "cmdlang.c(ipmi_cmdlang_handle)";
+	    if (cmdlang->err)
 		goto done_help;
-	    }
-
+	    cmdlang->down(cmdlang);
 	    while (cmd) {
-		if (strcmp(cmd->name, argv[curr_arg]) == 0) {
-		    curr_arg++;
-		    parent = cmd;
-		    cmd = cmd->subcmds;
-		    goto next_help;
+		cmdlang->out(cmdlang, cmd->name, cmd->help);
+		if (cmdlang->err) {
+		    cmdlang->up(cmdlang);
+		    goto done_help;
 		}
+		if (cmd->help_finish)
+		    cmd->help_finish(cmdlang);
 		cmd = cmd->next;
 	    }
-
+	    cmdlang->up(cmdlang);
+	    goto done_help;
+	}
+	if (!cmd) {
 	    cmdlang->errstr = "Command not found";
 	    cmdlang->err = ENOSYS;
 	    cmdlang->location = "cmdlang.c(ipmi_cmdlang_handle)";
 	    goto done_help;
 	}
+
+	while (cmd) {
+	    if (strcmp(cmd->name, argv[curr_arg]) == 0) {
+		curr_arg++;
+		parent = cmd;
+		cmd = cmd->subcmds;
+		goto next_help;
+	    }
+	    cmd = cmd->next;
+	}
+
+	cmdlang->errstr = "Command not found";
+	cmdlang->err = ENOSYS;
+	cmdlang->location = "cmdlang.c(ipmi_cmdlang_handle)";
 
     done_help:
 	info->did_output = 1;
