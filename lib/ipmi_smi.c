@@ -1741,8 +1741,6 @@ smi_parse_args(int         *curr_arg,
     return 0;
 
  out_err:
-    if (p)
-	ipmi_free_args(p);
     return rv;
 }
 
