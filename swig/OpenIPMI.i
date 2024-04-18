@@ -1268,7 +1268,7 @@ mc_channel_got_users(ipmi_mc_t        *mc,
 
     if (info) {
 	count = ipmi_user_list_get_user_count(info);
-	info_ref = malloc(count * sizeof(swig_ref *));
+	info_ref = malloc(count * sizeof(swig_ref));
 	if (!info_ref) {
 	    count = 0;
 	    info_ref = &dummy;
