@@ -1189,6 +1189,8 @@ handle_partial_add_sdr(lmc_data_t    *mc,
 	    return;
 	}
 	mc->part_add_sdr = new_sdr_entry(&mc->main_sdrs, msg->data[11]);
+	if (!mc->part_add_sdr)
+	    return;
 	memcpy(mc->part_add_sdr->data+2, msg->data+8, msg->len - 8);
 	mc->part_add_next = msg->len - 8;
     } else {
