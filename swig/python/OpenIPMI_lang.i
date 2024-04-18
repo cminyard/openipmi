@@ -816,7 +816,7 @@ vswig_call_cb_rv(char rv_type, void *rv,
 	    case 'b':
 		/* An array characters with length, as chars.  May
 		   include nuls */
-		len = va_arg(ap, size_t);
+		len = va_arg(ap, int);
 		data = va_arg(ap, void *);
 		o = OI_PI_FromStringAndSize(data, len);
 		break;

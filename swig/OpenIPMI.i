@@ -2714,7 +2714,7 @@ sol_data_received_cb(ipmi_sol_conn_t *conn,
 
     conn_ref = swig_make_ref(conn, ipmi_sol_conn_t);
     swig_call_cb_rv('i', &rv, cb, "sol_data_received", "%p%*s",
-		    &conn_ref, count, buf);
+		    &conn_ref, (int) count, (char *) buf);
     swig_free_ref_check(conn_ref, ipmi_sol_conn_t);
     return rv;
 }
