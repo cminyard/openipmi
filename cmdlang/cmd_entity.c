@@ -819,7 +819,10 @@ static void fru_change(enum ipmi_update_werr_e op,
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(entity_name,
+				"cmd_entity.c(fru_change)",
+				errstr, rv);
+	return;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "Entity FRU");
@@ -863,14 +866,6 @@ static void fru_change(enum ipmi_update_werr_e op,
     }
 
     ipmi_cmdlang_cmd_info_put(evi);
-    return;
-
- out_err:
-    ipmi_cmdlang_global_err(entity_name,
-			    "cmd_entity.c(fru_change)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
 }
 
 static int
@@ -890,7 +885,10 @@ presence_change(ipmi_entity_t *entity,
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(entity_name,
+				"cmd_entity.c(presence_change)",
+				errstr, rv);
+	return IPMI_EVENT_NOT_HANDLED;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "Entity");
@@ -906,15 +904,6 @@ presence_change(ipmi_entity_t *entity,
     }
 
     ipmi_cmdlang_cmd_info_put(evi);
-    return IPMI_EVENT_NOT_HANDLED;
-
- out_err:
-    ipmi_cmdlang_global_err(entity_name,
-			    "cmd_entity.c(presence_change)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
-
     return IPMI_EVENT_NOT_HANDLED;
 }
 
@@ -932,21 +921,16 @@ static void fully_up(ipmi_entity_t      *entity,
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(entity_name,
+				"cmd_entity.c(fully_up)",
+				errstr, rv);
+	return;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "Entity");
     ipmi_cmdlang_out(evi, "Name", entity_name);
     ipmi_cmdlang_out(evi, "Operation", "Fully Up");
     ipmi_cmdlang_cmd_info_put(evi);
-    return;
-
- out_err:
-    ipmi_cmdlang_global_err(entity_name,
-			    "cmd_entity.c(fully_up)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
 }
 
 static int
@@ -967,7 +951,10 @@ entity_hot_swap(ipmi_entity_t             *entity,
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(entity_name,
+				"cmd_entity.c(entity_hot_swap)",
+				errstr, rv);
+	return IPMI_EVENT_NOT_HANDLED;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "Entity");
@@ -985,15 +972,6 @@ entity_hot_swap(ipmi_entity_t             *entity,
     }
 
     ipmi_cmdlang_cmd_info_put(evi);
-    return IPMI_EVENT_NOT_HANDLED;
-
- out_err:
-    ipmi_cmdlang_global_err(entity_name,
-			    "cmd_entity.c(entity_hot_swap)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
-
     return IPMI_EVENT_NOT_HANDLED;
 }
 

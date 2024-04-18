@@ -1837,8 +1837,8 @@ set_user1(ipmi_mc_t        *mc,
 	/* Optional value, afaict there is no way to get this value. */
 	rv |= ipmi_user_set_enable(user, info->enable_val);
 	
-    rv = ipmi_mc_set_user(mc, info->channel, info->user, user,
-			  set_user2, info);
+    rv |= ipmi_mc_set_user(mc, info->channel, info->user, user,
+			   set_user2, info);
     if (rv) {
 	cmdlang->err = EINVAL;
 	cmdlang->errstr = "Error sending set user access cmd";
@@ -2059,7 +2059,10 @@ mc_active(ipmi_mc_t *mc, int active, void *cb_data)
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(mc_name,
+				"cmd_mc.c(mc_active)",
+				errstr, rv);
+	return;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "MC");
@@ -2068,14 +2071,6 @@ mc_active(ipmi_mc_t *mc, int active, void *cb_data)
     ipmi_cmdlang_out_bool(evi, "Active", active);
 
     ipmi_cmdlang_cmd_info_put(evi);
-    return;
-
- out_err:
-    ipmi_cmdlang_global_err(mc_name,
-			    "cmd_mc.c(mc_active)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
 }
 
 static void

@@ -149,10 +149,10 @@ sel_list(ipmi_domain_t *domain, void *cb_data)
     ipmi_cmdlang_out(cmd_info, "Name", domain_name);
     rv = ipmi_domain_sel_count(domain, &count1);
     if (rv)
-	return;
+	goto out_err;
     rv = ipmi_domain_sel_entries_used(domain, &count2);
     if (rv)
-	return;
+	goto out_err;
     ipmi_cmdlang_out_int(cmd_info, "Entries", count1);
     ipmi_cmdlang_out_int(cmd_info, "Slots in use", count2);
 
@@ -177,6 +177,8 @@ sel_list(ipmi_domain_t *domain, void *cb_data)
     ipmi_domain_get_name(domain, cmdlang->objstr,
 			 cmdlang->objstr_len);
     cmdlang->location = "cmd_sel.c(sel_list)";
+    if (h)
+	ipmi_event_handlers_free(h);
 }
 
 static void
@@ -244,8 +246,6 @@ mc_sel_list(ipmi_mc_t *mc, void *cb_data)
     ipmi_mc_get_name(mc, cmdlang->objstr,
 		     cmdlang->objstr_len);
     cmdlang->location = "cmd_sel.c(mc_sel_list)";
-    if (h)
-	ipmi_event_handlers_free(h);
 }
 
 typedef struct sel_delete_s

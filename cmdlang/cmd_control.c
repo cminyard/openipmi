@@ -649,7 +649,10 @@ control_event_handler(ipmi_control_t *control,
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(control_name,
+				"cmd_control.c(ipmi_cmdlang_control_change)",
+				errstr, rv);
+	return IPMI_EVENT_NOT_HANDLED;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "Control");
@@ -672,14 +675,6 @@ control_event_handler(ipmi_control_t *control,
 	ipmi_cmdlang_up(evi);
     }
     ipmi_cmdlang_cmd_info_put(evi);
-    return IPMI_EVENT_NOT_HANDLED;
-
- out_err:
-    ipmi_cmdlang_global_err(control_name,
-			    "cmd_control.c(ipmi_cmdlang_control_change)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
     return IPMI_EVENT_NOT_HANDLED;
 }
 
