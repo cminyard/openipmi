@@ -7554,7 +7554,6 @@ ipmi_args_t *alloc_parse_args(argarray *args);
 	    goto out_err;
 	if (!nil_swig_cb(handler)) {
 	    if (! valid_swig_cb(handler, sensor_event_enable_cb)) {
-		free(st);
 		rv = EINVAL;
 		goto out_err;
 	    }
