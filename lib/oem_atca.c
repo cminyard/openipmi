@@ -635,8 +635,7 @@ atca_activate_sensor_start(ipmi_sensor_t *sensor, int err, void *cb_data)
 		 ENTITY_NAME(finfo->entity), err);
 	if (hs_info->handler2)
 	    hs_info->handler2(finfo->entity, err, hs_info->cb_data);
-	if (sensor)
-	    ipmi_sensor_opq_done(sensor);
+	ipmi_sensor_opq_done(sensor);
 	if (finfo->entity)
 	    ipmi_entity_opq_done(finfo->entity);
 	ipmi_mem_free(hs_info);
@@ -2304,8 +2303,7 @@ get_power_feed_done(ipmi_control_t *control,
     unsigned int      expected_feeds;
     unsigned int      i;
 
-    if (control)
-	mc = ipmi_control_get_mc(control);
+    mc = ipmi_control_get_mc(control);
 
     expected_feeds = sinfo->nr_power_feeds - info->curr_feed;
     if (expected_feeds > 10)

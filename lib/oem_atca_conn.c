@@ -840,6 +840,7 @@ cleanup_atca_oem_data(ipmi_con_t *ipmi)
 			*(info->fd_list) = curr->fd_next;
 		    break;
 		}
+		prev = curr;
 		curr = curr->fd_next;
 	    }
 	}
