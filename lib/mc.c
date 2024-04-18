@@ -1539,7 +1539,7 @@ ipmi_mc_reread_sel(ipmi_mc_t       *mc,
     ipmi_lock(mc->lock);
     if (! mc_op_ready(mc)) {
 	rv = ECANCELED;
-    } else if (mc->sel_timer_info) {
+    } else if (mc->sel) {
 	/* SEL is already set up, just do a request. */
 	rv = ipmi_sel_get(mc->sel, cb, info);
     } else {
