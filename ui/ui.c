@@ -544,7 +544,8 @@ ui_vlog(const char *format, enum ipmi_log_type_e log_type, va_list ap)
 		do_nl = 0;
 		/* FALLTHROUGH */
 	    case IPMI_LOG_DEBUG:
-		log_pad_out("%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		log_pad_out("%ld.%6.6ld: ",
+			    (long) now.tv_sec, (long) now.tv_usec);
 		log_pad_out("DEBG: ");
 		break;
 
@@ -3329,7 +3330,7 @@ traverse_fru_multi_record_tree(ipmi_fru_node_t *node,
 
 	case IPMI_FRU_DATA_BOOLEAN:
 	    display_pad_out("%*sType: boolean\n", indent, "");
-	    display_pad_out("%*sData: %ls\n", indent, "",
+	    display_pad_out("%*sData: %s\n", indent, "",
 			    intval ? "true" : "false");
 	    break;
 
@@ -3480,13 +3481,13 @@ dump_fru_info(ipmi_fru_t *fru)
 	}
 	data = ipmi_mem_alloc(len);
 	if (!data) {
-	    display_pad_out("\n  multi-record %d, error allocating data\n");
+	    display_pad_out("\n  multi-record %d, error allocating data\n", i);
 	    continue;
 	}
 	rv = ipmi_fru_get_multi_record_data(fru, i, data, &len);
 	if (rv) {
 	    display_pad_out("\n  multi-record %d, error getting data: %x\n",
-			    rv);
+			    i, rv);
 	} else {
 	    for (j=0; j<len; j++) {
 		if ((j > 0) && ((j % 16) == 0))
