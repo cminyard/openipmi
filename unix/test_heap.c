@@ -104,7 +104,7 @@ main(int argc, char *argv[])
     if (i < argc) {
 	random_seed = atoi(argv[i]);
     } else {
-	random_seed = time(NULL);
+	random_seed = (int) time(NULL);
     }
     if (debug)
 	printf("Random seed is %d\n", random_seed);
