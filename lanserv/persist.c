@@ -276,7 +276,7 @@ read_persist(const char *name, ...)
 {
     char *fname;
     va_list ap;
-    persist_t *p;
+    persist_t *p = NULL;
     FILE *f;
     char *line;
     char *end;
@@ -288,18 +288,14 @@ read_persist(const char *name, ...)
     va_start(ap, name);
     p = alloc_vpersist(name, ap);
     if (!p)
-	return NULL;
+	goto out_err;
     fname = get_fname(p, "");
-    if (!fname) {
-	free_persist(p);
-	return NULL;
-    }
+    if (!fname)
+	goto out_err;
     f = fopen(fname, "r");
     free(fname);
-    if (!f) {
-	free_persist(p);
-	return NULL;
-    }
+    if (!f)
+	goto out_err;
 
     for (line = NULL; getline(&line, &n, f) != -1; free(line), line = NULL) {
 	char *name = line;
@@ -318,16 +314,14 @@ read_persist(const char *name, ...)
 	pi = malloc(sizeof(*pi));
 	if (!pi) {
 	    free(line);
-	    free_persist(p);
-	    return NULL;
+	    goto out_err;
 	}
 
 	pi->iname = strdup(name);
 	if (!pi->iname) {
 	    free(pi);
 	    free(line);
-	    free_persist(p);
-	    return NULL;
+	    goto out_err;
 	}
 	pi->type = type[0];
 
@@ -359,7 +353,13 @@ read_persist(const char *name, ...)
 	p->items = pi;
     }
 
+    va_end(ap);
     return p;
+ out_err:
+    if (p)
+	free_persist(p);
+    va_end(ap);
+    return NULL;
 }
 
 int
