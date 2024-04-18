@@ -931,7 +931,7 @@ mc_add_fru_data(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 
 	rv = get_delim_str(toks, &frufn, &errstr);
 	if (rv) {
-	    out->eprintf(out, "**Error with FRU filename: %d", strerror(rv));
+	    out->eprintf(out, "**Error with FRU filename: %s", errstr);
 	    return rv;
 	}
 	rv = ipmi_mc_add_fru_file(mc, devid, length, file_offset,
