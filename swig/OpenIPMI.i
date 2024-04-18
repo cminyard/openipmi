@@ -7495,7 +7495,7 @@ ipmi_args_t *alloc_parse_args(argarray *args);
 	int                 rv;
 	swig_cb_val         *handler_val = NULL;
 	ipmi_sensor_done_cb sensor_cb = NULL;
-	ipmi_event_state_t  *st;
+	ipmi_event_state_t  *st = NULL;
 
 	IPMI_SWIG_C_CB_ENTRY
 	if (ipmi_sensor_get_event_reading_type(self)
@@ -7518,8 +7518,9 @@ ipmi_args_t *alloc_parse_args(argarray *args);
 	rv = ipmi_sensor_enable_events(self, st, sensor_cb, handler_val);
 	if (rv && handler_val)
 	    deref_swig_cb_val(handler_val);
-	free(st);
     out_err:
+	if (st)
+	    free(st);
 	IPMI_SWIG_C_CB_EXIT
 	return rv;
     }
@@ -7539,7 +7540,7 @@ ipmi_args_t *alloc_parse_args(argarray *args);
 	int                 rv;
 	swig_cb_val         *handler_val = NULL;
 	ipmi_sensor_done_cb sensor_cb = NULL;
-	ipmi_event_state_t  *st;
+	ipmi_event_state_t  *st = NULL;
 
 	IPMI_SWIG_C_CB_ENTRY
 	if (ipmi_sensor_get_event_reading_type(self)
@@ -7563,8 +7564,9 @@ ipmi_args_t *alloc_parse_args(argarray *args);
 	rv = ipmi_sensor_disable_events(self, st, sensor_cb, handler_val);
 	if (rv && handler_val)
 	    deref_swig_cb_val(handler_val);
-	free(st);
     out_err:
+	if (st)
+	    free(st);
 	IPMI_SWIG_C_CB_EXIT
 	return rv;
     }
