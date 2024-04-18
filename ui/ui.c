@@ -441,27 +441,32 @@ ui_vlog(const char *format, enum ipmi_log_type_e log_type, va_list ap)
 	switch(log_type)
 	{
 	    case IPMI_LOG_INFO:
-		wprintw(dummy_pad, "%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		wprintw(dummy_pad, "%ld.%6.6ld: ",
+			(long) now.tv_sec, (long) now.tv_usec);
 		wprintw(dummy_pad, "INFO: ");
 		break;
 
 	    case IPMI_LOG_WARNING:
-		wprintw(dummy_pad, "%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		wprintw(dummy_pad, "%ld.%6.6ld: ",
+			(long) now.tv_sec, (long) now.tv_usec);
 		wprintw(dummy_pad, "WARN: ");
 		break;
 
 	    case IPMI_LOG_SEVERE:
-		wprintw(dummy_pad, "%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		wprintw(dummy_pad, "%ld.%6.6ld: ",
+			(long) now.tv_sec, (long) now.tv_usec);
 		wprintw(dummy_pad, "SEVR: ");
 		break;
 
 	    case IPMI_LOG_FATAL:
-		wprintw(dummy_pad, "%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		wprintw(dummy_pad, "%ld.%6.6ld: ",
+			(long) now.tv_sec, (long) now.tv_usec);
 		wprintw(dummy_pad, "FATL: ");
 		break;
 
 	    case IPMI_LOG_ERR_INFO:
-		wprintw(dummy_pad, "%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		wprintw(dummy_pad, "%ld.%6.6ld: ",
+			(long) now.tv_sec, (long) now.tv_usec);
 		wprintw(dummy_pad, "EINF: ");
 		break;
 
@@ -469,7 +474,8 @@ ui_vlog(const char *format, enum ipmi_log_type_e log_type, va_list ap)
 		do_nl = 0;
 		/* FALLTHROUGH */
 	    case IPMI_LOG_DEBUG:
-		wprintw(dummy_pad, "%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		wprintw(dummy_pad, "%ld.%6.6ld: ",
+			(long) now.tv_sec, (long) now.tv_usec);
 		wprintw(dummy_pad, "DEBG: ");
 		break;
 
@@ -566,7 +572,8 @@ ui_log(char *format, ...)
     if (full_screen) {
 	/* Generate the output to the dummy pad to see how many lines we
 	   will use. */
-	wprintw(dummy_pad, "%d.%6.6d: ", now.tv_sec, now.tv_usec);
+	wprintw(dummy_pad, "%ld.%6.6ld: ",
+		(long) now.tv_sec, (long) now.tv_usec);
 	vw_printw(dummy_pad, format, ap);
 	getyx(dummy_pad, y, x);
 	wmove(dummy_pad, 0, x);
@@ -1812,7 +1819,7 @@ display_sensor(ipmi_entity_t *entity, ipmi_sensor_t *sensor)
 		    double val;
 		    rv = ipmi_threshold_get(sensor_thresholds, t, &val);
 		    if (rv)
-			display_pad_out("?", val);
+			display_pad_out("?");
 		    else
 			display_pad_out("%f", val);
 		}
@@ -1979,7 +1986,7 @@ read_thresholds(ipmi_sensor_t     *sensor,
 			  threshold_positions[t].value.y,
 			  threshold_positions[t].value.x);
 		    if (rv)
-			display_pad_out("?", val);
+			display_pad_out("?");
 		    else
 			display_pad_out("%f", val);
 		}
@@ -2011,9 +2018,6 @@ read_thresh_event_enables(ipmi_sensor_t      *sensor,
 	return;
 
     if (sensor_displayed) {
-	if (err)
-	    return;
-
 	global_enable = ipmi_event_state_get_events_enabled(states);
 	scanning_enable = ipmi_event_state_get_scanning_enabled(states);
 	wmove(display_pad, enabled_pos.y, enabled_pos.x);
@@ -3306,7 +3310,7 @@ traverse_fru_multi_record_tree(ipmi_fru_node_t *node,
 	    display_pad_out("%*sName: %s \n", indent, "", name);
 	else
 	    /* An array index. */
-	    display_pad_out("%*%d: \n", indent, "", i);
+	    display_pad_out("%*d: \n", indent, "", i);
         switch (dtype) {
 	case IPMI_FRU_DATA_INT:
 	    display_pad_out("%*sType: integer\n", indent, "");
@@ -3453,10 +3457,12 @@ dump_fru_info(ipmi_fru_t *fru)
 
 	rv = ipmi_fru_get_multi_record_type(fru, i, &type);
 	if (rv)
-	    display_pad_out("  multi-record %d, error getting type: %x\n", rv);
+	    display_pad_out("  multi-record %d, error getting type: %x\n",
+			    i, rv);
 	rv = ipmi_fru_get_multi_record_format_version(fru, i, &ver);
 	if (rv)
-	    display_pad_out("  multi-record %d, error getting ver: %x\n", rv);
+	    display_pad_out("  multi-record %d, error getting ver: %x\n",
+			    i, rv);
 
 	display_pad_out("  multi-record %d, type 0x%x, format version 0x%x:",
 			i, type, ver);
@@ -3464,7 +3470,7 @@ dump_fru_info(ipmi_fru_t *fru)
 	rv = ipmi_fru_get_multi_record_data_len(fru, i, &len);
 	if (rv) {
 	    display_pad_out("\n  multi-record %d, error getting length: %x\n",
-			    rv);
+			    i, rv);
 	    continue;
 	}
 	data = ipmi_mem_alloc(len);
@@ -4051,7 +4057,7 @@ display_pef_config(void)
     rv = ipmi_pefconfig_get_guid(pef_config, &val, data, &len);
     if (!rv) {
 	display_pad_out("  guid_enabled: %d\n", val);
-	display_pad_out("  guid:", val);
+	display_pad_out("  guid:");
 	for (i=0; i<len; i++)
 	    display_pad_out(" %2.2x", data[i]);
 	display_pad_out("\n");
@@ -5732,7 +5738,7 @@ sel_time_fetched(ipmi_mc_t     *mc,
 	goto out;
     }
 
-    display_pad_out("SEL time is 0x%x\n", time);
+    display_pad_out("SEL time is 0x%lx\n", time);
 
  out:
     display_pad_refresh();
@@ -5890,8 +5896,8 @@ void sdrs_fetched(ipmi_sdr_info_t *sdrs,
     display_pad_out("total bytes in SDRs: %d\n", total_size);
     display_pad_refresh();
 
- out:
     ipmi_sdr_info_destroy(sdrs, NULL, NULL);
+ out:
     ipmi_mem_free(info);
 }
 
