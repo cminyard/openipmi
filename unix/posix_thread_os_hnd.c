@@ -213,7 +213,7 @@ start_timer(os_handler_t      *handler,
 
     rv = handler->get_monotonic_time(handler, &now);
     if (rv)
-	return rv;
+	goto out;
 
     id->running = 1;
     id->cb_data = cb_data;
