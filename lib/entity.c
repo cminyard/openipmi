@@ -3465,10 +3465,11 @@ iterate_control_prefunc(void *cb_data, void *item1, void *item2)
     ipmi_control_t         *control = item1;
     int                   rv;
     ipmi_mc_t             *mc = ipmi_control_get_mc(control);
-    ipmi_domain_t         *domain = ipmi_mc_get_domain(mc);
+    ipmi_domain_t         *domain;
 
     if (!mc)
 	goto out_err;
+    domain = ipmi_mc_get_domain(mc);
     i_ipmi_domain_mc_lock(domain);
     rv = i_ipmi_mc_get(mc);
     i_ipmi_domain_mc_unlock(domain);
