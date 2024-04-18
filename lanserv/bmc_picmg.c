@@ -1042,7 +1042,7 @@ handle_picmg_cmd_get_shelf_manager_ip_addresses(lmc_data_t    *mc,
 	}
     }
 
-    if (addr >= count) {
+    if (addr >= count || !ap) {
 	rdata[0] = IPMI_PARAMETER_OUT_OF_RANGE_CC;
 	*rdata_len = 1;
 	return;
