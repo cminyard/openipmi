@@ -6971,11 +6971,14 @@ event_handler(ipmi_domain_t *domain,
     const unsigned char *data = ipmi_event_get_data_ptr(event);
     unsigned int        i;
     char                str[200];
-    int                 pos;
+    int                 pos = 0;
 
-    pos = 0;
-    for (i=0; i<data_len; i++)
-	pos += snprintf(str+pos, 200-pos, " %2.2x", data[i]);
+    for (i=0; i<data_len; i++) {
+	int count = snprintf(str+pos, 200-pos, " %2.2x", data[i]);
+	if (count >= 200 - pos)
+	    break;
+	pos += count;
+    }
 
     ui_log("Unknown event from mc (%x %x)\n"
 	   "%4.4x:%2.2x %lld: %s\n",
