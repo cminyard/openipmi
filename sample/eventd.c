@@ -218,8 +218,11 @@ send_event_to_prog(char         *type,
 	    len = sizeof(eventdata);
 	ipmi_event_get_data(event, eventdata, 0, len);
 	for (i = 0; i < len; i++) {
-	    pos += snprintf(datastr + pos, sizeof(datastr) - pos, " 0x%2.2x",
-			    eventdata[i]);
+	    int count = snprintf(datastr + pos, 128 - pos,
+				 " 0x%2.2x", eventdata[i]);
+	    if (count >= 128 - pos)
+		break;
+	    pos += count;
 	}
     }
 
