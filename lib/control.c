@@ -44,6 +44,7 @@
 #include <OpenIPMI/internal/ipmi_domain.h>
 #include <OpenIPMI/internal/ipmi_mc.h>
 #include <OpenIPMI/internal/ipmi_control.h>
+#include <OpenIPMI/internal/ipmi_utils.h>
 
 struct ipmi_control_info_s
 {
@@ -474,11 +475,13 @@ control_set_name(ipmi_control_t *control)
     int length;
 
     length = ipmi_entity_get_name(control->entity, control->name,
-				  sizeof(control->name)-2);
+				  sizeof(control->name)-3);
     control->name[length] = '.';
     length++;
-    length += snprintf(control->name+length, IPMI_CONTROL_NAME_LEN-length-2,
-		       "%s", control->id);
+    length += ipmi_string_append(control->name+length,
+				 IPMI_CONTROL_NAME_LEN-length-2,
+				 control->id, control->id_len,
+				 control->id_type);
     control->name[length] = ' ';
     length++;
     control->name[length] = '\0';
@@ -494,14 +497,28 @@ i_ipmi_control_name(const ipmi_control_t *control)
 int
 ipmi_control_get_name(ipmi_control_t *control, char *name, int length)
 {
-    int rv = 0;
+    int slen;
 
-    if (control->entity)
-	rv = ipmi_entity_get_name(control->entity, name, length);
-    if (length > (int) (control->id_len + 2))
-	length = control->id_len + 2; /* Leave space for the nil */
-    rv += snprintf(name+rv, length, ".%s", control->id);
-    return rv;
+    if (length <= 0)
+	return 0;
+
+    /* Never changes, no lock needed. */
+    slen = strlen(control->name);
+    if (slen == 0) {
+	if (name)
+	    *name = '\0';
+	goto out;
+    }
+
+    slen -= 1; /* Remove the trailing ' ' */
+    if (slen > length - 1)
+	slen = length - 1;
+    if (name) {
+	memcpy(name, control->name, slen);
+	name[slen] = '\0';
+    }
+ out:
+    return slen;
 }
 
 /***********************************************************************
@@ -1427,6 +1444,7 @@ ipmi_control_get_id_type(ipmi_control_t *control)
 
     return control->id_type;
 }
+
 
 int
 ipmi_control_get_id(ipmi_control_t *control, char *id, int length)

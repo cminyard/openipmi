@@ -48,6 +48,7 @@
 #include <OpenIPMI/internal/ipmi_domain.h>
 #include <OpenIPMI/internal/ipmi_mc.h>
 #include <OpenIPMI/internal/ipmi_event.h>
+#include <OpenIPMI/internal/ipmi_utils.h>
 
 struct ipmi_sensor_info_s
 {
@@ -1109,11 +1110,13 @@ sensor_set_name(ipmi_sensor_t *sensor)
     int length;
 
     length = ipmi_entity_get_name(sensor->entity, sensor->name,
-				  sizeof(sensor->name)-2);
+				  sizeof(sensor->name)-3);
     sensor->name[length] = '.';
     length++;
-    length += snprintf(sensor->name+length, IPMI_SENSOR_NAME_LEN-length-2,
-		       "%s", sensor->id);
+    length += ipmi_string_append(sensor->name+length,
+				 IPMI_CONTROL_NAME_LEN-length-2,
+				 sensor->id, sensor->id_len,
+				 sensor->id_type);
     sensor->name[length] = ' ';
     length++;
     sensor->name[length] = '\0';
@@ -1143,7 +1146,7 @@ ipmi_sensor_get_name(ipmi_sensor_t *sensor, char *name, int length)
     }
 
     slen -= 1; /* Remove the trailing ' ' */
-    if (slen >= length)
+    if (slen >= length - 1)
 	slen = length - 1;
 
     if (name) {

@@ -25,6 +25,7 @@
 
 #include <OpenIPMI/dllvisibility.h>
 #include <OpenIPMI/ipmi_types.h>
+#include <OpenIPMI/ipmi_bits.h>
 
 /* Do a hash on a pointer value. */
 IPMI_UTILS_DLL_PUBLIC
@@ -60,5 +61,15 @@ IPMI_DLL_PUBLIC
 int ipmi_fru_destroy_internal(ipmi_fru_t            *fru,
 			      ipmi_fru_idestroyed_cb handler,
 			      void                  *cb_data);
+
+/*
+ * Used to append an IPMI string to a character string, converting it to
+ * something printable in a normal string.  Unicode and binary strings
+ * are currently converted into a hex string.
+ */
+unsigned int
+ipmi_string_append(char *str, unsigned int len,
+		   char *to_append, unsigned int append_len,
+		   enum ipmi_str_type_e append_type);
 
 #endif /* OPENIPMI_UTILS_H_ */

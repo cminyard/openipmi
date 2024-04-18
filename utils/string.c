@@ -52,6 +52,7 @@
 
 #include <string.h>
 #include <errno.h>
+#include <stdio.h>
 
 #include <OpenIPMI/ipmi_string.h>
 
@@ -535,4 +536,40 @@ ipmi_set_device_string(const char           *input,
 {
     ipmi_set_device_string2(input, type, in_len, output, force_unicode,
 			    out_len, IPMI_STRING_OPTION_NONE);
+}
+
+unsigned int
+ipmi_string_append(char *str, unsigned int len,
+		   char *to_append, unsigned int append_len,
+		   enum ipmi_str_type_e append_type)
+{
+    if (append_type == IPMI_ASCII_STR) {
+	if (append_len > len - 1)
+	    append_len = len - 1;
+	memcpy(str, to_append, append_len);
+	str[append_len] = 0;
+	return append_len;
+    } else {
+	/*
+	 * The IPMI spec is silent what "unicode" means, and that
+	 * could have several meanings, like UTF8, 16-bit encoding, or
+	 * 32-bit encoding.  Just treat it as binary for now.
+	 *
+	 * Binary is just printed as hex values.
+	 */
+	unsigned int i, left = len - 1, pos = 0;
+
+	for (i = 0; i < append_len; i++) {
+	    snprintf(str + pos, left, "%2.2x", to_append[i]);
+	    if (left < 2) {
+		pos += left;
+		break;
+	    } else {
+		pos += 2;
+		left -= 2;
+	    }
+	}
+	str[pos] = '\0';
+	return pos;
+    }
 }
