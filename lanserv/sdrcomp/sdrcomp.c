@@ -1643,15 +1643,22 @@ open_include(const char *filename, unsigned int line, const char *name)
     for (n = includes; n; n = n->next) {
 	char *s = malloc(namelen + strlen(n->dirname) + 2);
 
+	if (!s) {
+	    fprintf(stderr,
+		    "%s:%3d: Unable to allocate memory for included file %s\n",
+		    filename, line, name);
+	    goto do_err;
+	}
 	sprintf(s, "%s/%s", n->dirname, name);
 	f = fopen(s, "r");
+	free(s);
 	if (f)
 	    return f;
-	free(s);
     }
 
     fprintf(stderr, "%s:%3d: Unable to open included file %s\n",
 	    filename, line, name);
+ do_err:
     out_err(1);
     return NULL;
 }
