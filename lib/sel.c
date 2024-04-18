@@ -1890,7 +1890,8 @@ sel_del_event_cb(ipmi_mc_t *mc, void *cb_data)
 	elem = opq_alloc_elem();
 	if (!data || !elem) {
 	    if (! info->do_clear) {
-		real_holder->deleted = 0;
+		if (real_holder)
+		    real_holder->deleted = 0;
 		sel->num_sels++;
 		sel->del_sels--;
 	    }
