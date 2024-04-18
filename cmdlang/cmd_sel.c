@@ -177,8 +177,6 @@ sel_list(ipmi_domain_t *domain, void *cb_data)
     ipmi_domain_get_name(domain, cmdlang->objstr,
 			 cmdlang->objstr_len);
     cmdlang->location = "cmd_sel.c(sel_list)";
-    if (h)
-	ipmi_event_handlers_free(h);
 }
 
 static void

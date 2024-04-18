@@ -1242,8 +1242,6 @@ sensor_discrete_event_handler(ipmi_sensor_t         *sensor,
     ipmi_cmdlang_global_err(sensor_name,
 			    "cmd_sensor.c(sensor_discrete_event_handler)",
 			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
     return IPMI_EVENT_NOT_HANDLED;
 }
 
