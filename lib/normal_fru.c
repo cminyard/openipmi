@@ -2318,6 +2318,9 @@ ipmi_fru_ins_multi_record(ipmi_fru_t    *fru,
     if (data && version != 2)
 	return EINVAL;
 
+    if (!data && length > 0)
+	return EINVAL;
+
     if (length > 255)
 	return EINVAL;
 
@@ -2372,7 +2375,8 @@ ipmi_fru_ins_multi_record(ipmi_fru_t    *fru,
 	i_ipmi_fru_unlock(fru);
 	return ENOMEM;
     }
-    memcpy(new_data, data, length);
+    if (data)
+	memcpy(new_data, data, length);
 
     if (num == u->num_records)
 	offset = rec->used_length;
