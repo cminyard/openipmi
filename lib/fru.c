@@ -1400,9 +1400,7 @@ next_fru_write(ipmi_domain_t *domain, ipmi_fru_t *fru)
     noff = fru->update_recs->offset;
     offset = noff;
     left = MAX_FRU_DATA_WRITE;
-    while (fru->update_recs
-	   && (left > 0)
-	   && (noff == fru->update_recs->offset))
+    while ((left > 0) && (noff == fru->update_recs->offset))
     {
 	if (left < fru->update_recs->length)
 	    tlen = left;
