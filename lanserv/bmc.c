@@ -165,7 +165,7 @@ handle_iana_netfn(lmc_data_t    *mc,
     }
 
     /* Remove the IANA */
-    memcpy(msg->data, msg->data + 3, msg->len - 3);
+    memmove(msg->data, msg->data + 3, msg->len - 3);
     msg->len -= 3;
 
     p->handler(mc, msg, rdata, rdata_len, p->cb_data);

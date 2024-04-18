@@ -511,27 +511,32 @@ ui_vlog(const char *format, enum ipmi_log_type_e log_type, va_list ap)
 	switch(log_type)
 	{
 	    case IPMI_LOG_INFO:
-		log_pad_out("%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		log_pad_out("%ld.%6.6ld: ",
+			    (long) now.tv_sec, (long) now.tv_usec);
 		log_pad_out("INFO: ");
 		break;
 
 	    case IPMI_LOG_WARNING:
-		log_pad_out("%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		log_pad_out("%ld.%6.6ld: ",
+			    (long) now.tv_sec, (long) now.tv_usec);
 		log_pad_out("WARN: ");
 		break;
 
 	    case IPMI_LOG_SEVERE:
-		log_pad_out("%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		log_pad_out("%ld.%6.6ld: ",
+			    (long) now.tv_sec, (long) now.tv_usec);
 		log_pad_out("SEVR: ");
 		break;
 
 	    case IPMI_LOG_FATAL:
-		log_pad_out("%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		log_pad_out("%ld.%6.6ld: ",
+			    (long) now.tv_sec, (long) now.tv_usec);
 		log_pad_out("FATL: ");
 		break;
 
 	    case IPMI_LOG_ERR_INFO:
-		log_pad_out("%d.%6.6d: ", now.tv_sec, now.tv_usec);
+		log_pad_out("%ld.%6.6ld: ",
+			    (long) now.tv_sec, (long) now.tv_usec);
 		log_pad_out("EINF: ");
 		break;
 
@@ -3310,7 +3315,7 @@ traverse_fru_multi_record_tree(ipmi_fru_node_t *node,
 	    display_pad_out("%*sName: %s \n", indent, "", name);
 	else
 	    /* An array index. */
-	    display_pad_out("%*d: \n", indent, "", i);
+	    display_pad_out("%*d: \n", indent, i);
         switch (dtype) {
 	case IPMI_FRU_DATA_INT:
 	    display_pad_out("%*sType: integer\n", indent, "");

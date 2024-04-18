@@ -713,7 +713,8 @@ sdrs_fetched(ipmi_sdr_info_t *sdrs,
 	cmdlang->location = "cmd_mc.c(sdrs_fetched)";
     }
     ipmi_cmdlang_cmd_info_put(cmd_info);
-    ipmi_sdr_info_destroy(sdrs, NULL, NULL);
+    if (sdrs)
+	ipmi_sdr_info_destroy(sdrs, NULL, NULL);
     ipmi_mem_free(info);
 }
 
@@ -2087,7 +2088,10 @@ mc_fully_up(ipmi_mc_t *mc, void *cb_data)
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(mc_name,
+				"cmd_mc.c(mc_fully_up)",
+				errstr, rv);
+	return;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "MC");
@@ -2095,14 +2099,6 @@ mc_fully_up(ipmi_mc_t *mc, void *cb_data)
     ipmi_cmdlang_out(evi, "Operation", "Fully Up");
 
     ipmi_cmdlang_cmd_info_put(evi);
-    return;
-
- out_err:
-    ipmi_cmdlang_global_err(mc_name,
-			    "cmd_mc.c(mc_fully_up)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
 }
 
 void

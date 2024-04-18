@@ -1748,8 +1748,8 @@ compile_file(const char *filename, FILE *f, persist_t *p, int outraw,
 	    }
 	    
 	    err = add_variable(name, value);
+	    free(value);
 	    if (err) {
-		free(value);
 		out_err(1);
 	    }
 	} else if (strcmp(tok, "include") == 0) {

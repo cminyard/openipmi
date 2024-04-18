@@ -1267,7 +1267,10 @@ sensor_threshold_event_handler(ipmi_sensor_t               *sensor,
     if (!evi) {
 	rv = ENOMEM;
 	errstr = "Out of memory";
-	goto out_err;
+	ipmi_cmdlang_global_err(sensor_name,
+				"cmd_sensor.c(sensor_threshold_event_handler)",
+				errstr, rv);
+	return IPMI_EVENT_NOT_HANDLED;
     }
 
     ipmi_cmdlang_out(evi, "Object Type", "Sensor");
@@ -1294,14 +1297,6 @@ sensor_threshold_event_handler(ipmi_sensor_t               *sensor,
 	ipmi_cmdlang_up(evi);
     }
     ipmi_cmdlang_cmd_info_put(evi);
-    return IPMI_EVENT_NOT_HANDLED;
-
- out_err:
-    ipmi_cmdlang_global_err(sensor_name,
-			    "cmd_sensor.c(sensor_threshold_event_handler)",
-			    errstr, rv);
-    if (evi)
-	ipmi_cmdlang_cmd_info_put(evi);
     return IPMI_EVENT_NOT_HANDLED;
 }
 

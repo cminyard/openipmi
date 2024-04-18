@@ -150,17 +150,18 @@ ipmi_addr_equal_nolun(const ipmi_addr_t *addr1,
 	case IPMI_SYSTEM_INTERFACE_ADDR_TYPE:
 	    return 1;
 
-	if (addr1->addr_type == IPMI_LAN_ADDR_TYPE) {
-		struct ipmi_lan_addr *lan_addr1
-			= (struct ipmi_lan_addr *) addr1;
-		struct ipmi_lan_addr *lan_addr2
-		    = (struct ipmi_lan_addr *) addr2;
+	case IPMI_LAN_ADDR_TYPE:
+	{
+	    struct ipmi_lan_addr *lan_addr1
+		= (struct ipmi_lan_addr *) addr1;
+	    struct ipmi_lan_addr *lan_addr2
+		= (struct ipmi_lan_addr *) addr2;
 
-		return ((lan_addr1->remote_SWID == lan_addr2->remote_SWID)
-			&& (lan_addr1->local_SWID == lan_addr2->local_SWID)
-			&& (lan_addr1->privilege == lan_addr2->privilege)
-			&& (lan_addr1->session_handle
-			    == lan_addr2->session_handle));
+	    return ((lan_addr1->remote_SWID == lan_addr2->remote_SWID)
+		    && (lan_addr1->local_SWID == lan_addr2->local_SWID)
+		    && (lan_addr1->privilege == lan_addr2->privilege)
+		    && (lan_addr1->session_handle
+			== lan_addr2->session_handle));
 	}
 
 	default:
