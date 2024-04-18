@@ -1473,10 +1473,6 @@ start_oem_domain_check(ipmi_domain_t      *domain,
 	    h = ilist_get(&iter);
 	}
 	if (rv) {
-	    if (rv == ENOSYS)
-		/* This just means that we didn't match anything. */
-		rv = 0;
-
 	    /* We didn't get a check to start, just give up. */
 	    check->done(domain, rv, check->cb_data);
 	    ipmi_mem_free(check);
@@ -1523,11 +1519,6 @@ next_oem_domain_check(ipmi_domain_t      *domain,
 	    h = ilist_get(&iter);
 	    check->curr_handler = h;
 	    rv = h->check(domain, domain_oem_check_done, check);
-	}
-	if (rv) {
-	    /* We didn't get a check to start, just give up. */
-	    check->done(domain, 0, check->cb_data);
-	    ipmi_mem_free(check);
 	}
     }
  out:
@@ -2802,10 +2793,7 @@ ipmi_start_ipmb_mc_scan(ipmi_domain_t  *domain,
 	}
     }
 
-    if (rv)
-	goto out_err;
-    else
-	add_bus_scans_running(domain, info);
+    add_bus_scans_running(domain, info);
     return 0;
 
  out_err:
@@ -3236,13 +3224,14 @@ ll_event_handler(ipmi_con_t        *ipmi,
     mc = i_ipmi_find_mc_by_addr(domain, addr, addr_len);
     if (!mc)
 	goto out;
-    ipmi_event_set_mcid(event, ipmi_mc_convert_to_id(mc));
 
     if (event == NULL) {
 	/* The incoming event didn't carry the full event information.
 	   Just scan for events in the MC's SEL. */
 	ipmi_mc_reread_sel(mc, NULL, NULL);
     } else {
+	ipmi_event_set_mcid(event, ipmi_mc_convert_to_id(mc));
+
 	/* Add it to the mc's event log. */
 	rv = i_ipmi_mc_sel_event_add(mc, event);
 
@@ -5300,7 +5289,7 @@ ll_addr_changed(ipmi_con_t    *ipmi,
 		continue;
 	    if (ipmb_addr[i] != old_addr[i]) {
 		/* First scan the old address to remove it. */
-		if (domain->con_ipmb_addr[u] != 0)
+		if (domain->con_ipmb_addr[u][i] != 0)
 		    ipmi_start_ipmb_mc_scan(domain, i,
 					    old_addr[i], old_addr[i],
 					    NULL, NULL);
