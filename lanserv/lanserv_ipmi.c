@@ -880,6 +880,12 @@ handle_temp_session(lanserv_data_t *lan, msg_t *msg)
     }
 
     auth = msg->data[0] & 0xf;
+    if (auth >= MAX_IPMI_AUTHS) {
+	lan->sysinfo->log(lan->sysinfo, NEW_SESSION_FAILED, msg,
+		 "Activate session failed: Invalid auth: 0x%x", auth);
+	return;
+    }
+
     user = &(lan->users[user_idx]);
     if (! (user->valid)) {
 	lan->sysinfo->log(lan->sysinfo, NEW_SESSION_FAILED, msg,
@@ -3032,6 +3038,11 @@ ipmi_handle_lan_msg(lanserv_data_t *lan,
     }
 
     msg.authtype = data[4];
+    if (msg.authtype >= MAX_IPMI_AUTHS) {
+	lan->sysinfo->log(lan->sysinfo, LAN_ERR, &msg,
+		 "LAN msg failure: Invalid authtype");
+	return;
+    }
     msg.data = data+5;
     msg.len = len - 5;
     msg.channel = lan->channel.channel_num;
