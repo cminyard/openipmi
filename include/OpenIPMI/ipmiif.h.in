@@ -1003,7 +1003,8 @@ IPMI_DLL_PUBLIC
 int ipmi_entity_get_device_address(ipmi_entity_t *ent);
 
 /* Return the FRU for this entity, or NULL if it doesn't have one
-   or the fetch has not completed. */
+   or the fetch has not completed.  This pointer is only valid
+   as long as the entity pointer you fetch it from is valid. */
 IPMI_DLL_PUBLIC
 ipmi_fru_t *ipmi_entity_get_fru(ipmi_entity_t *ent);
 
