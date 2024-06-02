@@ -3020,16 +3020,32 @@ ipmi_handle_lan_msg(lanserv_data_t *lan,
 {
     msg_t   msg;
 
+    memset(&msg, 0, sizeof(msg));
+
     msg.src_addr = from_addr;
     msg.src_len = from_len;
 
     msg.oem_data = 0;
+
+    msg.channel = lan->channel.channel_num;
+    msg.orig_channel = &lan->channel;
+
+    /*
+     * Initialize the data so the log won't crash if it gets called, and
+     * so the log might have useful info.
+     */
+    msg.data = data;
+    msg.len = len;
 
     if (len < 5) {
 	lan->sysinfo->log(lan->sysinfo, LAN_ERR, &msg,
 		 "LAN msg failure: message too short");
 	return;
     }
+
+    /* Length is at least marginally correct, skip the first part now. */
+    msg.data = data + 5;
+    msg.len = len - 5;
 
     if (data[2] != 0xff) {
 	lan->sysinfo->log(lan->sysinfo, LAN_ERR, &msg,
@@ -3043,10 +3059,6 @@ ipmi_handle_lan_msg(lanserv_data_t *lan,
 		 "LAN msg failure: Invalid authtype");
 	return;
     }
-    msg.data = data+5;
-    msg.len = len - 5;
-    msg.channel = lan->channel.channel_num;
-    msg.orig_channel = &lan->channel;
 
     if (msg.authtype == IPMI_AUTHTYPE_RMCP_PLUS) {
 	ipmi_handle_rmcpp_msg(lan, &msg);
