@@ -3054,18 +3054,15 @@ ipmi_handle_lan_msg(lanserv_data_t *lan,
     }
 
     msg.authtype = data[4];
-    if (msg.authtype >= MAX_IPMI_AUTHS) {
-	lan->sysinfo->log(lan->sysinfo, LAN_ERR, &msg,
-		 "LAN msg failure: Invalid authtype");
-	return;
-    }
-
     if (msg.authtype == IPMI_AUTHTYPE_RMCP_PLUS) {
 	ipmi_handle_rmcpp_msg(lan, &msg);
+    } else if (msg.authtype >= MAX_IPMI_AUTHS) {
+	lan->sysinfo->log(lan->sysinfo, LAN_ERR, &msg,
+			  "LAN msg failure: Invalid authtype: %d", data[4]);
+	return;
     } else {
 	ipmi_handle_rmcp_msg(lan, &msg);
     }
-
 }
 
 static void
