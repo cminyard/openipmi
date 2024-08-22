@@ -1927,7 +1927,7 @@ startup_set_sel_time(ipmi_mc_t  *mc,
 	ipmi_log(IPMI_LOG_WARNING,
 		 "%smc.c(startup_set_sel_time): "
 		 "Unable to start an SEL get due to error: %x",
-		 mc->name, rsp->data[0]);
+		 mc->name, rv);
 	sels_restart(info);
     }
 
