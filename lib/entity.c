@@ -5510,7 +5510,7 @@ static void
 domain_cb(ipmi_domain_t *domain, void *cb_data)
 {
     ipmi_device_num_t device_num;
-    ipmi_entity_t     *ent;
+    ipmi_entity_t     *ent = NULL;
     mc_cb_info_t      *info = cb_data;
 
     device_num.channel = info->id.channel;

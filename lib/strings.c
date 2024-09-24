@@ -438,6 +438,20 @@ static char *entity_id_types[] =
     "scsi bus",						/* 50 */
     "sata/sas bus",
     "processor front side bus",
+    "real time clock",
+    "reserved 1",
+    "air inlet",
+    "reserved 2",
+    "reserved 3",
+    "reserved 4",
+    "reserved 5",
+    "reserved 6",					/* 60 */
+    "reserved 7",
+    "reserved 8",
+    "reserved 9",
+    "air inlet",
+    "processor / CPU",
+    "baseboard / main system board",
 };
 #define NUM_ENTITY_ID_TYPES (sizeof(entity_id_types)/sizeof(char *))
 const char *
@@ -536,7 +550,8 @@ static char *sensor_states[256][16] =
 	"SM BIOS 'uncorrectable CPU-complex error'",
 	"processor presence detected",
 	"processor disabled",
-	"terminator presence detected"
+	"terminator presence detected",
+	"processor automatically throttled"
     },
     { /* 0x08 */
 	"presence detected",
@@ -569,6 +584,7 @@ static char *sensor_states[256][16] =
 	"configuration error",
 	"spare",
 	"memory automatically throttled",
+	"critical overtemperature"
     },
     { /* 0x0d */
 	"drive presence",
@@ -592,6 +608,9 @@ static char *sensor_states[256][16] =
 	"event type logging disabled",
 	"log area reset/cleared",
 	"all event logging disabled",
+	"SEL full",
+	"SEL almost full",
+	"correctable machine check error logging disabled"
     },
     { /* 0x11 */
 	"BIOS watchdog reset",
@@ -621,7 +640,9 @@ static char *sensor_states[256][16] =
 	"EISA fail safe timeout",
 	"bus correctable error",
 	"bus uncorrectable error",
-	"fatal NMI"
+	"fatal NMI",
+	"bus fatal error",
+	"bus degraded"
     },
     { /* 0x14 */
 	"power button pressed",
@@ -632,7 +653,10 @@ static char *sensor_states[256][16] =
     {}, /* 0x16 */
     {}, /* 0x17 */
     {}, /* 0x18 */
-    {}, /* 0x19 */
+    { /* 0x19 */
+	"soft power control failure",
+	"thermal trip"
+    },
     {}, /* 0x1a */
     { /* 0x1b */
 	"cable/interconnect is connected",
@@ -663,12 +687,18 @@ static char *sensor_states[256][16] =
 	"diagnostic boot completed",
 	"CD-ROM boot completed",
 	"ROM boot completed",
-	"boot completed"
+	"boot completed",
+	"base OS/hypervisor installation started",
+	"base OS/hypervisor installation not installing/provisioning a VM",
+	"base OS/hypervisor installation completed",
+	"base OS/hypervisor installation aborted",
+	"base OS/hypervisor installation failed"
     },
     { /* 0x20 */
-	"stop during OS load/initialization",
+	"critical stop during OS load/initialization",
 	"run time critical stop",
 	"OS Graceful Stop",
+	"OS Graceful Shutdown",
 	"Soft shutdown initiated by PEF",
 	"Agent not responding, graceful shutdown did not occur"
     },
@@ -739,6 +769,32 @@ static char *sensor_states[256][16] =
 	"battery low",
 	"battery failed",
 	"battery presence detected"
+    },
+    { /* 0x2a */
+	"session activated",
+	"session deactivated",
+	"invalid username or password",
+	"invalid password disable"
+    },
+    { /* 0x2b */
+	"hardware change detected with associated entity",
+	"firmware or software change detected with associated entity",
+	"hardware incompatibility detected with associated entity",
+	"firmware or software incompatibility detected with associated entity",
+	"entity is of an invalid or unsupported hardware version",
+	"entity contains an invalid or unsupported firmware software or version",
+	"hardware change detected with associated entity was successful",
+	"software or firmware change detected with associated entity was successful",
+    },
+    { /* 0x2c */
+	"FRU not installed",
+	"FRU inactive",
+	"FRU activation requested",
+	"FRU activation in progress",
+	"FRU active",
+	"FRU deactivation requested",
+	"FRU deactivation in progress",
+	"FRU communication lost",
     },
 };
 
