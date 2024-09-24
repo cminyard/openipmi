@@ -2986,6 +2986,13 @@ ipmi_handle_rmcp_msg(lanserv_data_t *lan, msg_t *msg)
 	    return;
 	}
 
+	if (session->authtype != msg->authtype) {
+	    lan->sysinfo->log(lan->sysinfo, INVALID_MSG, msg,
+		     "Normal session message failure:"
+		     " Message authtype does not match session authtype");
+	    return;
+	}
+
 	rv = auth_check(session, tsid, tseq, msg->data, msg->len,
 			msg->rmcp.authcode);
 	if (rv) {
