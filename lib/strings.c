@@ -225,7 +225,7 @@ static char *rate_unit_types[] =
 };
 #define NUM_RATE_UNIT_TYPES (sizeof(rate_unit_types)/sizeof(char *))
 const char *
-ipmi_get_rate_unit_string(unsigned int val)
+ipmi_get_rate_unit_string(enum ipmi_rate_unit_e val)
 {
     if (val >= NUM_RATE_UNIT_TYPES)
 	return "invalid";
@@ -330,7 +330,7 @@ static char *unit_types[] =
 };
 #define NUM_UNIT_TYPES (sizeof(unit_types)/sizeof(char *))
 const char *
-ipmi_get_unit_type_string(unsigned int val)
+ipmi_get_unit_type_string(enum ipmi_unit_type_e val)
 {
     if (val >= NUM_UNIT_TYPES)
 	return "invalid";
@@ -689,10 +689,9 @@ static char *sensor_states[256][16] =
 	"ROM boot completed",
 	"boot completed",
 	"base OS/hypervisor installation started",
-	"base OS/hypervisor installation not installing/provisioning a VM",
 	"base OS/hypervisor installation completed",
 	"base OS/hypervisor installation aborted",
-	"base OS/hypervisor installation failed"
+	"base OS/hypervisor installation failed"	/* 10 */
     },
     { /* 0x20 */
 	"critical stop during OS load/initialization",
@@ -724,7 +723,7 @@ static char *sensor_states[256][16] =
 	"G3 mechanical off",
 	"sleeping in an S1, S2, or S3 state",
 	"G1 sleeping",
-	"S5 entered by override",
+	"S5 entered by override",				/* 10 */
 	"legacy on state",
 	"legacy off state",
 	NULL,
