@@ -346,6 +346,8 @@ struct lan_data_s
 
     /* IPMI LAN 1.5 specific info. */
     unsigned char              chosen_authtype;
+    unsigned char              broken_authtype1;
+    unsigned char              broken_authtype2;
     unsigned char              challenge_string[16];
     ipmi_authdata_t            authdata;
 
@@ -1737,7 +1739,7 @@ rmcpp_format_msg(lan_data_t *lan, int addr_num,
 
 static int
 lan15_format_msg(lan_data_t *lan, int addr_num,
-		 unsigned char **msgdata, unsigned int *data_len)
+		 unsigned char **msgdata, unsigned int *data_len, int breakauth)
 {
     unsigned char *data;
     int           rv;
@@ -1751,7 +1753,10 @@ lan15_format_msg(lan_data_t *lan, int addr_num,
     data[1] = 0;
     data[2] = 0xff;
     data[3] = 0x07;
-    data[4] = lan->ip[addr_num].working_authtype;
+    if (lan->broken_authtype1 && breakauth)
+	data[4] = lan->broken_authtype1;
+    else
+	data[4] = lan->ip[addr_num].working_authtype;
     ipmi_set_uint32(data+5, lan->ip[addr_num].outbound_seq_num);
     ipmi_set_uint32(data+9, lan->ip[addr_num].session_id);
 
@@ -1789,7 +1794,8 @@ lan_send_addr(lan_data_t              *lan,
 	      const ipmi_msg_t        *msg,
 	      uint8_t                 seq,
 	      int                     addr_num,
-	      const ipmi_con_option_t *options)
+	      const ipmi_con_option_t *options,
+	      int                     breakauth)
 {
     unsigned char  data[IPMI_MAX_LAN_LEN+IPMI_LAN_MAX_HEADER];
     unsigned char  *tmsg;
@@ -1874,7 +1880,7 @@ lan_send_addr(lan_data_t              *lan,
 			      IPMI_MAX_LAN_LEN, IPMI_LAN_MAX_HEADER,
 			      oem_iana, oem_payload_id, options);
     } else {
-	rv = lan15_format_msg(lan, addr_num, &tmsg, &pos);
+	rv = lan15_format_msg(lan, addr_num, &tmsg, &pos, breakauth);
 	if (addr->addr_type == IPMI_RMCPP_ADDR_SOL)
 		/*
 		 * We're sending SoL over IPMI 1.5, which requires that we set
@@ -1962,7 +1968,8 @@ lan_send(lan_data_t              *lan,
 
     *send_ip_num = curr_ip_addr;
 
-    return lan_send_addr(lan, addr, addr_len, msg, seq, curr_ip_addr, options);
+    return lan_send_addr(lan, addr, addr_len, msg, seq, curr_ip_addr, options,
+			 0);
 }
 
 typedef struct call_ipmb_change_handler_s
@@ -2452,7 +2459,7 @@ rsp_timeout_handler(void              *cb_data,
 			       &(lan->seq_table[seq].msg),
 			       seq,
 			       lan->seq_table[seq].addr_num,
-			       NULL);
+			       NULL, 0);
 	else
 	    rv = lan_send(lan,
 			  &(lan->seq_table[seq].addr),
@@ -2628,7 +2635,8 @@ handle_msg_send(lan_timer_info_t      *info,
 		const ipmi_msg_t      *msg,
 		ipmi_ll_rsp_handler_t rsp_handler,
 		ipmi_msgi_t           *rspi,
-		int                   side_effects)
+		int                   side_effects,
+		int                   breakauth)
 {
     ipmi_con_t        *ipmi = info->ipmi;
     lan_data_t        *lan = ipmi->con_data;
@@ -2758,7 +2766,8 @@ handle_msg_send(lan_timer_info_t      *info,
     lan->last_seq = seq;
 
     if (addr_num >= 0) {
-	rv = lan_send_addr(lan, addr, addr_len, msg, seq, addr_num, NULL);
+	rv = lan_send_addr(lan, addr, addr_len, msg, seq, addr_num, NULL,
+			   breakauth);
 	lan->seq_table[seq].last_ip_num = addr_num;
     } else {
 	rv = lan_send(lan, addr, addr_len, msg, seq,
@@ -2804,7 +2813,7 @@ check_command_queue(ipmi_con_t *ipmi, lan_data_t *lan)
 
 	rv = handle_msg_send(q_item->info, -1, &q_item->addr, q_item->addr_len,
 			     &(q_item->msg), q_item->rsp_handler,
-			     q_item->rsp_item, q_item->side_effects);
+			     q_item->rsp_item, q_item->side_effects, 0);
 	if (rv) {
 	    ipmi_unlock(lan->seq_num_lock);
 
@@ -3531,14 +3540,15 @@ data_handler(int            fd,
 }
 
 /* Note that this puts the address number in data4 of the rspi. */
-int
-ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
-			      int                   addr_num,
-			      ipmi_addr_t           *addr,
-			      unsigned int          addr_len,
-			      ipmi_msg_t            *msg,
-			      ipmi_ll_rsp_handler_t rsp_handler,
-			      ipmi_msgi_t           *rspi)
+static int
+ipmi_lan_send_command_forceip_b(ipmi_con_t            *ipmi,
+				int                   addr_num,
+				ipmi_addr_t           *addr,
+				unsigned int          addr_len,
+				ipmi_msg_t            *msg,
+				ipmi_ll_rsp_handler_t rsp_handler,
+				ipmi_msgi_t           *rspi,
+				int                   breakauth)
 {
     lan_timer_info_t *info;
     lan_data_t       *lan;
@@ -3562,7 +3572,7 @@ ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
     /* Odd netfns are responses or unacknowledged data.  Just send
        them. */
     if (msg->netfn & 1)
-	return lan_send_addr(lan, addr, addr_len, msg, 0, addr_num, NULL);
+	return lan_send_addr(lan, addr, addr_len, msg, 0, addr_num, NULL, 0);
 
     info = ipmi_mem_alloc(sizeof(*info));
     if (!info)
@@ -3588,7 +3598,7 @@ ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
 
     rspi->data4 = (void *) (intptr_t) addr_num;
     rv = handle_msg_send(info, addr_num, addr, addr_len, msg,
-			 rsp_handler, rspi, 0);
+			 rsp_handler, rspi, 0, breakauth);
     /* handle_msg_send handles freeing the timer and info on an error */
     info = NULL;
     if (! rv)
@@ -3606,6 +3616,19 @@ ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
 	}
     }
     return rv;
+}
+
+int
+ipmi_lan_send_command_forceip(ipmi_con_t            *ipmi,
+			      int                   addr_num,
+			      ipmi_addr_t           *addr,
+			      unsigned int          addr_len,
+			      ipmi_msg_t            *msg,
+			      ipmi_ll_rsp_handler_t rsp_handler,
+			      ipmi_msgi_t           *rspi)
+{
+    return ipmi_lan_send_command_forceip_b(ipmi, addr_num, addr, addr_len,
+					   msg, rsp_handler, rspi, 0);
 }
 
 static int
@@ -3703,7 +3726,7 @@ lan_send_command_option(ipmi_con_t              *ipmi,
     }
 
     rv = handle_msg_send(info, -1, addr, addr_len, msg,
-			 rsp_handler, rspi, side_effects);
+			 rsp_handler, rspi, side_effects, 0);
     /* handle_msg_send handles freeing the timer and info on an error */
     info = NULL;
     if (!rv)
@@ -3866,7 +3889,7 @@ send_close_session(ipmi_con_t *ipmi, lan_data_t *lan, int addr_num)
     else
 	ipmi_set_uint32(data, lan->ip[addr_num].session_id);
     lan_send_addr(lan, (ipmi_addr_t *) &si, sizeof(si), &msg, 0, addr_num,
-		  NULL);
+		  NULL, 0);
 }
 
 typedef struct lan_unreg_stat_info_s
@@ -4832,7 +4855,10 @@ send_activate_session(ipmi_con_t *ipmi, lan_data_t *lan, int addr_num,
     addr.channel = 0xf;
     addr.lun = 0;
 
-    data[0] = lan->chosen_authtype;
+    if (lan->broken_authtype2)
+	data[0] = lan->broken_authtype2;
+    else
+	data[0] = lan->chosen_authtype;
     data[1] = lan->cparm.privilege;
     memcpy(data+2, lan->challenge_string, 16);
     ipmi_set_uint32(data+18, lan->ip[addr_num].inbound_seq_num);
@@ -4842,9 +4868,9 @@ send_activate_session(ipmi_con_t *ipmi, lan_data_t *lan, int addr_num,
     msg.data = data;
     msg.data_len = 22;
 
-    rv = ipmi_lan_send_command_forceip(ipmi, addr_num,
-				       (ipmi_addr_t *) &addr, sizeof(addr),
-				       &msg, session_activated, rspi);
+    rv = ipmi_lan_send_command_forceip_b(ipmi, addr_num,
+					 (ipmi_addr_t *) &addr, sizeof(addr),
+					 &msg, session_activated, rspi, 1);
     return rv;
 }
 
@@ -4981,7 +5007,7 @@ auth_cap_done(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 		"BMC confused about RMCP+ support. Disabling RMCP+.",
 		IPMI_CONN_NAME(lan->ipmi));
     } 
-    if (lan->cparm.authtype == IPMI_AUTHTYPE_RMCP_PLUS) {
+    if ((lan->cparm.authtype & 0xff) == IPMI_AUTHTYPE_RMCP_PLUS) {
 	/* The user specified RMCP+, but the system doesn't have it. */
 	ipmi_log(IPMI_LOG_ERR_INFO,
 		"%sipmi_lan.c(auth_cap_done): "
@@ -4999,7 +5025,7 @@ auth_cap_done(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 	lan->authdata = NULL;
     }
 
-    if ((int) lan->cparm.authtype == IPMI_AUTHTYPE_DEFAULT) {
+    if ((int) (lan->cparm.authtype & 0xff) == (IPMI_AUTHTYPE_DEFAULT & 0xff)) {
 	/* Pick the most secure authentication type. */
 	if (msg->data[2] & (1 << IPMI_AUTHTYPE_MD5)) {
 	    lan->chosen_authtype = IPMI_AUTHTYPE_MD5;
@@ -5018,7 +5044,7 @@ auth_cap_done(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 	    goto out;
 	}
     } else {
-	if (!(msg->data[2] & (1 << lan->cparm.authtype))) {
+	if (!(msg->data[2] & (1 << lan->cparm.authtype & 0xff))) {
 	    ipmi_log(IPMI_LOG_ERR_INFO,
 		     "%sipmi_lan.c(auth_cap_done): "
 		     "Requested authentication not supported",
@@ -5026,7 +5052,9 @@ auth_cap_done(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 	    handle_connected(ipmi, EINVAL, addr_num);
 	    goto out;
 	}
-	lan->chosen_authtype = lan->cparm.authtype;
+	lan->chosen_authtype = lan->cparm.authtype & 0xff;
+	lan->broken_authtype1 = (lan->cparm.authtype >> 8) & 0xff;
+	lan->broken_authtype2 = (lan->cparm.authtype >> 16) & 0xff;
     }
 
     rv = ipmi_auths[lan->chosen_authtype].authcode_init(lan->cparm.password,
@@ -5078,7 +5106,7 @@ auth_cap_done_p(ipmi_con_t *ipmi, ipmi_msgi_t *rspi)
 	   systems incorrectly return errors when reserved data is
 	   set. */
 
-	if (lan->cparm.authtype == IPMI_AUTHTYPE_RMCP_PLUS) {
+	if ((lan->cparm.authtype & 0xff) == IPMI_AUTHTYPE_RMCP_PLUS) {
 	    /* The user specified RMCP+, but the system doesn't have it. */
 	    ipmi_log(IPMI_LOG_ERR_INFO,
 		     "%sipmi_lan.c(auth_cap_done_p): "
@@ -5130,8 +5158,8 @@ send_auth_cap(ipmi_con_t *ipmi, lan_data_t *lan, int addr_num,
     msg.netfn = IPMI_APP_NETFN;
     msg.data = data;
     msg.data_len = 2;
-    if ((((int) lan->cparm.authtype == IPMI_AUTHTYPE_DEFAULT)
-	 || ((int) lan->cparm.authtype == IPMI_AUTHTYPE_RMCP_PLUS))
+    if ((((int) (lan->cparm.authtype & 0xff) == (IPMI_AUTHTYPE_DEFAULT & 0xff))
+	 || ((int) (lan->cparm.authtype & 0xff) == IPMI_AUTHTYPE_RMCP_PLUS))
 	&& !force_ipmiv15)
     {
 	rsp_handler = auth_cap_done_p;
@@ -5476,7 +5504,7 @@ ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
     memset(&cparm, 0, sizeof(cparm));
 
     /* Pick some secure defaults. */
-    cparm.authtype = IPMI_AUTHTYPE_DEFAULT;
+    cparm.authtype = IPMI_AUTHTYPE_DEFAULT & 0xff;
     cparm.privilege = IPMI_PRIVILEGE_ADMIN;
     cparm.conf = most_secure_lanp_conf();
     cparm.integ = most_secure_lanp_integ();
@@ -5599,10 +5627,10 @@ ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
 
     if ((cparm.num_ip_addr == 0) || (ip_addrs == NULL))
 	return EINVAL;
-    if (((int) cparm.authtype != IPMI_AUTHTYPE_DEFAULT)
-	&& (cparm.authtype != IPMI_AUTHTYPE_RMCP_PLUS)
-	&& ((cparm.authtype >= MAX_IPMI_AUTHS)
-	    || (ipmi_auths[cparm.authtype].authcode_init == NULL)))
+    if (((int) (cparm.authtype & 0xff) != (IPMI_AUTHTYPE_DEFAULT & 0xff))
+	&& ((cparm.authtype & 0xff) != IPMI_AUTHTYPE_RMCP_PLUS)
+	&& (((cparm.authtype & 0xff) >= MAX_IPMI_AUTHS)
+	    || (ipmi_auths[cparm.authtype & 0xff].authcode_init == NULL)))
 	return EINVAL;
     if ((cparm.num_ip_addr < 1) || (cparm.num_ip_addr > MAX_IP_ADDR))
 	return EINVAL;
@@ -5730,7 +5758,7 @@ ipmi_lanp_setup_con(ipmi_lanp_parm_t *parms,
     for (i=0; i<MAX_IPMI_USED_CHANNELS; i++)
 	lan->slave_addr[i] = 0x20; /* Assume this until told otherwise */
     lan->is_active = 1;
-    lan->chosen_authtype = IPMI_AUTHTYPE_DEFAULT;
+    lan->chosen_authtype = IPMI_AUTHTYPE_DEFAULT & 0xff;
     lan->curr_ip_addr = 0;
     lan->num_sends = 0;
     lan->connected = 0;
@@ -6772,6 +6800,12 @@ lan_parse_args(int         *curr_arg,
 		rv = EINVAL;
 		goto out_err;
 	    }
+	} else if (strcmp(args[*curr_arg], "-B1") == 0) {
+	    (*curr_arg)++; CHECK_ARG;
+	    largs->authtype |= strtol(args[*curr_arg], NULL, 0) << 8;
+	} else if (strcmp(args[*curr_arg], "-B2") == 0) {
+	    (*curr_arg)++; CHECK_ARG;
+	    largs->authtype |= strtol(args[*curr_arg], NULL, 0) << 16;
 	} else if (strcmp(args[*curr_arg], "-L") == 0) {
 	    (*curr_arg)++; CHECK_ARG;
 
@@ -6966,7 +7000,7 @@ lan_con_alloc_args(void)
     largs = i_ipmi_args_get_extra_data(args);
 
     /* Set defaults */
-    largs->authtype = IPMI_AUTHTYPE_DEFAULT;
+    largs->authtype = IPMI_AUTHTYPE_DEFAULT & 0xff;
     largs->privilege = IPMI_PRIVILEGE_ADMIN;
     largs->conf_alg = most_secure_lanp_conf();
     largs->integ_alg = most_secure_lanp_integ();
