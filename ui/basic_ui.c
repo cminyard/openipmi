@@ -71,7 +71,7 @@ int snmp_input(int op,
 	       struct snmp_pdu *pdu,
 	       void *magic)
 {
-    struct sockaddr_in   *src_ip;
+    struct sockaddr_in   src_ip;
     uint32_t             specific;
     struct variable_list *var;
 
@@ -93,7 +93,9 @@ int snmp_input(int op,
     if (pdu->trap_type != SNMP_TRAP_ENTERPRISESPECIFIC)
 	goto out;
 
-    src_ip = (struct sockaddr_in *) &pdu->agent_addr;
+    src_ip.sin_family = AF_INET;
+    src_ip.sin_port = 0;
+    memcpy(&src_ip.sin_addr.s_addr, pdu->agent_addr, 4);
     specific = pdu->specific_type;
 
     var = pdu->variables;
@@ -109,8 +111,8 @@ int snmp_input(int op,
     if (var->val_len < 46)
 	goto out;
     
-    ipmi_handle_snmp_trap_data(src_ip,
-		    	       sizeof(*src_ip),
+    ipmi_handle_snmp_trap_data(&src_ip,
+		    	       sizeof(src_ip),
 			       IPMI_EXTERN_ADDR_IP,
 			       specific,
 			       var->val.string,
