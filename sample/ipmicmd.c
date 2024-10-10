@@ -343,8 +343,7 @@ process_input_line(char *buf)
     char               *strtok_data;
     char               *endptr;
     char               *v = strtok_r(buf, " \t\r\n,.\"", &strtok_data);
-    unsigned int       pos = 0;
-    int                start;
+    unsigned int       pos = 0, start;
     char               addr_data[sizeof(ipmi_addr_t)];
     ipmi_addr_t        *addr = (ipmi_addr_t *) addr_data;
     unsigned int       addr_len;
@@ -479,11 +478,15 @@ process_input_line(char *buf)
 
     if (channel == IPMI_BMC_CHANNEL) {
 	struct ipmi_system_interface_addr *si = (void *) addr;
-	if ((pos-start) < 1) {
+	if (pos <= start) {
 	    fprintf(stderr, "No LUN specified\n");
 	    return -1;
 	}
 	si->lun = outbuf[start]; start++;
+	if (pos <= start) {
+	    fprintf(stderr, "No NETFN specified\n");
+	    return -1;
+	}
 	msg.netfn = outbuf[start]; start++;
 	si->addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 	si->channel = IPMI_BMC_CHANNEL;
@@ -491,7 +494,7 @@ process_input_line(char *buf)
     } else if (lan_addr) {
 	struct ipmi_lan_addr *lan = (void *) addr;
 
-	if ((pos-start) < 3) {
+	if (pos <= start + 5) {
 	    fprintf(stderr, "No LAN address specified\n");
 	    return -1;
 	}
@@ -507,20 +510,34 @@ process_input_line(char *buf)
     } else {
 	struct ipmi_ipmb_addr *ipmb = (void *) addr;
 
-	if ((pos-start) < 2) {
+	if (pos <= start) {
 	    fprintf(stderr, "No IPMB address specified\n");
 	    return -1;
 	}
 
 	if (outbuf[start] == 0) {
-	    ipmb->addr_type = IPMI_IPMB_BROADCAST_ADDR_TYPE;
 	    start++;
+	    ipmb->addr_type = IPMI_IPMB_BROADCAST_ADDR_TYPE;
 	} else {
 	    ipmb->addr_type = IPMI_IPMB_ADDR_TYPE;
 	}
+
+	if (pos <= start) {
+	    fprintf(stderr, "No IPMB slave specified\n");
+	    return -1;
+	}
+
 	ipmb->slave_addr = outbuf[start]; start++;
 	ipmb->channel = channel;
+	if (pos <= start) {
+	    fprintf(stderr, "No LUN specified\n");
+	    return -1;
+	}
 	ipmb->lun = outbuf[start]; start++;
+	if (pos <= start) {
+	    fprintf(stderr, "No NETFN specified\n");
+	    return -1;
+	}
 	msg.netfn = outbuf[start]; start++;
 	addr_len = sizeof(*ipmb);
     }
@@ -534,14 +551,14 @@ process_input_line(char *buf)
 	seq = outbuf[start]; start++;
     }
 
-    if ((pos-start) < 1) {
+    if (pos <= start) {
 	fprintf(stderr, "Message too short\n");
 	return -1;
     }
 
     msg.cmd = outbuf[start]; start++;
     msg.data = &(outbuf[start]);
-    msg.data_len = pos-start;
+    msg.data_len = pos - start;
     if (time_count) {
 	time_msgs(con, &msg, addr, addr_len, time_count);
 	rv = 0;
