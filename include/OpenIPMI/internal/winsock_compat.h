@@ -65,15 +65,17 @@
     ({							\
     int fd = open("/dev/urandom", O_RDONLY);		\
     int rv = 0;						\
+    char *cdata = data;					\
     if (fd == -1)					\
 	return errno;					\
     while (len > 0) {					\
-	rv = read(fd, data, len);			\
+	rv = read(fd, cdata, len);			\
 	if (rv < 0) {					\
 	    rv = errno;					\
 	    break;					\
 	}						\
 	len -= rv;					\
+	cdata += rv;					\
 	rv = 0;						\
     }							\
     close(fd);						\
