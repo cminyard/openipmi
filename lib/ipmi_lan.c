@@ -3403,7 +3403,9 @@ rmcpp_find_ipmi(lan_fd_t      *item,
 	    return NULL;
 	}
 	tag = ctag;
-    } else
+    } else if (sid == 0)
+	return NULL;
+    else
 	tag = sid - 1;
 
     if (tag >= MAX_CONS_PER_FD) {
