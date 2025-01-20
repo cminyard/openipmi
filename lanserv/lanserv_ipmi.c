@@ -140,8 +140,12 @@ close_session(lanserv_data_t *lan, session_t *session)
     }
 
     session->active = 0;
-    if (session->authtype <= 4 && session->authdata)
-	ipmi_auths[session->authtype].authcode_cleanup(session->authdata);
+    if (session->authdata) {
+	if (session->authtype <= 4)
+	    ipmi_auths[session->authtype].authcode_cleanup(session->authdata);
+	else
+	    memset(&(session->auth_data), 0, sizeof(auth_data_t));
+    }
     if (session->integh)
 	session->integh->cleanup(lan, session);
     if (session->confh)
@@ -151,6 +155,8 @@ close_session(lanserv_data_t *lan, session_t *session)
 	lan->channel.free(&lan->channel, session->src_addr);
 	session->src_addr = NULL;
     }
+
+    memset(session, 0, sizeof(session_t));
 }
 
 static int
