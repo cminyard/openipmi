@@ -1073,6 +1073,9 @@ handle_activate_session_cmd(lanserv_data_t *lan, session_t *session, msg_t *msg)
 
     data[10] = session->max_priv;
 
+    // progress state
+    session->state = SESSION_STATE_AUTHENTICATED;
+
     return_rsp_data(lan, msg, session, data, 11);
 }
 
@@ -1852,6 +1855,13 @@ handle_normal_session(lanserv_data_t *lan, msg_t *msg)
 	}
     } else {
     normal_msg:
+	if (session->authtype == IPMI_AUTHTYPE_RMCP_PLUS &&
+		session->state != SESSION_STATE_AUTHENTICATED) {
+	    // received payload before authenticating
+	    lan->sysinfo->log(lan->sysinfo, INVALID_MSG, msg,
+		      "Normal session message failure: Invalid session state");
+	    return;
+	}
 	handle_smi_msg(lan, session, msg);
     }
 }
@@ -2578,6 +2588,9 @@ handle_open_session_payload(lanserv_data_t *lan, msg_t *msg)
 
     lan->channel.active_sessions++;
 
+    // progress session state
+    session->state = SESSION_STATE_OPENED;
+
     return_rmcpp_rsp(lan, session, msg, 0x11, data, 36, NULL, 0);
     return;
  out_err:
@@ -2613,6 +2626,12 @@ handle_rakp1_payload(lanserv_data_t *lan, msg_t *msg)
     session = sid_to_session(lan, sid);
     if (!session)
 	return;
+
+    if (session->state != SESSION_STATE_OPENED) {
+	lan->sysinfo->log(lan->sysinfo, NEW_SESSION, msg,
+			  "Invalid message: Invalid session state");
+	return;
+    }
 
     memcpy(session->auth_data.rem_rand, msg->data+8, 16);
     session->auth_data.role = msg->data[24];
@@ -2671,6 +2690,9 @@ handle_rakp1_payload(lanserv_data_t *lan, msg_t *msg)
 	}
     }
 
+    // progress session state
+    session->state = SESSION_STATE_RAKP1;
+
  out_err:
     memset(data, 0, sizeof(data));
     data[0] = msg->data[0];
@@ -2716,6 +2738,12 @@ handle_rakp3_payload(lanserv_data_t *lan, msg_t *msg)
     if (!session)
 	return;
 
+    if (session->state != SESSION_STATE_RAKP1) {
+	lan->sysinfo->log(lan->sysinfo, NEW_SESSION, msg,
+			  "Invalid message: Invalid session state");
+	return;
+    }
+
     if (session->authh) {
 	int rv;
 	rv = session->authh->check3(lan, session, msg->data, &msg->len);
@@ -2735,6 +2763,9 @@ handle_rakp3_payload(lanserv_data_t *lan, msg_t *msg)
 
     // user has now proven identity: we can assign privilege
     session->max_priv = session->temp_max_priv;
+
+    // progress session state
+    session->state = SESSION_STATE_AUTHENTICATED;
 
  out_err:
     memset(data, 0, sizeof(data));
@@ -2927,8 +2958,14 @@ ipmi_handle_rmcpp_msg(lanserv_data_t *lan, msg_t *msg)
 	    *seq = msg->seq;
     }
 
-    if (payload_handlers[msg->rmcpp.payload])
+    if (payload_handlers[msg->rmcpp.payload]) {
 	payload_handlers[msg->rmcpp.payload](lan, msg);
+    } else {
+	// Invalid message type
+	lan->sysinfo->log(lan->sysinfo, INVALID_MSG, msg,
+			  "LAN msg failure: Invalid message type");
+	return;
+    }
 }
 
 static void

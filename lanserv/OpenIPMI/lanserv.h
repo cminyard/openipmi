@@ -144,6 +144,13 @@ typedef struct auth_data_s
 
 #define LANSERV_NUM_CLOSERS 3
 
+typedef enum {
+    SESSION_STATE_UNINITIATED = 0,
+    SESSION_STATE_OPENED = 1,
+    SESSION_STATE_RAKP1 = 2,
+    SESSION_STATE_AUTHENTICATED = 3
+} session_state_t;
+
 struct session_s
 {
     unsigned int active : 1;
@@ -156,6 +163,8 @@ struct session_s
     uint32_t        xmit_seq;
     uint32_t        sid;
     unsigned char   userid;
+
+    session_state_t state;
 
     /* RMCP data */
     unsigned char   authtype;
