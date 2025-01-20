@@ -407,7 +407,7 @@ ipmi_md5_authcode_check(ipmi_authdata_t handle,
 void
 ipmi_md5_authcode_cleanup(ipmi_authdata_t handle)
 {
-    if (NULL != handle && NULL != handle->data) {
+    if (handle != NULL) {
         memset(handle->data, 0, sizeof(handle->data));
         handle->mem_free(handle->info, handle);
     }
