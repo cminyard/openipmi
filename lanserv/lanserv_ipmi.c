@@ -2639,7 +2639,7 @@ handle_rakp1_payload(lanserv_data_t *lan, msg_t *msg)
 	goto out_err;
     }
 
-    session->max_priv = priv;
+    session->temp_max_priv = priv;
     session->priv = IPMI_PRIVILEGE_USER; /* Start at user privilege. */
 
     memset(username, 0, sizeof(username));
@@ -2732,6 +2732,9 @@ handle_rakp3_payload(lanserv_data_t *lan, msg_t *msg)
 	close_session(lan, session);
 	return;
     }
+
+    // user has now proven identity: we can assign privilege
+    session->max_priv = session->temp_max_priv;
 
  out_err:
     memset(data, 0, sizeof(data));

@@ -174,6 +174,7 @@ struct session_s
     auth_data_t      auth_data;
 
     unsigned char priv;
+    unsigned char temp_max_priv;
     unsigned char max_priv;
 
     /* The number of seconds left before the session is shut down. */
