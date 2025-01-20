@@ -636,6 +636,11 @@ get_user(char **tokptr, sys_data_t *sys, const char **err)
 	return -1;
     }
 
+    if (num == 0) {
+	*err = "User number 0 is invalid";
+	return -1;
+    }
+
     rv = get_bool(tokptr, &val, err);
     if (rv)
 	return rv;
