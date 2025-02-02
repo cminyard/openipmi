@@ -128,6 +128,7 @@ static void
 close_session(lanserv_data_t *lan, session_t *session)
 {
     unsigned int i;
+    int old_handle;
 
     for (i = 0; i < LANSERV_NUM_CLOSERS; i++) {
 	if (session->closers[i].close_cb) {
@@ -156,7 +157,9 @@ close_session(lanserv_data_t *lan, session_t *session)
 	session->src_addr = NULL;
     }
 
+    old_handle = session->handle;
     memset(session, 0, sizeof(session_t));
+    session->handle = old_handle;
 }
 
 static int
