@@ -1987,7 +1987,7 @@ static int fru_file_io_cb(void *cb_data,
     struct fru_file_io_info *info = cb_data;
     int fd;
     int rv = 0;
-    int l;
+    ssize_t l;
 
     if (offset + length > info->length)
 	return EINVAL;
