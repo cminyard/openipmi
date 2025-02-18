@@ -155,7 +155,6 @@ struct session_s
 {
     unsigned int active : 1;
     unsigned int in_startup : 1;
-    unsigned int rmcpplus : 1;
 
     int           handle; /* My index in the table. */
 

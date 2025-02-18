@@ -443,7 +443,7 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
     if (!session)
 	session = sid_to_session(lan, msg->sid);
 
-    if (session && session->rmcpplus) {
+    if (session && session->authtype == IPMI_AUTHTYPE_RMCP_PLUS) {
 	return_rmcpp_rsp(lan, session, msg, msg->rmcpp.payload,
 			 rsp->data, rsp->data_len, NULL, 0);
 	return;
@@ -990,7 +990,6 @@ handle_temp_session(lanserv_data_t *lan, msg_t *msg)
     session->src_len = msg->src_len;
 
     session->active = 1;
-    session->rmcpplus = 0;
     session->authtype = auth;
     session->authdata = dummy_session.authdata;
     rv = lan->gen_rand(lan, seq_data, 4);
@@ -1221,7 +1220,9 @@ handle_get_session_info(lanserv_data_t *lan, session_t *session, msg_t *msg)
 	data[1] = nses->handle;
 	data[4] = nses->userid;
 	data[5] = nses->priv;
-	data[6] = lan->channel.channel_num | (session->rmcpplus << 4);
+	data[6] = lan->channel.channel_num;
+	if (session->authtype == IPMI_AUTHTYPE_RMCP_PLUS)
+	    data[6] |= 1 << 4;
 	return_rsp_data(lan, msg, session, data, 7);
     } else {
 	data[1] = 0;
@@ -2539,7 +2540,6 @@ handle_open_session_payload(lanserv_data_t *lan, msg_t *msg)
 
     session->active = 1;
     session->in_startup = 1;
-    session->rmcpplus = 1;
     session->authtype = IPMI_AUTHTYPE_RMCP_PLUS;
     rv = lan->gen_rand(lan, session->auth_data.rand, 16);
     if (rv) {
@@ -2915,7 +2915,7 @@ ipmi_handle_rmcpp_msg(lanserv_data_t *lan, msg_t *msg)
 	    return;
 	}
 
-	if (!session->rmcpplus) {
+	if (session->authtype != IPMI_AUTHTYPE_RMCP_PLUS) {
 	    lan->sysinfo->log(lan->sysinfo, INVALID_MSG, msg,
 		     "Normal session message failure:"
 		     " RMCP+ msg on RMCP session");
@@ -3028,7 +3028,7 @@ ipmi_handle_rmcp_msg(lanserv_data_t *lan, msg_t *msg)
 	    return;
 	}
 
-	if (session->rmcpplus) {
+	if (session->authtype == IPMI_AUTHTYPE_RMCP_PLUS) {
 	    lan->sysinfo->log(lan->sysinfo, INVALID_MSG, msg,
 		     "Normal session message failure:"
 		     " RMCP msg on RMCP+ session");
