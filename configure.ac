@@ -40,18 +40,31 @@ AM_CONDITIONAL([HAVE_OPENIPMI_SMI], [${OPENIPMI_SMI}])
 
 SNMPLIBS=
 
-# Where do we find the UCD SNMP includes and libs
-tryucdsnmp=yes
+# Where do we find the NETSNMP includes and libs.  We keep the old udc
+# name for backwards compatibility.
+trynetsnmp=yes
 AC_ARG_WITH(ucdsnmp,
-[  --with-ucdsnmp=PATH             Look for ucdsnmp in PATH.],
+[  --with-ucdsnmp=PATH             Look for netsnmp in PATH.],
     if test "x$withval" = "xyes"; then
-      tryucdsnmp=yes
+      trynetsnmp=yes
     elif test "x$withval" = "xno"; then
-      tryucdsnmp=no
+      trynetsnmp=no
     elif test -d "$withval"; then
       CPPFLAGS="-I$withval/include $CPPFLAGS"
       SNMPLIBS="-L$withval/lib $SNMPLIBS"
-      tryucdsnmp=yes
+      trynetsnmp=yes
+    fi,
+)
+AC_ARG_WITH(netsnmp,
+[  --with-netsnmp=PATH             Look for netsnmp in PATH.],
+    if test "x$withval" = "xyes"; then
+      trynetsnmp=yes
+    elif test "x$withval" = "xno"; then
+      trynetsnmp=no
+    elif test -d "$withval"; then
+      CPPFLAGS="-I$withval/include $CPPFLAGS"
+      SNMPLIBS="-L$withval/lib $SNMPLIBS"
+      trynetsnmp=yes
     fi,
 )
 
@@ -77,7 +90,7 @@ AC_ARG_WITH(poptlibs,
     POPTLIBS="$withval"
 )
 
-# If UCD SNMP requires OpenSSL, this tells where to find the crypto lib
+# If NETSNMP requires OpenSSL, this tells where to find the crypto lib
 tryopenssl=yes
 AC_ARG_WITH(openssl,
 [  --with-openssl[[=yes|no|PATH]]    Look for openssl, with the optional path.],
@@ -627,67 +640,27 @@ AC_CHECK_LIB(readline, rl_initialize, READLINE_LIBS=-lreadline,
 AC_SUBST(READLINE_LIBS)
 
 # Handle SNMP support
-if test "x$tryucdsnmp" != "xno"; then
-
-   HAVE_UCDSNMP=no
+if test "x$trynetsnmp" != "xno"; then
    HAVE_NETSNMP=no
-   FOUND_SNMPINCL=no
-   # Try net snmp first
-   AC_CHECK_HEADER(net-snmp/net-snmp-config.h,
-                   FOUND_SNMPINCL=yes; HAVE_NETSNMP=yes; )
-   if test "x$FOUND_SNMPINCL" = "xno"; then
-      # Try old UCD snmp
-      AC_CHECK_HEADER(snmp_api.h, FOUND_SNMPINCL=yes; )
-      if test "x$FOUND_SNMPINCL" = "xno"; then
-          AC_CHECK_HEADER(ucd-snmp/snmp_api.h,
-                   FOUND_SNMPINCL=yes;
-		   AC_DEFINE([HAVE_ALT_UCDSNMP_DIR], [], [Alternate UCD SMP directory]))
+   AC_CHECK_HEADER(net-snmp/net-snmp-config.h, HAVE_NETSNMP=yes; )
+   if test "x$HAVE_NETSNMP" = "xyes"; then
+      AC_CHECK_LIB(netsnmp, snmp_add, 
+		   SNMPLIBS="-lnetsnmp $SNMPLIBS"
+		   AC_DEFINE([HAVE_NETSNMP], [], [Have Net SNMP])
+		   HAVE_NETSNMP=yes,
+		   ,
+		   $SNMPLIBS)
+      if test "x$HAVE_NETSNMP" = "xno"; then
+	  # Try net snmp with crypto
+	  AC_CHECK_LIB(netsnmp, snmp_add_full, 
+	               SNMPLIBS="-lnetsnmp -lcrypto $SNMPLIBS"
+		       AC_DEFINE([HAVE_NETSNMP], [], [Have Net SNMP])
+		       HAVE_NETSNMP=yes,
+		       ,
+		       -lcrypto $SNMPLIBS)
       fi
-   fi
-
-   if test "x$FOUND_SNMPINCL" = "xyes"; then
-      if test "x$HAVE_NETSNMP" = "xyes"; then
-         AC_CHECK_LIB(netsnmp, snmp_add, 
-		      SNMPLIBS="-lnetsnmp $SNMPLIBS"
-		      AC_DEFINE([HAVE_UCDSNMP], [], [Have UCD SNMP])
-		      AC_DEFINE([HAVE_NETSNMP], [], [Have Net SNMP])
-		      HAVE_UCDSNMP=yes
-		      HAVE_NETSNMP=yes,
-		      ,
-		      $SNMPLIBS)
-         if test "x$HAVE_UCDSNMP" = "xno"; then
-	     # Try net snmp with crypto
-	     AC_CHECK_LIB(netsnmp, snmp_add_full, 
-	                  SNMPLIBS="-lnetsnmp -lcrypto $SNMPLIBS"
-		          AC_DEFINE([HAVE_UCDSNMP], [], [Have UCD SNMP])
-		          AC_DEFINE([HAVE_NETSNMP], [], [Have Net SNMP])
-			  HAVE_UCDSNMP=yes
-			  HAVE_NETSNMP=yes,
-			  ,
-			  -lcrypto $SNMPLIBS)
-         fi
-         if test "x$HAVE_UCDSNMP" = "xno"; then
-	     AC_MSG_WARN([Found NET SNMP include files, but could not find libraries])
-	 fi
-      else
-         AC_CHECK_LIB(snmp, snmp_open_ex, 
-		      SNMPLIBS="-lsnmp $SNMPLIBS"
-		      AC_DEFINE([HAVE_UCDSNMP], [], [Have UCD SNMP])
-		      HAVE_UCDSNMP=yes,
-		      ,
-		      $SNMPLIBS)
-         if test "x$HAVE_UCDSNMP" = "xno"; then
-            # Try with the crypto lib
-            AC_CHECK_LIB(snmp, snmp_sess_perror, 
-		         SNMPLIBS="-lsnmp -lcrypto $SNMPLIBS"
-		         AC_DEFINE([HAVE_UCDSNMP], [], [Have UCD SNMP])
-			 HAVE_UCDSNMP=yes,
-			 ,
-			 -lcrypto $SNMPLIBS)
-         fi
-         if test "x$HAVE_UCDSNMP" = "xno"; then
-	     AC_MSG_WARN([Found UCD SNMP include files, but could not find libraries])
-	 fi
+      if test "x$HAVE_NETSNMP" = "xno"; then
+	  AC_MSG_WARN([Found NET SNMP include files, but could not find libraries])
       fi
    fi
 fi

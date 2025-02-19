@@ -47,22 +47,12 @@
 
 #include <OpenIPMI/internal/ipmi_malloc.h>
 
-#ifdef HAVE_UCDSNMP
-# ifdef HAVE_NETSNMP
-#  include <net-snmp/net-snmp-config.h>
-#  include <net-snmp/net-snmp-includes.h>
-# elif defined(HAVE_ALT_UCDSNMP_DIR)
-#  include <ucd-snmp/asn1.h>
-#  include <ucd-snmp/snmp_api.h>
-#  include <ucd-snmp/snmp.h>
-# else
-#  include <asn1.h>
-#  include <snmp_api.h>
-#  include <snmp.h>
-# endif
+#ifdef HAVE_NETSNMP
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
 #endif
 
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
 #define IPMI_OID_SIZE 9
 static oid ipmi_oid[IPMI_OID_SIZE] = {1,3,6,1,4,1,3183,1,1};
 int snmp_input(int op,
@@ -75,13 +65,8 @@ int snmp_input(int op,
     uint32_t             specific;
     struct variable_list *var;
 
-#ifdef HAVE_NETSNMP
     if (op != NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE)
 	goto out;
-#else
-    if (op != RECEIVED_MESSAGE)
-	goto out;
-#endif
     if (pdu->command != SNMP_MSG_TRAP)
 	goto out;
     if (snmp_oid_compare(ipmi_oid, IPMI_OID_SIZE,
@@ -122,20 +107,12 @@ int snmp_input(int op,
     return 1;
 }
 
-#ifdef HAVE_NETSNMP
 static int
 snmp_pre_parse(netsnmp_session * session, netsnmp_transport *transport,
 	       void *transport_data, int transport_data_length)
 {
     return 1;
 }
-#else
-static int
-snmp_pre_parse(struct snmp_session *session, snmp_ipaddr from)
-{
-    return 1;
-}
-#endif
 
 struct snmp_session *snmp_session;
 
@@ -294,7 +271,7 @@ snmp_init(os_handler_t *os_hnd)
 }
 #else
 static void snmp_setup_fds(os_handler_t *os_hnd) { }
-#endif /* HAVE_UCDSNMP */
+#endif /* HAVE_NETSNMP */
     
 int
 main(int argc, char *argv[])
@@ -305,7 +282,7 @@ main(int argc, char *argv[])
     int              full_screen = 1;
     ipmi_domain_id_t domain_id;
     int              i;
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
     int              init_snmp = 0;
 #endif
     ipmi_args_t      *con_parms[2];
@@ -327,7 +304,7 @@ main(int argc, char *argv[])
 	    DEBUG_RAWMSG_ENABLE();
 	} else if (strcmp(arg, "-dmsg") == 0) {
 	    DEBUG_MSG_ENABLE();
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
 	} else if (strcmp(arg, "-snmp") == 0) {
 	    init_snmp = 1;
 #endif
@@ -345,7 +322,7 @@ main(int argc, char *argv[])
 
     rv = ipmi_ui_init(&ipmi_ui_cb_handlers, full_screen);
 
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
     if (init_snmp) {
 	if (snmp_init(&ipmi_ui_cb_handlers) < 0)
 	    goto out;
@@ -392,7 +369,7 @@ main(int argc, char *argv[])
     }
 
     for (;;) {
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
       if (init_snmp)
 	  snmp_setup_fds(&ipmi_ui_cb_handlers);
 #endif

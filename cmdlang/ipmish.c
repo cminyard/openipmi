@@ -60,19 +60,9 @@
 /* Internal includes, do not use in your programs */
 #include <OpenIPMI/internal/ipmi_malloc.h>
 
-#ifdef HAVE_UCDSNMP
-# ifdef HAVE_NETSNMP
-#  include <net-snmp/net-snmp-config.h>
-#  include <net-snmp/net-snmp-includes.h>
-# elif defined(HAVE_ALT_UCDSNMP_DIR)
-#  include <ucd-snmp/asn1.h>
-#  include <ucd-snmp/snmp_api.h>
-#  include <ucd-snmp/snmp.h>
-# else
-#  include <asn1.h>
-#  include <snmp_api.h>
-#  include <snmp.h>
-# endif
+#ifdef HAVE_NETSNMP
+#include <net-snmp/net-snmp-config.h>
+#include <net-snmp/net-snmp-includes.h>
 #endif
 
 extern os_handler_t ipmi_debug_os_handlers;
@@ -84,7 +74,7 @@ static int done = 0;
 static int evcount = 0;
 static int handling_input = 0;
 static int cmd_redisp = 1;
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
 static int do_snmp = 0;
 #endif
 
@@ -219,7 +209,7 @@ disable_term_fd(ipmi_cmdlang_t *cmdlang)
     term_fd_id = NULL;
 }
 
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
 #define IPMI_OID_SIZE 9
 static oid ipmi_oid[IPMI_OID_SIZE] = {1,3,6,1,4,1,3183,1,1};
 int snmp_input(int op,
@@ -232,13 +222,8 @@ int snmp_input(int op,
     uint32_t             specific;
     struct variable_list *var;
 
-#ifdef HAVE_NETSNMP
     if (op != NETSNMP_CALLBACK_OP_RECEIVED_MESSAGE)
 	goto out;
-#else
-    if (op != RECEIVED_MESSAGE)
-	goto out;
-#endif
     if (pdu->command != SNMP_MSG_TRAP)
 	goto out;
     if (snmp_oid_compare(ipmi_oid, IPMI_OID_SIZE,
@@ -279,20 +264,12 @@ int snmp_input(int op,
     return 1;
 }
 
-#ifdef HAVE_NETSNMP
 static int
 snmp_pre_parse(netsnmp_session * session, netsnmp_transport *transport,
 	       void *transport_data, int transport_data_length)
 {
     return 1;
 }
-#else
-static int
-snmp_pre_parse(struct snmp_session *session, snmp_ipaddr from)
-{
-    return 1;
-}
-#endif
 
 static struct snmp_session *snmp_session;
 
@@ -402,7 +379,6 @@ static int
 snmp_init(os_handler_t *os_hnd)
 {
     struct snmp_session session;
-#ifdef HAVE_NETSNMP
     netsnmp_transport *transport = NULL;
     static char *snmp_default_port = "udp:162";
     int rv;
@@ -424,9 +400,7 @@ snmp_init(os_handler_t *os_hnd)
         snmp_sess_perror("ipmish", &session);
 	return -1;
     }
-#else
-    void *transport = NULL;
-#endif
+
     snmp_sess_init(&session);
     session.peername = SNMP_DEFAULT_PEERNAME;
     session.version = SNMP_DEFAULT_VERSION;
@@ -439,12 +413,7 @@ snmp_init(os_handler_t *os_hnd)
     session.authenticator = NULL;
     session.isAuthoritative = SNMP_SESS_UNKNOWNAUTH;
 
-#ifdef HAVE_NETSNMP
     snmp_session = snmp_add(&session, transport, snmp_pre_parse, NULL);
-#else
-    snmp_session = snmp_open_ex(&session, snmp_pre_parse,
-				NULL, NULL, NULL, NULL);
-#endif
     if (snmp_session == NULL) {
         snmp_sess_perror("ipmish", &session);
 	return -1;
@@ -454,7 +423,7 @@ snmp_init(os_handler_t *os_hnd)
 }
 #else
 static void snmp_setup_fds(os_handler_t *os_hnd) { }
-#endif /* HAVE_UCDSNMP */
+#endif /* HAVE_NETSNMP */
 
 typedef struct out_data_s
 {
@@ -972,7 +941,7 @@ static char *usage_str =
 #ifdef HAVE_TCL
 "  --tcl - use tcl for the OS handler.\n"
 #endif
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
 "  --snmp - turn on SNMP trap handling.\n"
 #endif
 "  --help - This output.\n"
@@ -1033,7 +1002,7 @@ main(int argc, char *argv[])
 	    DEBUG_MSG_ENABLE();
 	} else if (strcmp(arg, "--dmsgerr") == 0) {
 	    DEBUG_MSG_ERR_ENABLE();
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
 	} else if (strcmp(arg, "--snmp") == 0) {
 	    do_snmp = 1;
 #endif
@@ -1107,7 +1076,7 @@ main(int argc, char *argv[])
     /* Initialize the OpenIPMI library. */
     ipmi_init(os_hnd);
 
-#ifdef HAVE_UCDSNMP
+#ifdef HAVE_NETSNMP
     if (do_snmp) {
 	if (snmp_init(os_hnd) < 0)
 	    return 1;
