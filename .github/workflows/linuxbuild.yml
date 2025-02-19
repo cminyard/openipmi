@@ -18,7 +18,8 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt install gcc g++ git swig python3-dev libssl-dev pkg-config \
-            libtool autoconf automake make libglib2.0-dev tcl-dev libpopt-dev
+            libtool autoconf automake make libglib2.0-dev tcl-dev libpopt-dev \
+            libreadline-dev
       - name: Configure
         run: |
           mkdir $INSTALLPREFIX
