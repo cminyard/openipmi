@@ -788,7 +788,8 @@ handle_no_session(lanserv_data_t *lan, msg_t *msg)
 	return;
     }
 
-    if (msg->authtype != IPMI_AUTHTYPE_NONE) {
+    if (msg->authtype != IPMI_AUTHTYPE_NONE &&
+		msg->authtype != IPMI_AUTHTYPE_RMCP_PLUS) {
 	lan->sysinfo->log(lan->sysinfo, INVALID_MSG, msg,
 		 "No session message failed: Invalid authtype: %d",
 		 msg->authtype);
