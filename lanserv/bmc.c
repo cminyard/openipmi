@@ -61,6 +61,7 @@
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_lan.h>
 #include <OpenIPMI/extcmd.h>
+#include <OpenIPMI/serv.h>
 #include "ipmi_sim.h"
 
 static void ipmi_mc_start_cmd(lmc_data_t *mc);
@@ -901,21 +902,6 @@ handle_invalid_cmd(lmc_data_t    *mc,
 {
     rdata[0] = IPMI_INVALID_CMD_CC;
     *rdata_len = 1;
-}
-
-int
-check_msg_length(msg_t         *msg,
-		 unsigned int  len,
-		 unsigned char *rdata,
-		 unsigned int  *rdata_len)
-{
-    if (msg->len < len) {
-	rdata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
-	*rdata_len = 1;
-	return 1;
-    }
-
-    return 0;
 }
 
 static void

@@ -62,6 +62,7 @@
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/ipmi_msgbits.h>
 #include <OpenIPMI/ipmi_bits.h>
+#include <OpenIPMI/serv.h>
 
 static void sensor_poll(void *cb_data);
 

@@ -161,11 +161,6 @@ int ipmi_mc_sensor_set_event_support(lmc_data_t    *mc,
 void handle_invalid_cmd(lmc_data_t    *mc,
 			unsigned char *rdata,
 			unsigned int  *rdata_len);
-int check_msg_length(msg_t         *msg,
-		     unsigned int  len,
-		     unsigned char *rdata,
-		     unsigned int  *rdata_len);
-
 void ipmi_mc_set_dev_revision(lmc_data_t *mc, unsigned char dev_revision);
 void ipmi_mc_set_fw_revision(lmc_data_t *mc, unsigned char fw_revision_major,
 			     unsigned char fw_revision_minor);
