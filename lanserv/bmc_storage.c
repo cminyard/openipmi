@@ -61,6 +61,7 @@
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/ipmi_msgbits.h>
 #include <OpenIPMI/persist.h>
+#include <OpenIPMI/serv.h>
 
 /*
  * SEL handling commands.

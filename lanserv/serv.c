@@ -64,6 +64,8 @@
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_msgbits.h>
 #include <OpenIPMI/lanserv.h>
+#include <OpenIPMI/serv.h>
+#include <OpenIPMI/ipmi_err.h>
 
 int
 ipmi_oem_send_msg(channel_t     *chan,
@@ -311,4 +313,19 @@ ipmb_checksum(uint8_t *data, int size, uint8_t start)
 		csum += *data;
 
 	return csum;
+}
+
+int
+check_msg_length(msg_t         *msg,
+		 unsigned int  len,
+		 unsigned char *rdata,
+		 unsigned int  *rdata_len)
+{
+    if (msg->len < len) {
+	rdata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
+	*rdata_len = 1;
+	return 1;
+    }
+
+    return 0;
 }

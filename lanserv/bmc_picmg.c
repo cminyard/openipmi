@@ -56,6 +56,7 @@
 #include <OpenIPMI/ipmi_err.h>
 #include <OpenIPMI/ipmi_msgbits.h>
 #include <OpenIPMI/ipmi_picmg.h>
+#include <OpenIPMI/serv.h>
 
 int
 ipmi_mc_set_power(lmc_data_t *mc, unsigned char power, int gen_event)

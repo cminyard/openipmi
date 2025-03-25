@@ -57,6 +57,7 @@
 #include <OpenIPMI/ipmi_msgbits.h>
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_lan.h>
+#include <OpenIPMI/serv.h>
 
 static void
 handle_get_device_id(lmc_data_t    *mc,
