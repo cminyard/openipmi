@@ -441,6 +441,7 @@ struct lanserv_data_s
 
     /* session 0 is not used. */
     session_t sessions[MAX_SESSIONS+1];
+    unsigned int last_session; /* Last session picked, round robin them. */
 
     /* Used to make the sid somewhat unique. */
     uint32_t sid_seq;

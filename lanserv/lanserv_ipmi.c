@@ -839,11 +839,20 @@ ifree(void *info, void *data)
 static session_t *
 find_free_session(lanserv_data_t *lan)
 {
-    int i;
-    /* Find a free session.  Session 0 is invalid. */
-    for (i=1; i<=MAX_SESSIONS; i++) {
-	if (! lan->sessions[i].active)
-	    return &(lan->sessions[i]);
+    unsigned int i, j = lan->last_session + 1;
+
+    /* Find a free session.  Session 0 is invalid.  Round-robin them. */
+    for (i = 0; i <= MAX_SESSIONS; i++, j++) {
+	if (j == 0)
+	    continue;
+	if (j > MAX_SESSIONS + 1) {
+	    j = 0;
+	    continue;
+	}
+	if (! lan->sessions[j].active) {
+	    lan->last_session = j;
+	    return &(lan->sessions[j]);
+	}
     }
     return NULL;
 }
