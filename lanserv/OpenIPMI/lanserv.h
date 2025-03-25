@@ -319,9 +319,16 @@ struct channel_s
     void (*free)(channel_t *chan, void *data);
 
     /* Set by channel code */
-    void (*return_rsp)(channel_t *chan, msg_t *msg, rsp_msg_t *rsp);
+
     /* Available for the specific channel code. */
     void *chan_info;
+
+    /* Return a response to a message command. */
+    void (*return_rsp)(channel_t *chan, msg_t *msg, rsp_msg_t *rsp);
+
+    /* A send message to this channel will call this. */
+    int (*handle_send_msg)(channel_t *chan, msg_t *msg,
+			   unsigned char *rdata, unsigned int *rdata_len);
 
     /* Set or clear the attn flag.  If irq is set, set/clear the irq. */
     void (*set_atn)(channel_t *chan, int val, int irq);

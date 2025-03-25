@@ -103,6 +103,9 @@ typedef struct msg_s
     unsigned char rq_seq;
     unsigned char cmd;
 
+    /* If we override rq_seq, store it here to restore when done. */
+    unsigned char save_seq;
+
     unsigned char *data;
     unsigned int  len;
 

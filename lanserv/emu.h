@@ -71,11 +71,11 @@ void *ipmi_emu_get_user_data(emu_data_t *emu);
 
 void ipmi_emu_sleep(emu_data_t *emu, struct timeval *time);
 
-void ipmi_emu_handle_msg(emu_data_t    *emu,
-			 lmc_data_t    *srcmc,
-			 msg_t         *msg,
-			 unsigned char *rdata,
-			 unsigned int  *rdata_len);
+int ipmi_emu_handle_msg(emu_data_t    *emu,
+			lmc_data_t    *srcmc,
+			msg_t         *msg,
+			unsigned char *rdata,
+			unsigned int  *rdata_len);
 
 #define IPMI_MC_DYNAMIC_SENSOR_POPULATION	(1 << 0)
 #define IPMI_MC_PERSIST_SDR			(1 << 1)

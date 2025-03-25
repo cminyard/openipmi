@@ -999,7 +999,7 @@ handle_get_msg(lmc_data_t    *mc,
     }
 
     rdata[0] = 0;
-    rdata[1] = 0; /* Always channel 0 for now, FIXME - privilege level? */
+    rdata[1] = qmsg->channel; /* FIXME - privilege level? */
     /*
      * Note that we chop off the first byte because the destination
      * address is not in the get message response.

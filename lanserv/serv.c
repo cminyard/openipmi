@@ -153,6 +153,7 @@ channel_smi_send(channel_t *chan, msg_t *msg)
     int rv;
     msg_t *nmsg;
 
+    msg->orig_channel = chan;
     msg->channel = chan->channel_num;
     nmsg = chan->alloc(chan, sizeof(*nmsg)+msg->src_len+msg->len);
     if (!nmsg) {

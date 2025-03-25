@@ -310,119 +310,29 @@ ipmi_emu_tick(emu_data_t *emu, unsigned int seconds)
     }
 }
 
-#define IPMI_SEND_MSG_NO_TRACK 0x0
-#define IPMI_SEND_MSG_TRACK_REQUEST 0x01
-#define IPMI_SEND_MSG_SEND_RAW 0x2
-#define IPMI_SEND_MSG_GET_TRACKING(v) ((v >> 6) & 0x3)
-
-void
-ipmi_emu_handle_msg(emu_data_t    *emu,
-		    lmc_data_t    *srcmc,
-		    msg_t         *omsg,
-		    unsigned char *ordata,
-		    unsigned int  *ordata_len)
+static void
+enqueue_recv_msg(channel_t *chan, lmc_data_t *mc, msg_t *msg)
 {
-    lmc_data_t *mc;
-    msg_t smsg, *rmsg = NULL;
-    msg_t *msg;
-    unsigned char *data = NULL;
-    unsigned char *rdata;
-    unsigned int  *rdata_len;
-    channel_t *rchan = omsg->orig_channel;
-
-    if (emu->sysinfo->debug & DEBUG_MSG)
-	emu->sysinfo->log(emu->sysinfo, DEBUG, omsg, "Receive message:");
-    if (omsg->netfn == IPMI_APP_NETFN && omsg->cmd == IPMI_SEND_MSG_CMD) {
-	/* Encapsulated IPMB, do special handling. */
-	unsigned char slave;
-	unsigned int  data_len;
-
-	if (check_msg_length(omsg, 8, ordata, ordata_len))
-	    return;
-	if ((omsg->data[0] & 0x3f) != 0) {
-	    ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
-	    *ordata_len = 1;
-	    return;
-	}
-
-	switch (IPMI_SEND_MSG_GET_TRACKING(omsg->data[0])) {
-	case IPMI_SEND_MSG_NO_TRACK:
-	    rchan = srcmc->channels[15];
-	    break;
-	case IPMI_SEND_MSG_TRACK_REQUEST:
-	    break;
-	default:
-	    ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
-	    *ordata_len = 1;
-	    return;
-	}
-
-	data = omsg->data + 1;
-	data_len = omsg->len - 1;
-	if (data[0] == 0) {
-	    /* Broadcast, just skip the first byte, but check len. */
-	    data++;
-	    data_len--;
-	    if (data_len < 7) {
-		ordata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
-		*ordata_len = 1;
-		return;
-	    }
-	}
-	slave = data[0];
-	mc = emu->sysinfo->ipmb_addrs[slave];
-	if (!mc || !mc->enabled) {
-	    ordata[0] = 0x83; /* NAK on Write */
-	    *ordata_len = 1;
-	    return;
-	}
-
-	rmsg = malloc(sizeof(*rmsg) + IPMI_SIM_MAX_MSG_LENGTH);
-	if (!rmsg) {
-	    ordata[0] = IPMI_OUT_OF_SPACE_CC;
-	    *ordata_len = 1;
-	    return;
-	}
-
-	*rmsg = *omsg;
-
-	rmsg->data = ((unsigned char *) rmsg) + sizeof(*rmsg);
-	rmsg->len = IPMI_SIM_MAX_MSG_LENGTH - 7; /* header and checksum */
-	rmsg->netfn = (data[1] & 0xfc) >> 2;
-	rmsg->cmd = data[5];
-	rdata = rmsg->data + 6;
-	rdata_len = &rmsg->len;
-	rmsg->data[0] = emu->sysinfo->bmc_ipmb;
-	rmsg->data[1] = ((data[1] & 0xfc) | 0x4) | (data[4] & 0x3);
-	rmsg->data[2] = -ipmb_checksum(rdata+1, 2, 0);
-	rmsg->data[3] = data[0];
-	rmsg->data[4] = (data[4] & 0xfc) | (data[1] & 0x03);
-	rmsg->data[5] = data[5];
-
-	smsg.src_addr = omsg->src_addr;
-	smsg.src_len = omsg->src_len;
-	smsg.netfn = data[1] >> 2;
-	smsg.rs_lun = data[1] & 0x3;
-	smsg.cmd = data[5];
-	smsg.data = data + 6;
-	smsg.len = data_len - 7; /* Subtract off the header and
-				    the end checksum */
-	smsg.channel = 0; /* IPMB channel is 0 */
-	smsg.orig_channel = omsg->orig_channel;
-	smsg.sid = omsg->sid;
-	msg = &smsg;
+    if (chan->recv_q_tail) {
+	msg->next = chan->recv_q_tail;
+	chan->recv_q_tail = msg;
     } else {
-	mc = srcmc;
-	if (!mc || !mc->enabled) {
-	    ordata[0] = 0xff;
-	    *ordata_len = 1;
-	    return;
+	msg->next = NULL;
+	chan->recv_q_head = msg;
+	chan->recv_q_tail = msg;
+	if (chan->channel_num == 15) {
+	    chan->mc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
+	    if (chan->set_atn)
+		chan->set_atn(chan, 1, IPMI_MC_MSG_INTS_ON(chan->mc));
 	}
-	rdata = ordata;
-	rdata_len = ordata_len;
-	msg = omsg;
     }
+}
 
+static void
+deliver_msg_to_mc(lmc_data_t *mc, msg_t *msg,
+		  unsigned char *rdata, unsigned int *rdata_len)
+{
+    /* Now handle the message on the destination mc. */
     if (netfn_handlers[msg->netfn >> 1].check_capable &&
 	!netfn_handlers[msg->netfn >> 1].check_capable(mc))
 	handle_invalid_cmd(mc, rdata, rdata_len);
@@ -439,45 +349,203 @@ ipmi_emu_handle_msg(emu_data_t    *emu,
     } else
 	handle_invalid_cmd(mc, rdata, rdata_len);
 
-    if (omsg->netfn == IPMI_APP_NETFN && omsg->cmd == IPMI_SEND_MSG_CMD) {
-	/* An encapsulated command, put the response into the receive q. */
-
-	if (rchan->recv_in_q) {
-	    if (rchan->recv_in_q(srcmc->channels[15], rmsg))
-		return;
-	}
-
-	ordata[0] = 0;
-	*ordata_len = 1;
-
-	if (emu->sysinfo->debug & DEBUG_MSG)
-	    debug_log_raw_msg(emu->sysinfo, rdata, *rdata_len,
-			      "Response message:");
-
-	if (!rchan->has_recv_q) {
-	    free(rmsg);
-	    return;
-	}
-
-	rmsg->len += 6;
-	rmsg->data[rmsg->len] = -ipmb_checksum(rmsg->data, rmsg->len, 0);
-	rmsg->len += 1;
-	if (rchan->recv_q_tail) {
-	    rmsg->next = rchan->recv_q_tail;
-	    rchan->recv_q_tail = rmsg;
-	} else {
-	    rmsg->next = NULL;
-	    rchan->recv_q_head = rmsg;
-	    rchan->recv_q_tail = rmsg;
-	    if (rchan->channel_num == 15) {
-		srcmc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
-		if (rchan->set_atn)
-		    rchan->set_atn(rchan, 1, IPMI_MC_MSG_INTS_ON(mc));
-	    }
-	}
-    } else if (emu->sysinfo->debug & DEBUG_MSG)
-	debug_log_raw_msg(emu->sysinfo, ordata, *ordata_len,
+    if (mc->emu->sysinfo->debug & DEBUG_MSG)
+	debug_log_raw_msg(mc->emu->sysinfo, rdata, *rdata_len,
 			  "Response message:");
+}
+
+
+static int
+ipmb_handle_send_msg(channel_t *chan,
+		     msg_t *omsg,
+		     unsigned char *ordata,
+		     unsigned int *ordata_len)
+{
+    lmc_data_t *mc = chan->chan_info;
+    emu_data_t *emu = mc->emu;
+    channel_t *ochan = omsg->orig_channel;
+    unsigned int  data_len;
+    msg_t smsg, *rmsg = NULL;
+    unsigned char slave;
+    unsigned char *data = NULL;
+    unsigned char *rdata;
+    unsigned int  *rdata_len;
+
+    if (check_msg_length(omsg, 8, ordata, ordata_len))
+	return 1;
+
+    data = omsg->data + 1;
+    data_len = omsg->len - 1;
+
+    if (data[0] == 0) {
+	/* Broadcast, just skip the first byte, but check len. */
+	data++;
+	data_len--;
+	if (data_len < 7) {
+	    ordata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
+	    *ordata_len = 1;
+	    return 1;
+	}
+    }
+    slave = data[0];
+    mc = emu->sysinfo->ipmb_addrs[slave];
+    if (!mc || !mc->enabled) {
+	ordata[0] = 0x83; /* NAK on Write */
+	*ordata_len = 1;
+	return 1;
+    }
+
+    rmsg = malloc(sizeof(*rmsg) + IPMI_SIM_MAX_MSG_LENGTH);
+    if (!rmsg) {
+	ordata[0] = IPMI_OUT_OF_SPACE_CC;
+	*ordata_len = 1;
+	return 1;
+    }
+
+    *rmsg = *omsg;
+
+    rmsg->data = ((unsigned char *) rmsg) + sizeof(*rmsg);
+    rmsg->len = IPMI_SIM_MAX_MSG_LENGTH - 7; /* header and checksum */
+    rmsg->netfn = (data[1] & 0xfc) >> 2;
+    rmsg->cmd = data[5];
+    rmsg->channel = chan->channel_num;
+    rdata = rmsg->data + 6;
+    rdata_len = &rmsg->len;
+    rmsg->data[0] = emu->sysinfo->bmc_ipmb;
+    rmsg->data[1] = ((data[1] & 0xfc) | 0x4) | (data[4] & 0x3);
+    rmsg->data[2] = -ipmb_checksum(rdata+1, 2, 0);
+    rmsg->data[3] = data[0];
+    rmsg->data[4] = (data[4] & 0xfc) | (data[1] & 0x03);
+    rmsg->data[5] = data[5];
+
+    smsg.src_addr = omsg->src_addr;
+    smsg.src_len = omsg->src_len;
+    smsg.netfn = data[1] >> 2;
+    smsg.rs_lun = data[1] & 0x3;
+    smsg.cmd = data[5];
+    smsg.data = data + 6;
+    smsg.len = data_len - 7; /* Subtract off the header and
+				the end checksum */
+    smsg.channel = omsg->channel;
+    smsg.orig_channel = omsg->orig_channel;
+    smsg.sid = omsg->sid;
+
+    deliver_msg_to_mc(mc, &smsg, rdata, rdata_len);
+
+    /*
+     * The actual send message succeeded.  The response from the MC is
+     * separate, in rmsg.
+     */
+    ordata[0] = 0;
+    *ordata_len = 1;
+
+    if (ochan->recv_in_q) {
+	if (ochan->recv_in_q(ochan, rmsg))
+	    return 1;
+    }
+
+    rmsg->len += 6;
+    rmsg->data[rmsg->len] = -ipmb_checksum(rmsg->data, rmsg->len, 0);
+    rmsg->len += 1;
+
+    enqueue_recv_msg(ochan, mc, rmsg);
+    return 1;
+}
+
+#define IPMI_SEND_MSG_NO_TRACK 0x0
+#define IPMI_SEND_MSG_TRACK_REQUEST 0x01
+#define IPMI_SEND_MSG_SEND_RAW 0x2
+#define IPMI_SEND_MSG_GET_TRACKING(v) ((v >> 6) & 0x3)
+
+/*
+ * Route a send message command.
+ */
+static int
+handle_send_msg_cmd(emu_data_t    *emu,
+		    lmc_data_t    *srcmc,
+		    msg_t         *omsg,
+		    unsigned char *ordata,
+		    unsigned int  *ordata_len)
+{
+    unsigned char chan;
+    channel_t *ochan = omsg->orig_channel;
+
+    if (check_msg_length(omsg, 1, ordata, ordata_len))
+	return 1;
+
+    if (!ochan->has_recv_q) {
+	/* We have to have a receive queue to route it back to. */
+	ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	*ordata_len = 1;
+	return 1;
+    }
+
+    switch (IPMI_SEND_MSG_GET_TRACKING(omsg->data[0])) {
+    case IPMI_SEND_MSG_NO_TRACK:
+	if (ochan->session_support != IPMI_CHANNEL_SESSION_LESS) {
+	    /* No tracking only supported on the system interface. */
+	    ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	    *ordata_len = 1;
+	    return 1;
+	}
+	break;
+    case IPMI_SEND_MSG_TRACK_REQUEST:
+	if (ochan->session_support == IPMI_CHANNEL_SESSION_LESS) {
+	    /* Tracking only supported on the session-oriented channels. */
+	    ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	    *ordata_len = 1;
+	    return 1;
+	}
+	break;
+    default:
+	ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	*ordata_len = 1;
+	return 1;
+    }
+
+    chan = omsg->data[0] & 0x3f;
+    if (chan > 15 || !srcmc->channels[chan] ||
+		!srcmc->channels[chan]->handle_send_msg) {
+	ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	*ordata_len = 1;
+	return 1;
+    }
+
+    return srcmc->channels[chan]->handle_send_msg(srcmc->channels[chan], omsg,
+						  ordata, ordata_len);
+}
+
+int
+ipmi_emu_handle_msg(emu_data_t    *emu,
+		    lmc_data_t    *srcmc,
+		    msg_t         *omsg,
+		    unsigned char *ordata,
+		    unsigned int  *ordata_len)
+{
+    if (emu->sysinfo->debug & DEBUG_MSG)
+	emu->sysinfo->log(emu->sysinfo, DEBUG, omsg, "Receive message:");
+
+    /* Figure out where the message goes. */
+    if (omsg->rq_lun == 2) {
+	/* FIXME - implement this. */
+	ordata[0] = 0xff;
+	*ordata_len = 1;
+	return 1;
+    }
+
+    if (omsg->netfn == IPMI_APP_NETFN &&
+	       omsg->cmd == IPMI_SEND_MSG_CMD)
+	return handle_send_msg_cmd(emu, srcmc, omsg, ordata, ordata_len);
+
+    if (!srcmc || !srcmc->enabled) {
+	ordata[0] = 0xff;
+	*ordata_len = 1;
+	return 1;
+    }
+
+    deliver_msg_to_mc(srcmc, omsg, ordata, ordata_len);
+
+    return 1; /* Return a response. */
 }
 
 void
@@ -815,7 +883,9 @@ is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
     mc->ipmb_channel.protocol_type = IPMI_CHANNEL_PROTOCOL_IPMB;
     mc->ipmb_channel.session_support = IPMI_CHANNEL_SESSION_LESS;
     mc->ipmb_channel.active_sessions = 0;
+    mc->ipmb_channel.chan_info = mc;
     mc->ipmb_channel.prim_ipmb_in_cfg_file = 0;
+    mc->ipmb_channel.handle_send_msg = ipmb_handle_send_msg;
     mc->channels[0] = &mc->ipmb_channel;
     mc->channels[0]->log = sys->clog;
 
