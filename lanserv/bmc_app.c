@@ -962,6 +962,65 @@ handle_clear_msg_flags(lmc_data_t    *mc,
     *rdata_len = 1;
 }
 
+#define IPMI_SEND_MSG_NO_TRACK 0x0
+#define IPMI_SEND_MSG_TRACK_REQUEST 0x01
+#define IPMI_SEND_MSG_SEND_RAW 0x2
+#define IPMI_SEND_MSG_GET_TRACKING(v) ((v >> 6) & 0x3)
+
+static void
+handle_send_msg(lmc_data_t    *mc,
+		msg_t         *msg,
+		unsigned char *rdata,
+		unsigned int  *rdata_len,
+		void          *cb_data)
+{
+    channel_t *chan;
+    channel_t *ochan = msg->orig_channel;
+
+    if (check_msg_length(msg, 1, rdata, rdata_len))
+	return;
+
+    if (!ochan->has_recv_q) {
+	/* We have to have a receive queue to route it back to. */
+	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	*rdata_len = 1;
+	return;
+    }
+
+    switch (IPMI_SEND_MSG_GET_TRACKING(msg->data[0])) {
+    case IPMI_SEND_MSG_NO_TRACK:
+	if (ochan->session_support != IPMI_CHANNEL_SESSION_LESS) {
+	    /* No tracking only supported on the system interface. */
+	    rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	    *rdata_len = 1;
+	    return;
+	}
+	break;
+    case IPMI_SEND_MSG_TRACK_REQUEST:
+	if (ochan->session_support == IPMI_CHANNEL_SESSION_LESS) {
+	    /* Tracking only supported on the session-oriented channels. */
+	    rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	    *rdata_len = 1;
+	    return;
+	}
+	break;
+    default:
+	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	*rdata_len = 1;
+	return;
+    }
+
+    chan = mc->channels[msg->data[0] & 0xf];
+
+    if (!chan || !chan->handle_send_msg) {
+	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	*rdata_len = 1;
+	return;
+    }
+
+    chan->handle_send_msg(chan, msg, rdata, rdata_len);
+}
+
 static void
 handle_get_msg(lmc_data_t    *mc,
 	       msg_t         *msg,
@@ -1197,6 +1256,7 @@ cmd_handler_f app_netfn_handlers[256] = {
     [IPMI_SET_USER_PASSWORD_CMD] = handle_set_user_password,
     [IPMI_SET_CHANNEL_ACCESS_CMD] = handle_set_channel_access,
     [IPMI_READ_EVENT_MSG_BUFFER_CMD] = handle_read_event_msg_buffer,
+    [IPMI_SEND_MSG_CMD] = handle_send_msg,
     [IPMI_GET_MSG_CMD] = handle_get_msg,
     [IPMI_GET_MSG_FLAGS_CMD] = handle_get_msg_flags,
     [IPMI_CLEAR_MSG_FLAGS_CMD] = handle_clear_msg_flags,

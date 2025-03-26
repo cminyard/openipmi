@@ -68,6 +68,7 @@
 #include <OpenIPMI/ipmi_mc.h>
 #include <OpenIPMI/ipmi_lan.h>
 #include <OpenIPMI/lanserv.h>
+#include <OpenIPMI/serv.h>
 
 #include <OpenIPMI/internal/md5.h>
 
@@ -447,7 +448,8 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
 	return_rmcpp_rsp(lan, session, msg, msg->rmcpp.payload,
 			 rsp->data, rsp->data_len, NULL, 0);
 	return;
-    } else if (msg->sid == 0) {
+    }
+    if (!session && msg->sid == 0) {
 	session = &dummy_session;
 	session->active = 1;
 	session->authtype = IPMI_AUTHTYPE_NONE;
@@ -542,6 +544,71 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
     }
     if (chan->recv_in_q)
 	chan->recv_in_q(chan, 0);
+}
+
+static void
+lan_handle_send_msg(channel_t *chan, msg_t *imsg,
+		    unsigned char *rdata, unsigned int *rdata_len)
+{
+    lanserv_data_t *lan = chan->chan_info;
+    unsigned char handle;
+    session_t *session;
+    msg_t msg;
+    rsp_msg_t rmsg;
+
+    memset(&msg, 0, sizeof(msg));
+    memset(&rmsg, 0, sizeof(rmsg));
+
+    /* First byte of the message is the channel number field. */
+
+    if (check_msg_length(imsg, 9, rdata, rdata_len))
+	return;
+
+    rmsg.netfn = imsg->data[3] >> 2;
+    if (rmsg.netfn & 1) {
+	/* It's a response, check that it has the completion code. */
+	if (check_msg_length(imsg, 10, rdata, rdata_len))
+	    return;
+    }
+
+    handle = imsg->data[1];
+    if (handle > MAX_SESSIONS + 1 || !lan->sessions[handle].active) {
+	rdata[0] = IPMI_NOT_PRESENT_CC;
+	*rdata_len = 1;
+    }
+
+    session = &lan->sessions[handle];
+    msg.src_addr = session->src_addr;
+    msg.src_len = session->src_len;
+    msg.rs_addr = imsg->data[2];
+    msg.rs_lun = imsg->data[3] & 0x3;
+    msg.rq_addr = imsg->data[5];
+    msg.rq_seq = imsg->data[6] >> 2;
+    msg.rq_lun = imsg->data[6] & 0x3;
+
+    rmsg.cmd = imsg->data[7];
+    rmsg.data = imsg->data + 8;
+    rmsg.data_len = imsg->len - 9;
+
+    return_rsp(lan, &msg, session, &rmsg);
+
+    rdata[0] = 0;
+    *rdata_len = 1;
+}
+
+static int
+lan_format_lun_2(channel_t *chan, msg_t *omsg, msg_t *qmsg,
+		 unsigned char *rdata, unsigned int *rdata_len)
+{
+    lanserv_data_t *lan = chan->chan_info;
+
+    qmsg->data[0] = 0;
+    qmsg->data[1] = (omsg->sid >> 1) & MAX_SESSIONS;
+    qmsg->data[2] = 0; /* SWID is not used. */
+    qmsg->data[3] = (omsg->netfn << 2) | 2;
+    qmsg->data[4] = -ipmb_checksum(qmsg->data, 4, 0);
+    qmsg->data[5] = 0;
+    //qmsg->data[6] = (seq << 2) | 
 }
 
 static void
@@ -3255,6 +3322,8 @@ ipmi_lan_init(lanserv_data_t *lan)
 	lan->lanparm.cipher_suite_entry[i] = i;
 
     lan->channel.return_rsp = lan_return_rsp;
+    lan->channel.handle_send_msg = lan_handle_send_msg;
+    lan->channel.format_lun_2 = lan_format_lun_2;
     lan->channel.get_lan_parms = get_lan_config_parms;
     lan->channel.set_lan_parms = set_lan_config_parms;
     lan->channel.set_chan_access = set_channel_access;
