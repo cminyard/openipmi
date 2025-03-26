@@ -213,7 +213,7 @@ smi_send_dev(channel_t *chan, msg_t *msg)
 
 	si->addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
 	si->channel = 0xf;
-	si->lun = msg->rs_lun;
+	si->lun = msg->dlun;
 	req.addr_len = sizeof(*si);
 	req.msg.netfn = msg->netfn;
 	req.msg.cmd = msg->cmd;
@@ -424,8 +424,8 @@ ilanserv_log(sys_data_t *sys, int logtype, msg_t *msg, const char *format,
 	    " rq_addr=0x%x\n rq_lun=0x%x rq_seq=0x%x\n"
 
 	len += snprintf(&dummy, 0, mformat, msg->channel, msg->netfn,
-			msg->cmd, msg->rs_addr, msg->rs_lun, msg->rq_addr,
-			msg->rq_lun, msg->rq_seq);
+			msg->cmd, msg->daddr, msg->dlun, msg->saddr,
+			msg->slun, msg->rq_seq);
 	len += 3 * msg->len + 3;
 	str = malloc(len);
 	if (!str)
@@ -433,7 +433,7 @@ ilanserv_log(sys_data_t *sys, int logtype, msg_t *msg, const char *format,
 	pos = vsprintf(str, format, ap);
 	str[pos++] = '\n';
 	pos += sprintf(str + pos, mformat, msg->channel, msg->netfn, msg->cmd,
-		       msg->rs_addr, msg->rs_lun, msg->rq_addr, msg->rq_lun,
+		       msg->daddr, msg->dlun, msg->saddr, msg->slun,
 		       msg->rq_seq);
 #undef mformat
 	for (i = 0; i < msg->len; i++)

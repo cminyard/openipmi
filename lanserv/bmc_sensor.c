@@ -119,7 +119,7 @@ handle_get_device_sdr_info(lmc_data_t    *mc,
     }
 
     rdata[0] = 0;
-    rdata[1] = mc->num_sensors_per_lun[msg->rs_lun];
+    rdata[1] = mc->num_sensors_per_lun[msg->dlun];
     rdata[2] = ((mc->dynamic_sensor_population << 7)
 		| (mc->lun_has_sensors[3] << 3)
 		| (mc->lun_has_sensors[2] << 2)
@@ -151,12 +151,12 @@ handle_reserve_device_sdr_repository(lmc_data_t    *mc,
 	return;
     }
 
-    mc->device_sdrs[msg->rs_lun].reservation++;
-    if (mc->device_sdrs[msg->rs_lun].reservation == 0)
-	mc->device_sdrs[msg->rs_lun].reservation++;
+    mc->device_sdrs[msg->dlun].reservation++;
+    if (mc->device_sdrs[msg->dlun].reservation == 0)
+	mc->device_sdrs[msg->dlun].reservation++;
 
     rdata[0] = 0;
-    ipmi_set_uint16(rdata+1, mc->device_sdrs[msg->rs_lun].reservation);
+    ipmi_set_uint16(rdata+1, mc->device_sdrs[msg->dlun].reservation);
     *rdata_len = 3;
 }
 
@@ -184,7 +184,7 @@ handle_get_device_sdr(lmc_data_t    *mc,
 	uint16_t reservation = ipmi_get_uint16(msg->data+0);
 
 	if ((reservation != 0)
-	    && (reservation != mc->device_sdrs[msg->rs_lun].reservation))
+	    && (reservation != mc->device_sdrs[msg->dlun].reservation))
 	{
 	    rdata[0] = IPMI_INVALID_RESERVATION_CC;
 	    *rdata_len = 1;
@@ -197,16 +197,16 @@ handle_get_device_sdr(lmc_data_t    *mc,
     count = msg->data[5];
 
     if (record_id == 0) {
-	entry = mc->device_sdrs[msg->rs_lun].sdrs;
+	entry = mc->device_sdrs[msg->dlun].sdrs;
     } else if (record_id == 0xffff) {
-	entry = mc->device_sdrs[msg->rs_lun].sdrs;
+	entry = mc->device_sdrs[msg->dlun].sdrs;
 	if (entry) {
 	    while (entry->next) {
 		entry = entry->next;
 	    }
 	}
     } else {
-	entry = find_sdr_by_recid(&mc->device_sdrs[msg->rs_lun],
+	entry = find_sdr_by_recid(&mc->device_sdrs[msg->dlun],
 				  record_id, NULL);
     }
 
@@ -257,13 +257,13 @@ handle_set_sensor_hysteresis(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
     if (sensor->hysteresis_support != IPMI_HYSTERESIS_SUPPORT_SETTABLE) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
@@ -291,13 +291,13 @@ handle_get_sensor_hysteresis(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
     if ((sensor->hysteresis_support != IPMI_HYSTERESIS_SUPPORT_SETTABLE)
 	&& (sensor->hysteresis_support != IPMI_HYSTERESIS_SUPPORT_READABLE))
     {
@@ -461,13 +461,13 @@ handle_set_sensor_thresholds(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
     if ((sensor->event_reading_code != IPMI_EVENT_READING_TYPE_THRESHOLD)
 	|| (sensor->threshold_support != IPMI_THRESHOLD_ACCESS_SUPPORT_SETTABLE))
     {
@@ -512,13 +512,13 @@ handle_get_sensor_thresholds(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
     if ((sensor->event_reading_code != IPMI_EVENT_READING_TYPE_THRESHOLD)
 	|| ((sensor->threshold_support != IPMI_THRESHOLD_ACCESS_SUPPORT_SETTABLE)
 	    && (sensor->threshold_support != IPMI_THRESHOLD_ACCESS_SUPPORT_READABLE)))
@@ -557,13 +557,13 @@ handle_set_sensor_event_enable(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
     if ((sensor->event_support == IPMI_EVENT_SUPPORT_NONE)
 	|| (sensor->event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE))
     {
@@ -644,13 +644,13 @@ handle_get_sensor_event_enable(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
     if ((sensor->event_support == IPMI_EVENT_SUPPORT_NONE)
 	|| (sensor->event_support == IPMI_EVENT_SUPPORT_GLOBAL_DISABLE))
     {
@@ -700,13 +700,13 @@ handle_get_sensor_type(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
     rdata[0] = 0;
     rdata[1] = sensor->sensor_type;
     rdata[2] = sensor->event_reading_code;
@@ -727,13 +727,13 @@ handle_get_sensor_reading(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
 
     if (sensor->event_only) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
@@ -773,13 +773,13 @@ handle_rearm_sensor_events(lmc_data_t    *mc,
 	return;
 
     sens_num = msg->data[0];
-    if ((sens_num >= 255) || (!mc->sensors[msg->rs_lun][sens_num])) {
+    if ((sens_num >= 255) || (!mc->sensors[msg->dlun][sens_num])) {
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    sensor = mc->sensors[msg->rs_lun][sens_num];
+    sensor = mc->sensors[msg->dlun][sens_num];
 
     if (msg->data[1] & (1 << 7)) {
 	rearm_assert = 0x7fff;

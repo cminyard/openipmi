@@ -96,10 +96,17 @@ typedef struct msg_s
     };
 
     unsigned char netfn;
-    unsigned char rs_addr;
-    unsigned char rs_lun;
-    unsigned char rq_addr;
-    unsigned char rq_lun;
+
+    /*
+     * Note that we don't keep this by rs and rq, we keep it by
+     * destination (the first addr and lun in a message) and source
+     * (the second destination and LIN in a message.  This makes a
+     * little more sense for routing.
+     */
+    unsigned char daddr; /* rsSA on requests, rqSA on responses. */
+    unsigned char dlun;  /* rsLUN on requests, rqLUN on responses. */
+    unsigned char saddr; /* rqSA on requests, rqSA on responses. */
+    unsigned char slun;  /* rqLUN on requests, rsLUN on responses. */
     unsigned char rq_seq;
     unsigned char cmd;
 

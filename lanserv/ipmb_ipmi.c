@@ -63,11 +63,11 @@ ipmb_send(msg_t *imsg, ipmbserv_data_t *ipmb)
     unsigned int msg_len;
 
     msg[0] = imsg->len + 7;
-    msg[1] = imsg->rs_addr;
-    msg[2] = (imsg->netfn << 2) | imsg->rs_lun;
+    msg[1] = imsg->daddr;
+    msg[2] = (imsg->netfn << 2) | imsg->dlun;
     msg[3] = -ipmb_checksum(msg + 1, 2, 0);
-    msg[4] = imsg->rq_addr;
-    msg[5] = (imsg->rq_seq << 2) | imsg->rq_lun;
+    msg[4] = imsg->saddr;
+    msg[5] = (imsg->rq_seq << 2) | imsg->slun;
     msg[6] = imsg->cmd;
     memcpy(msg + 7, imsg->data, imsg->len);
     msg_len = imsg->len + 7;
@@ -89,10 +89,10 @@ ipmb_return_rsp(channel_t *chan, msg_t *imsg, rsp_msg_t *rsp)
     msg.cmd = rsp->cmd;
     msg.data = rsp->data;
     msg.len = rsp->data_len;
-    msg.rq_lun = imsg->rs_lun;
-    msg.rq_addr = imsg->rs_addr;
-    msg.rs_lun = imsg->rq_lun;
-    msg.rs_addr = imsg->rq_addr;
+    msg.daddr = imsg->saddr;
+    msg.dlun = imsg->slun;
+    msg.saddr = imsg->daddr;
+    msg.slun = imsg->dlun;
     msg.rq_seq = imsg->rq_seq;
 
     ipmb_send(&msg, ipmb);
@@ -128,13 +128,13 @@ ipmbserv_handle_data(ipmbserv_data_t *ipmb, uint8_t *imsg, unsigned int len)
 
     memset(&msg, 0, sizeof(msg));
 
-    msg.rs_addr = imsg[0];
+    msg.daddr = imsg[0];
+    msg.dlun = imsg[1] & 3;
     msg.netfn = imsg[1] >> 2;
-    msg.rs_lun = imsg[1] & 3;
     /* imsg[2] is first checksum */
-    msg.rq_addr = imsg[3];
+    msg.saddr = imsg[3];
+    msg.slun = imsg[4] & 3;
     msg.rq_seq = imsg[4] >> 2;
-    msg.rq_lun = imsg[4] & 3;
     msg.cmd = imsg[5];
 
     msg.len = len - 6;
