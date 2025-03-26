@@ -356,7 +356,7 @@ deliver_msg_to_mc(lmc_data_t *mc, msg_t *msg,
 }
 
 
-static int
+static void
 ipmb_handle_send_msg(channel_t *chan,
 		     msg_t *omsg,
 		     unsigned char *ordata,
@@ -366,14 +366,14 @@ ipmb_handle_send_msg(channel_t *chan,
     emu_data_t *emu = mc->emu;
     channel_t *ochan = omsg->orig_channel;
     unsigned int  data_len;
-    msg_t smsg, *rmsg = NULL;
+    msg_t smsg, *qmsg = NULL;
     unsigned char slave;
     unsigned char *data = NULL;
     unsigned char *rdata;
     unsigned int  *rdata_len;
 
     if (check_msg_length(omsg, 8, ordata, ordata_len))
-	return 1;
+	return;
 
     data = omsg->data + 1;
     data_len = omsg->len - 1;
@@ -385,7 +385,7 @@ ipmb_handle_send_msg(channel_t *chan,
 	if (data_len < 7) {
 	    ordata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
 	    *ordata_len = 1;
-	    return 1;
+	    return;
 	}
     }
     slave = data[0];
@@ -393,31 +393,32 @@ ipmb_handle_send_msg(channel_t *chan,
     if (!mc || !mc->enabled) {
 	ordata[0] = 0x83; /* NAK on Write */
 	*ordata_len = 1;
-	return 1;
+	return;
     }
 
-    rmsg = malloc(sizeof(*rmsg) + IPMI_SIM_MAX_MSG_LENGTH);
-    if (!rmsg) {
+    qmsg = malloc(sizeof(*qmsg) + IPMI_SIM_MAX_MSG_LENGTH);
+    if (!qmsg) {
 	ordata[0] = IPMI_OUT_OF_SPACE_CC;
 	*ordata_len = 1;
-	return 1;
+	return;
     }
 
-    *rmsg = *omsg;
+    *qmsg = *omsg;
 
-    rmsg->data = ((unsigned char *) rmsg) + sizeof(*rmsg);
-    rmsg->len = IPMI_SIM_MAX_MSG_LENGTH - 7; /* header and checksum */
-    rmsg->netfn = (data[1] & 0xfc) >> 2;
-    rmsg->cmd = data[5];
-    rmsg->channel = chan->channel_num;
-    rdata = rmsg->data + 6;
-    rdata_len = &rmsg->len;
-    rmsg->data[0] = emu->sysinfo->bmc_ipmb;
-    rmsg->data[1] = ((data[1] & 0xfc) | 0x4) | (data[4] & 0x3);
-    rmsg->data[2] = -ipmb_checksum(rdata+1, 2, 0);
-    rmsg->data[3] = data[0];
-    rmsg->data[4] = (data[4] & 0xfc) | (data[1] & 0x03);
-    rmsg->data[5] = data[5];
+    qmsg->data = ((unsigned char *) qmsg) + sizeof(*qmsg);
+    qmsg->len = IPMI_SIM_MAX_MSG_LENGTH - 7; /* header and checksum */
+    qmsg->netfn = (data[1] & 0xfc) >> 2;
+    qmsg->cmd = data[5];
+    qmsg->channel = chan->channel_num;
+    rdata = qmsg->data + 6;
+    rdata_len = &qmsg->len;
+    /* FIXME - qmsg->data[0] is not used, get rid of it for consistency. */
+    qmsg->data[0] = emu->sysinfo->bmc_ipmb;
+    qmsg->data[1] = ((data[1] & 0xfc) | 0x4) | (data[4] & 0x3);
+    qmsg->data[2] = -ipmb_checksum(rdata+1, 2, 0);
+    qmsg->data[3] = data[0];
+    qmsg->data[4] = (data[4] & 0xfc) | (data[1] & 0x03);
+    qmsg->data[5] = data[5];
 
     smsg.src_addr = omsg->src_addr;
     smsg.src_len = omsg->src_len;
@@ -435,116 +436,164 @@ ipmb_handle_send_msg(channel_t *chan,
 
     /*
      * The actual send message succeeded.  The response from the MC is
-     * separate, in rmsg.
+     * separate, in qmsg.
      */
     ordata[0] = 0;
     *ordata_len = 1;
 
     if (ochan->recv_in_q) {
-	if (ochan->recv_in_q(ochan, rmsg))
-	    return 1;
+	if (ochan->recv_in_q(ochan, qmsg))
+	    return;
     }
 
-    rmsg->len += 6;
-    rmsg->data[rmsg->len] = -ipmb_checksum(rmsg->data, rmsg->len, 0);
-    rmsg->len += 1;
+    qmsg->len += 6;
+    qmsg->data[qmsg->len] = -ipmb_checksum(qmsg->data, qmsg->len, 0);
+    qmsg->len += 1;
 
-    enqueue_recv_msg(ochan, mc, rmsg);
-    return 1;
+    enqueue_recv_msg(ochan, mc, qmsg);
 }
 
-#define IPMI_SEND_MSG_NO_TRACK 0x0
-#define IPMI_SEND_MSG_TRACK_REQUEST 0x01
-#define IPMI_SEND_MSG_SEND_RAW 0x2
-#define IPMI_SEND_MSG_GET_TRACKING(v) ((v >> 6) & 0x3)
+static int
+ipmb_format_lun_2(channel_t *chan, msg_t *omsg, msg_t *qmsg,
+		  unsigned char *rdata, unsigned int *rdata_len)
+{
+}
 
 /*
  * Route a send message command.
  */
 static int
-handle_send_msg_cmd(emu_data_t    *emu,
-		    lmc_data_t    *srcmc,
-		    msg_t         *omsg,
-		    unsigned char *ordata,
-		    unsigned int  *ordata_len)
+handle_lun_2_cmd(emu_data_t    *emu,
+		 lmc_data_t    *mc,
+		 msg_t         *omsg,
+		 unsigned char *ordata,
+		 unsigned int  *ordata_len)
 {
-    unsigned char chan;
     channel_t *ochan = omsg->orig_channel;
+    msg_t *qmsg;
 
-    if (check_msg_length(omsg, 1, ordata, ordata_len))
+    if (!mc->channels[15]) {
+	ordata[0] = 0xff;
+	*ordata_len = 1;
 	return 1;
+    }
 
-    if (!ochan->has_recv_q) {
-	/* We have to have a receive queue to route it back to. */
+    if (!ochan->format_lun_2) {
 	ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*ordata_len = 1;
 	return 1;
     }
 
-    switch (IPMI_SEND_MSG_GET_TRACKING(omsg->data[0])) {
-    case IPMI_SEND_MSG_NO_TRACK:
-	if (ochan->session_support != IPMI_CHANNEL_SESSION_LESS) {
-	    /* No tracking only supported on the system interface. */
-	    ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
-	    *ordata_len = 1;
-	    return 1;
-	}
-	break;
-    case IPMI_SEND_MSG_TRACK_REQUEST:
-	if (ochan->session_support == IPMI_CHANNEL_SESSION_LESS) {
-	    /* Tracking only supported on the session-oriented channels. */
-	    ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
-	    *ordata_len = 1;
-	    return 1;
-	}
-	break;
-    default:
-	ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
+    qmsg = malloc(sizeof(*qmsg) + IPMI_SIM_MAX_MSG_LENGTH);
+    if (!qmsg) {
+	ordata[0] = IPMI_OUT_OF_SPACE_CC;
 	*ordata_len = 1;
 	return 1;
     }
 
-    chan = omsg->data[0] & 0x3f;
-    if (chan > 15 || !srcmc->channels[chan] ||
-		!srcmc->channels[chan]->handle_send_msg) {
-	ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
-	*ordata_len = 1;
+    *qmsg = *omsg;
+
+    qmsg->data = ((unsigned char *) qmsg) + sizeof(*qmsg);
+    qmsg->len = IPMI_SIM_MAX_MSG_LENGTH;
+    qmsg->orig_channel = ochan;
+    qmsg->channel = ochan->channel_num;
+    
+
+    if (ochan->format_lun_2(ochan, omsg, qmsg, ordata, ordata_len)) {
+	free(qmsg);
 	return 1;
     }
 
-    return srcmc->channels[chan]->handle_send_msg(srcmc->channels[chan], omsg,
-						  ordata, ordata_len);
+    enqueue_recv_msg(mc->channels[15], mc, qmsg);
+
+    return 0; /* Don't return a response. */
 }
 
+/*
+ * Messages handline depends on the source of the message, the
+ * destination, and whether the message is a command or responses.
+ * There are two basic source and destination types: session-less
+ * (IPMB, system interface) and session-oriented (LAN). Messages have
+ * three basic routes:
+ *
+ * - A message directly to the MC to LUN 0.  These are handled
+ *   directly, the response to the message is returned in rdata.
+ *   If it's a send message, that is handled in the third scenario
+ *   below.  Responses are currently ignored, there is nothing that
+ *   generates commands here.
+ *
+ * - A message to LUN 2, which means that the message is routed to the
+ *   host of the MC.  If delivered, these go into the receive queue
+ *   for the MC with the formatting described by the Get Message
+ *   command.
+ *
+ *   - Messages from a session-less channel are commands from other
+ *     MCs to this MC or responses to commands sent from this MC.  No
+ *     response is returned in rdata unless the delivery fails.
+ *
+ *   - Commands from session-oriented channel, a sequence number is
+ *     generated and the message information is stored.  A timer also
+ *     times these and removes them after a time if no response is
+ *     received.  No response is returned to rdata directly from this
+ *     unless the send fails, the response will be generated later
+ *     when the host does a send message response or the timeout
+ *     happens.
+ *
+ *   - Responses from a session-oriented channel.  These are just
+ *     delivered, a send success/failure response is returned in
+ *     rdata.
+ *
+ * - A send message command, which is routed to a channel on the MC.
+ *   rdata returns whether the send succeeded or failed.  If the send
+ *   fails, no tracking is done.  This is done in bmc_app.c in
+ *   handle_send_msg().
+ *
+ *   - Commands to session-oriented channels are permitted, but probably
+ *     not very useful.
+ *
+ *   - Commands from a session-less channel must be untracked and are
+ *     just sent.  rdata is used to say whether the send succeeded or
+ *     failed.  IPMB is not permitted as a source, and the response
+ *     LUN must be 2 to map back to the system interface.
+ *
+ *   - Responses from a session-less channel to a session-less channel
+ *     are just sent.
+ *
+ *   - Responses from a session-less channel to a session-oriented
+ *     channel must have been tracked.  These are looked up by sequence
+ *     number and the response is returned.
+ *
+ *   - Commands from a session-oriented channel.  These must be
+ *     tracked and will generate a sequence number.  The original
+ *     sequence number is stored and restored in the later response.
+ *     A timer times these.
+ *
+ *   - Responses from a session-oriented channel are just delivered.
+ *
+ * Note that rdata_len holds the length of rdata, and it must be at
+ * least 1.
+ */
 int
 ipmi_emu_handle_msg(emu_data_t    *emu,
-		    lmc_data_t    *srcmc,
+		    lmc_data_t    *mc,
 		    msg_t         *omsg,
-		    unsigned char *ordata,
-		    unsigned int  *ordata_len)
+		    unsigned char *rdata,
+		    unsigned int  *rdata_len)
 {
     if (emu->sysinfo->debug & DEBUG_MSG)
 	emu->sysinfo->log(emu->sysinfo, DEBUG, omsg, "Receive message:");
 
+    if (!mc->enabled) {
+	rdata[0] = 0xff;
+	*rdata_len = 1;
+	return 1;
+    }
+
     /* Figure out where the message goes. */
-    if (omsg->rq_lun == 2) {
-	/* FIXME - implement this. */
-	ordata[0] = 0xff;
-	*ordata_len = 1;
-	return 1;
-    }
+    if (omsg->rq_lun == 2)
+	return handle_lun_2_cmd(emu, mc, omsg, rdata, rdata_len);
 
-    if (omsg->netfn == IPMI_APP_NETFN &&
-	       omsg->cmd == IPMI_SEND_MSG_CMD)
-	return handle_send_msg_cmd(emu, srcmc, omsg, ordata, ordata_len);
-
-    if (!srcmc || !srcmc->enabled) {
-	ordata[0] = 0xff;
-	*ordata_len = 1;
-	return 1;
-    }
-
-    deliver_msg_to_mc(srcmc, omsg, ordata, ordata_len);
+    deliver_msg_to_mc(mc, omsg, rdata, rdata_len);
 
     return 1; /* Return a response. */
 }
@@ -887,6 +936,7 @@ is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
     mc->ipmb_channel.chan_info = mc;
     mc->ipmb_channel.prim_ipmb_in_cfg_file = 0;
     mc->ipmb_channel.handle_send_msg = ipmb_handle_send_msg;
+    mc->ipmb_channel.format_lun_2 = ipmb_format_lun_2;
     mc->channels[0] = &mc->ipmb_channel;
     mc->channels[0]->log = sys->clog;
 

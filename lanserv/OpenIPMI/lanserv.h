@@ -327,8 +327,19 @@ struct channel_s
     void (*return_rsp)(channel_t *chan, msg_t *msg, rsp_msg_t *rsp);
 
     /* A send message to this channel will call this. */
-    int (*handle_send_msg)(channel_t *chan, msg_t *msg,
-			   unsigned char *rdata, unsigned int *rdata_len);
+    void (*handle_send_msg)(channel_t *chan, msg_t *msg,
+			    unsigned char *rdata, unsigned int *rdata_len);
+
+    /*
+     * Format a received message for LUN 2. omsg is the incoming
+     * message to reformat, qmsg is a message to put the data into.
+     * qmsg->len will be the maximum length of the message on entry,
+     * this function should set it to the actual length.  If this
+     * returns 0, that means success and rdata is not used.  If this
+     * returns 1, that means error and rdata will be set to an error.
+     */
+    int (*format_lun_2)(channel_t *chan, msg_t *omsg, msg_t *qmsg,
+			unsigned char *rdata, unsigned int *rdata_len);
 
     /* Set or clear the attn flag.  If irq is set, set/clear the irq. */
     void (*set_atn)(channel_t *chan, int val, int irq);
