@@ -107,12 +107,12 @@ unformat_ipmb_msg(msg_t *msg, unsigned char *msgd, unsigned int len,
     }
     len--;
 
-    msg->rs_addr = msgd[0];
+    msg->daddr = msgd[0];
+    msg->dlun = msgd[1] & 3;
     msg->netfn = msgd[1] >> 2;
-    msg->rs_lun = msgd[1] & 3;
-    msg->rq_addr = msgd[3];
+    msg->saddr = msgd[3];
+    msg->slun = msgd[4] & 3;
     msg->rq_seq = msgd[4] >> 2;
-    msg->rq_lun = msgd[4] & 3;
     msg->cmd = msgd[5];
 
     msg->len = len - 6;
@@ -128,11 +128,11 @@ static void
 format_ipmb_rsp(msg_t *msg, unsigned char *msgd,
 		unsigned int *msgd_len, serserv_data_t *mi)
 {
-    msgd[0] = msg->rs_addr;
-    msgd[1] = (msg->netfn << 2) | msg->rs_lun;
+    msgd[0] = msg->daddr;
+    msgd[1] = (msg->netfn << 2) | msg->dlun;
     msgd[2] = -ipmb_checksum(msgd, 2, 0);
-    msgd[3] = msg->rq_addr;
-    msgd[4] = (msg->rq_seq << 2) | msg->rq_lun;
+    msgd[3] = msg->saddr;
+    msgd[4] = (msg->rq_seq << 2) | msg->slun;
     msgd[5] = msg->cmd;
     memcpy(msgd + 6, msg->data, msg->len);
     *msgd_len = msg->len + 6;
@@ -233,12 +233,12 @@ static int ra_unformat_msg(unsigned char *r, unsigned int len,
 	if (rv)
 	    return rv;
     } else {
-	msg.rs_addr = 1;
+	msg.daddr = 1;
+	msg.dlun = 0;
 	msg.netfn = IPMI_APP_NETFN;
-	msg.rs_lun = 0;
-	msg.rq_addr = 1;
+	msg.saddr = 1;
+	msg.slun = 0;
 	msg.rq_seq = 0;
-	msg.rq_lun = 0;
 	msg.cmd = IPMI_SEND_MSG_CMD;
 
 	msg.len = i + 1;
@@ -524,7 +524,7 @@ tm_send(msg_t *msg, serserv_data_t *si)
     c[len] = '[';
     len++;
 
-    t = msg->netfn << 2 | msg->rs_lun;
+    t = msg->netfn << 2 | msg->dlun;
     c[len] = hex2char[t >> 4];
     len++;
     c[len] = hex2char[t & 0xf];
@@ -610,7 +610,7 @@ static int tm_unformat_msg(unsigned char *r, unsigned int len,
 
 	memset(&msg, 0, sizeof(msg));
 	msg.netfn = o[0] >> 2;
-	msg.rq_lun = o[0] & 3;
+	msg.dlun = o[0] & 3;
 	msg.rq_seq = o[1] >> 2;
 	msg.cmd = o[2];
 	msg.data = o + 3;
@@ -778,7 +778,7 @@ vm_handle_msg(unsigned char *imsg, unsigned int len, serserv_data_t *si)
     memset(&msg, 0, sizeof(msg));
     msg.rq_seq = imsg[0];
     msg.netfn = imsg[1] >> 2;
-    msg.rs_lun = imsg[1] & 0x3;
+    msg.dlun = imsg[1] & 0x3;
     msg.cmd = imsg[2];
     msg.len = len - 3;
     msg.data = imsg + 3;
@@ -905,7 +905,7 @@ vm_send(msg_t *imsg, serserv_data_t *si)
     vm_add_char(ch, c, &len);
     csum = ipmb_checksum(&ch, 1, 0);
 
-    ch = (imsg->netfn << 2) | imsg->rs_lun;
+    ch = (imsg->netfn << 2) | imsg->dlun;
     vm_add_char(ch, c, &len);
     csum = ipmb_checksum(&ch, 1, csum);
 
@@ -1175,10 +1175,10 @@ ser_return_rsp(channel_t *chan, msg_t *imsg, rsp_msg_t *rsp)
     msg.cmd = rsp->cmd;
     msg.data = rsp->data;
     msg.len = rsp->data_len;
-    msg.rq_lun = imsg->rs_lun;
-    msg.rq_addr = imsg->rs_addr;
-    msg.rs_lun = imsg->rq_lun;
-    msg.rs_addr = imsg->rq_addr;
+    msg.daddr = imsg->saddr;
+    msg.dlun = imsg->slun;
+    msg.saddr = imsg->daddr;
+    msg.slun = imsg->dlun;
     msg.rq_seq = imsg->rq_seq;
     ser->codec->send(&msg, ser);
 }

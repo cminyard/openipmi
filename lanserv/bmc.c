@@ -423,7 +423,7 @@ ipmb_handle_send_msg(channel_t *chan,
     smsg.src_addr = omsg->src_addr;
     smsg.src_len = omsg->src_len;
     smsg.netfn = data[1] >> 2;
-    smsg.rs_lun = data[1] & 0x3;
+    smsg.dlun = data[1] & 0x3;
     smsg.cmd = data[5];
     smsg.data = data + 6;
     smsg.len = data_len - 7; /* Subtract off the header and
@@ -590,7 +590,7 @@ ipmi_emu_handle_msg(emu_data_t    *emu,
     }
 
     /* Figure out where the message goes. */
-    if (omsg->rq_lun == 2)
+    if (omsg->slun == 2)
 	return handle_lun_2_cmd(emu, mc, omsg, rdata, rdata_len);
 
     deliver_msg_to_mc(mc, omsg, rdata, rdata_len);

@@ -310,11 +310,11 @@ return_rmcpp_rsp(lanserv_data_t *lan, session_t *session, msg_t *msg,
 	pos -= 6;
 	dlen += 6; /* Adding header, increase total length */
 	len += 6;
-	pos[0] = msg->rq_addr;
-	pos[1] = ((msg->netfn | 1) << 2) | msg->rq_lun;
+	pos[0] = msg->saddr;
+	pos[1] = ((msg->netfn | 1) << 2) | msg->slun;
 	pos[2] = -ipmb_checksum(pos, 2, 0);
-	pos[3] = msg->rs_addr;
-	pos[4] = (msg->rq_seq << 2) | msg->rs_lun;
+	pos[3] = msg->daddr;
+	pos[4] = (msg->rq_seq << 2) | msg->dlun;
 	pos[5] = msg->cmd;
 	pos[len] = -ipmb_checksum(pos+3, len-3, 0);
 	len++;
@@ -478,11 +478,11 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
     *pos = len;
     pos++;
 
-    pos[0] = msg->rq_addr;
-    pos[1] = (rsp->netfn << 2) | msg->rq_lun;
+    pos[0] = msg->saddr;
+    pos[1] = (rsp->netfn << 2) | msg->slun;
     pos[2] = -ipmb_checksum(pos, 2, 0);
-    pos[3] = msg->rs_addr;
-    pos[4] = (msg->rq_seq << 2) | msg->rs_lun;
+    pos[3] = msg->daddr;
+    pos[4] = (msg->rq_seq << 2) | msg->dlun;
     pos[5] = rsp->cmd;
 
     csum = ipmb_checksum(pos+3, 3, 0);
@@ -525,12 +525,14 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
     if (!msg)
 	return;
     while (msg) {
-	/* Extract relevant header information and remove the header and
-	   checksum. */
-	msg->rq_addr = msg->data[0];
-	msg->rq_lun = msg->data[1] & 0x3;
-	msg->rs_addr = msg->data[3];
-	msg->rs_lun = msg->data[4] & 0x3;
+	/*
+	 * Extract relevant header information and remove the header and
+	 * checksum.
+	 */
+	msg->saddr = msg->data[0];
+	msg->slun = msg->data[1] & 0x3;
+	msg->daddr = msg->data[3];
+	msg->dlun = msg->data[4] & 0x3;
 	rrsp.netfn = msg->netfn | 1;
 	rrsp.cmd = msg->data[5];
 	rrsp.data = msg->data + 6;
@@ -580,11 +582,11 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
     session = &lan->sessions[handle];
     msg.src_addr = session->src_addr;
     msg.src_len = session->src_len;
-    msg.rs_addr = imsg->data[2];
-    msg.rs_lun = imsg->data[3] & 0x3;
-    msg.rq_addr = imsg->data[5];
+    msg.daddr = imsg->data[2];
+    msg.dlun = imsg->data[3] & 0x3;
+    msg.saddr = imsg->data[5];
+    msg.slun = imsg->data[6] & 0x3;
     msg.rq_seq = imsg->data[6] >> 2;
-    msg.rq_lun = imsg->data[6] & 0x3;
 
     rmsg.cmd = imsg->data[7];
     rmsg.data = imsg->data + 8;
@@ -1968,12 +1970,12 @@ handle_ipmi_payload(lanserv_data_t *lan, msg_t *msg)
     }
     msg->len--; /* Remove the final checksum */
 
-    msg->rs_addr = msg->data[0];
+    msg->daddr = msg->data[0];
+    msg->dlun = msg->data[1] & 0x3;
     msg->netfn = msg->data[1] >> 2;
-    msg->rs_lun = msg->data[1] & 0x3;
-    msg->rq_addr = msg->data[3];
+    msg->saddr = msg->data[3];
+    msg->slun = msg->data[4] & 0x3;
     msg->rq_seq = msg->data[4] >> 2;
-    msg->rq_lun = msg->data[4] & 0x3;
     msg->cmd = msg->data[5];
 
     msg->data += 6;
