@@ -598,13 +598,12 @@ lan_format_lun_2(channel_t *chan, msg_t *qmsg,
 {
     lanserv_data_t *lan = chan->chan_info;
 
-    qmsg->data[0] = 0;
-    qmsg->data[1] = (qmsg->sid >> 1) & MAX_SESSIONS;
-    qmsg->data[2] = 0; /* SWID is not used. */
-    qmsg->data[3] = (qmsg->netfn << 2) | 2;
-    qmsg->data[4] = -ipmb_checksum(qmsg->data, 4, 0);
-    qmsg->data[5] = 0;
-    //qmsg->data[6] = (seq << 2) | 
+    qmsg->data[0] = (qmsg->sid >> 1) & MAX_SESSIONS;
+    qmsg->data[1] = 0; /* SWID is not used. */
+    qmsg->data[2] = (qmsg->netfn << 2) | 2;
+    qmsg->data[3] = -ipmb_checksum(qmsg->data, 4, 0);
+    qmsg->data[4] = 0;
+    //qmsg->data[5] = (seq << 2) | 
 }
 
 static void
@@ -3317,8 +3316,8 @@ ipmi_lan_init(lanserv_data_t *lan)
     for (i=0; i<17; i++)
 	lan->lanparm.cipher_suite_entry[i] = i;
 
-    lan->channel.get_msg_overhead = 8; /* 7 byte header and a end checksum. */
-    lan->channel.get_msg_header_size = 7;
+    lan->channel.get_msg_overhead = 7; /* 6 byte header and a end checksum. */
+    lan->channel.get_msg_header_size = 6;
 
     lan->channel.return_rsp = lan_return_rsp;
     lan->channel.handle_send_msg = lan_handle_send_msg;
