@@ -186,9 +186,9 @@ bfree(sys_data_t *sys, void *data)
 
 typedef struct sim_addr_s
 {
-    struct sockaddr_storage addr;
-    socklen_t       addr_len;
     int             xmit_fd;
+    socklen_t       addr_len;
+    /* struct sockaddr_storage addr; */
 } sim_addr_t;
 
 static int
@@ -230,7 +230,8 @@ lan_send(lanserv_data_t *lan,
 	return;
 
     memset(&msg, 0, sizeof(msg));
-    msg.msg_name = &(l->addr);
+    /* Address is after the sim_addr_t struct. */
+    msg.msg_name = ((uint8_t *) l) + sizeof(l);
     msg.msg_namelen = l->addr_len;
     msg.msg_iov = data;
     msg.msg_iovlen = vecs;
@@ -244,15 +245,15 @@ lan_send(lanserv_data_t *lan,
 static void
 lan_data_ready(int lan_fd, void *cb_data, os_hnd_fd_id_t *id)
 {
-    lanserv_data_t    *lan = cb_data;
-    int           len;
-    sim_addr_t    l;
-    unsigned char msgd[256];
+    lanserv_data_t *lan = cb_data;
+    int len;
+    uint8_t addrdata[sizeof(sim_addr_t) + sizeof(struct sockaddr_storage)];
+    sim_addr_t *l = (sim_addr_t *) addrdata;
+    uint8_t msgd[256];
+    struct sockaddr *addr = (struct sockaddr *) (((char *) l) + sizeof(*l));
 
-    l.addr_len = sizeof(l.addr);
-    memset(&l.addr, 0, l.addr_len);
-    len = recvfrom(lan_fd, msgd, sizeof(msgd), 0,
-		   (struct sockaddr *) &(l.addr), &(l.addr_len));
+    l->addr_len = sizeof(struct sockaddr_storage);
+    len = recvfrom(lan_fd, msgd, sizeof(msgd), 0, addr, &l->addr_len);
     if (len < 0) {
 	if (errno != EINTR) {
 	    perror("Error receiving message");
@@ -260,10 +261,10 @@ lan_data_ready(int lan_fd, void *cb_data, os_hnd_fd_id_t *id)
 	}
 	goto out;
     }
-    l.xmit_fd = lan_fd;
+    l->xmit_fd = lan_fd;
 
     if (lan->sysinfo->debug & DEBUG_RAW_MSG) {
-	debug_log_raw_msg(lan->sysinfo, (void *) &l.addr, l.addr_len,
+	debug_log_raw_msg(lan->sysinfo, (uint8_t *) addr, l->addr_len,
 			  "Raw LAN receive from:");
 	debug_log_raw_msg(lan->sysinfo, msgd, len,
 			  " Receive message:");
@@ -278,11 +279,11 @@ lan_data_ready(int lan_fd, void *cb_data, os_hnd_fd_id_t *id)
     /* Check the message class. */
     switch (msgd[3]) {
 	case 6:
-	    handle_asf(lan, msgd, len, &l, sizeof(l));
+	    handle_asf(lan, msgd, len, l, sizeof(*l) + l->addr_len);
 	    break;
 
 	case 7:
-	    ipmi_handle_lan_msg(lan, msgd, len, &l, sizeof(l));
+	    ipmi_handle_lan_msg(lan, msgd, len, l, sizeof(*l) + l->addr_len);
 	    break;
     }
  out:
