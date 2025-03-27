@@ -967,6 +967,18 @@ handle_clear_msg_flags(lmc_data_t    *mc,
 #define IPMI_SEND_MSG_SEND_RAW 0x2
 #define IPMI_SEND_MSG_GET_TRACKING(v) ((v >> 6) & 0x3)
 
+static int send_msg_fixup(void *cb_data, channel_t *chan,
+			  msg_t *msg,
+			  unsigned char *rdata,
+			  unsigned int *rdata_len)
+{
+    if (chan->session_support != IPMI_CHANNEL_SESSION_LESS &&
+		msg->netfn & 1)
+	/* Now restore the sequence number. */
+	return find_mc_seq(chan->mc, msg, rdata, rdata_len);
+    return 0;
+}
+
 static void
 handle_send_msg(lmc_data_t    *mc,
 		msg_t         *msg,
@@ -1020,7 +1032,7 @@ handle_send_msg(lmc_data_t    *mc,
 	return;
     }
 
-    chan->handle_send_msg(chan, msg, rdata, rdata_len);
+    chan->handle_send_msg(chan, msg, send_msg_fixup, NULL, rdata, rdata_len);
 }
 
 static void

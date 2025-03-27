@@ -272,6 +272,10 @@ typedef struct oem_handlers_s
 			       unsigned char cmd);
 } oem_handlers_t;
 
+typedef int (*send_msg_handle_msg_fixup)(void *cb_data, channel_t *chan,
+					 msg_t *msg,
+					 unsigned char *rdata,
+					 unsigned int *rdata_len);
 #define IPMI_MAX_CHANNELS 16
 #define NUM_PRIV_LEVEL 4
 struct channel_s
@@ -332,6 +336,7 @@ struct channel_s
 
     /* A send message to this channel will call this. */
     void (*handle_send_msg)(channel_t *chan, msg_t *msg,
+			    send_msg_handle_msg_fixup fixup, void *fixup_data,
 			    unsigned char *rdata, unsigned int *rdata_len);
 
     /*

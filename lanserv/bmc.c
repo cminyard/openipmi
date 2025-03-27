@@ -359,6 +359,7 @@ deliver_msg_to_mc(lmc_data_t *mc, msg_t *msg,
 static void
 ipmb_handle_send_msg(channel_t *chan,
 		     msg_t *omsg,
+		     send_msg_handle_msg_fixup fixup, void *fixup_data,
 		     unsigned char *ordata,
 		     unsigned int *ordata_len)
 {
@@ -432,6 +433,9 @@ ipmb_handle_send_msg(channel_t *chan,
     if (omsg->track && reserve_mc_seq(ochan->mc, &smsg, rdata, rdata_len))
 	return;
 
+    if (fixup(fixup_data, chan, &smsg, rdata, rdata_len))
+	return;
+
     if (mc->emu->sysinfo->debug & DEBUG_MSG)
 	chan->log(chan, DEBUG, &smsg, "IPMB deliver to MC:");
 
@@ -489,6 +493,8 @@ handle_lun_2_cmd(emu_data_t    *emu,
 {
     channel_t *ochan = omsg->orig_channel;
     msg_t *qmsg;
+    unsigned char tmp_rdata[1];
+    unsigned int  tmp_rdata_len = 1;
 
     if (!mc->channels[15]) {
 	rdata[0] = 0xff;
@@ -518,7 +524,15 @@ handle_lun_2_cmd(emu_data_t    *emu,
     qmsg->orig_channel = ochan;
     qmsg->channel = ochan->channel_num;
 
+    if (ochan->session_support != IPMI_CHANNEL_SESSION_LESS)
+	qmsg->track = 1;
+
+    if (qmsg->track && reserve_mc_seq(ochan->mc, qmsg, rdata, rdata_len))
+	return 1;
+
     if (ochan->format_lun_2(ochan, qmsg, rdata, rdata_len)) {
+	if (qmsg->track)
+	    find_mc_seq(ochan->mc, qmsg, tmp_rdata, &tmp_rdata_len);
 	free(qmsg);
 	return 1;
     }
