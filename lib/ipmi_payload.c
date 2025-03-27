@@ -139,7 +139,7 @@ ipmi_format_msg(ipmi_con_t        *ipmi,
 	tmsg[pos++] = ipmb_checksum(tmsg+msgstart, 2);
 	msgstart = pos;
 	tmsg[pos++] = ipmi->ipmb_addr[ipmb_addr->channel];
-	tmsg[pos++] = (seq << 2) | 2; /* add 2 as the SMS LUN */
+	tmsg[pos++] = seq << 2;
 	tmsg[pos++] = msg->cmd;
 	memcpy(tmsg+pos, msg->data, msg->data_len);
 	pos += msg->data_len;
