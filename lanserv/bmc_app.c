@@ -995,6 +995,7 @@ handle_send_msg(lmc_data_t    *mc,
 	    *rdata_len = 1;
 	    return;
 	}
+	msg->track = 0;
 	break;
     case IPMI_SEND_MSG_TRACK_REQUEST:
 	if (ochan->session_support == IPMI_CHANNEL_SESSION_LESS) {
@@ -1003,6 +1004,7 @@ handle_send_msg(lmc_data_t    *mc,
 	    *rdata_len = 1;
 	    return;
 	}
+	msg->track = 1;
 	break;
     default:
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
@@ -1064,7 +1066,7 @@ handle_get_msg(lmc_data_t    *mc,
      * Note that we chop off the first byte because the destination
      * address is not in the get message response.
      */
-    memcpy(rdata + 2, qmsg->data + 1, qmsg->len + 1);
+    memcpy(rdata + 2, qmsg->data + 1, qmsg->len - 1);
     *rdata_len = qmsg->len - 1 + 2;
     free(qmsg);
 }

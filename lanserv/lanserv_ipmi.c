@@ -266,12 +266,12 @@ raw_send(lanserv_data_t *lan,
 	pos = sprintf(str, format);
 #undef format
 	str[pos++] = '\n';
-	str[pos++] = '\0';
 	for (i = 0; i < vecs; i++) {
 	    for (j = 0; j < vec[i].iov_len; j++)
 		pos += sprintf(str + pos, " %2.2x",
 			       ((unsigned char *) vec[i].iov_base)[j]);
 	}
+	str[pos++] = '\0';
 
 	lan->sysinfo->log(lan->sysinfo, DEBUG, NULL, "%s", str);
 	free(str);
@@ -522,8 +522,6 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
     return_rsp(lan, msg, NULL, rsp);
 
     msg = lan->sysinfo->mc_get_next_recv_q(chan);
-    if (!msg)
-	return;
     while (msg) {
 	/*
 	 * Extract relevant header information and remove the header and
@@ -544,8 +542,6 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
 	msg = lan->sysinfo->mc_get_next_recv_q(chan);
     }
-    if (chan->recv_in_q)
-	chan->recv_in_q(chan, 0);
 }
 
 static void
@@ -577,9 +573,10 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
     if (handle > MAX_SESSIONS + 1 || !lan->sessions[handle].active) {
 	rdata[0] = IPMI_NOT_PRESENT_CC;
 	*rdata_len = 1;
+	return;
     }
-
     session = &lan->sessions[handle];
+
     msg.src_addr = session->src_addr;
     msg.src_len = session->src_len;
     msg.daddr = imsg->data[2];
@@ -599,15 +596,15 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
 }
 
 static int
-lan_format_lun_2(channel_t *chan, msg_t *omsg, msg_t *qmsg,
+lan_format_lun_2(channel_t *chan, msg_t *qmsg,
 		 unsigned char *rdata, unsigned int *rdata_len)
 {
     lanserv_data_t *lan = chan->chan_info;
 
     qmsg->data[0] = 0;
-    qmsg->data[1] = (omsg->sid >> 1) & MAX_SESSIONS;
+    qmsg->data[1] = (qmsg->sid >> 1) & MAX_SESSIONS;
     qmsg->data[2] = 0; /* SWID is not used. */
-    qmsg->data[3] = (omsg->netfn << 2) | 2;
+    qmsg->data[3] = (qmsg->netfn << 2) | 2;
     qmsg->data[4] = -ipmb_checksum(qmsg->data, 4, 0);
     qmsg->data[5] = 0;
     //qmsg->data[6] = (seq << 2) | 
@@ -3322,6 +3319,9 @@ ipmi_lan_init(lanserv_data_t *lan)
     lan->lanparm.num_cipher_suites = 15;
     for (i=0; i<17; i++)
 	lan->lanparm.cipher_suite_entry[i] = i;
+
+    lan->channel.get_msg_overhead = 8; /* 7 byte header and a end checksum. */
+    lan->channel.get_msg_header_size = 7;
 
     lan->channel.return_rsp = lan_return_rsp;
     lan->channel.handle_send_msg = lan_handle_send_msg;

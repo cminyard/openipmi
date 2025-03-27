@@ -199,6 +199,13 @@ typedef struct led_data_s
     unsigned char def_override_color;
 } led_data_t;
 
+struct seq_entry {
+    uint8_t inuse;
+    uint8_t chan_num;
+    uint8_t orig_seq;
+    uint32_t sid;
+};
+
 struct lmc_data_s
 {
     emu_data_t *emu;
@@ -212,6 +219,9 @@ struct lmc_data_s
     unsigned char guid[16];
 
     channel_t *channels[IPMI_MAX_CHANNELS];
+
+    struct seq_entry seq_entries[64];
+    unsigned int next_seq;
 
     channel_t sys_channel;
     channel_t ipmb_channel;
@@ -429,5 +439,12 @@ extern cmd_handler_f oem0_netfn_handlers[256];
 
 int ipmi_mc_is_power_on(lmc_data_t *mc);
 
+int reserve_mc_seq(lmc_data_t *mc, msg_t *msg, 
+		   unsigned char *rdata,
+		   unsigned int  *rdata_len);
+
+int find_mc_seq(lmc_data_t *mc, msg_t *msg,
+		unsigned char *rdata,
+		unsigned int  *rdata_len);
 
 #endif /* __BMC_H_ */

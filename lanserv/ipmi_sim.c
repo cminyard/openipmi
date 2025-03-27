@@ -250,6 +250,7 @@ lan_data_ready(int lan_fd, void *cb_data, os_hnd_fd_id_t *id)
     unsigned char msgd[256];
 
     l.addr_len = sizeof(l.addr);
+    memset(&l.addr, 0, l.addr_len);
     len = recvfrom(lan_fd, msgd, sizeof(msgd), 0,
 		   (struct sockaddr *) &(l.addr), &(l.addr_len));
     if (len < 0) {
@@ -747,8 +748,8 @@ isim_log(sys_data_t *sys, int logtype, msg_t *msg, const char *format,
 	int pos;
 	unsigned int i;
 
-#define mformat " channel=%d netfn=0x%x cmd=0x%x rs_addr=0x%x rs_lun=0x%x" \
-	    " rq_addr=0x%x\n rq_lun=0x%x rq_seq=0x%x\n"
+#define mformat " channel=%d netfn=0x%x cmd=0x%x daddr=0x%x dlun=0x%x" \
+	    " saddr=0x%x\n slun=0x%x rq_seq=0x%x\n"
 
 	len += snprintf(&dummy, 0, mformat, msg->channel, msg->netfn,
 			msg->cmd, msg->daddr, msg->dlun, msg->saddr,
@@ -761,7 +762,7 @@ isim_log(sys_data_t *sys, int logtype, msg_t *msg, const char *format,
 	str[pos++] = '\n';
 	pos += sprintf(str + pos, mformat, msg->channel, msg->netfn, msg->cmd,
 		       msg->daddr, msg->dlun, msg->saddr, msg->slun,
-		       msg->seq);
+		       msg->rq_seq);
 #undef mformat
 	for (i = 0; i < msg->len; i++)
 	    pos += sprintf(str + pos, " %2.2x", msg->data[i]);
