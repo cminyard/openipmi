@@ -440,11 +440,14 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
     uint8_t      *pos;
     int          len;
     int          rv;
-    void *src_addr;
-    unsigned int src_len;
 
     if (!session)
 	session = sid_to_session(lan, msg->sid);
+
+    if (session && !msg->src_addr) {
+	msg->src_addr = session->src_addr;
+	msg->src_len = session->src_len;
+    }
 
     if (session && session->authtype == IPMI_AUTHTYPE_RMCP_PLUS) {
 	return_rmcpp_rsp(lan, session, msg, msg->rmcpp.payload,
@@ -461,13 +464,6 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
 
     if (!session)
 	return;
-
-    src_addr = msg->src_addr;
-    src_len = msg->src_len;
-    if (!src_addr) {
-	src_addr = session->src_addr;
-	src_len = session->src_len;
-    }
 
     data[0] = 6; /* RMCP version. */
     data[1] = 0;
@@ -519,7 +515,7 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
     vec[2].iov_base = &csum;
     vec[2].iov_len = 1;
 
-    raw_send(lan, vec, 3, src_addr, src_len);
+    raw_send(lan, vec, 3, msg->src_addr, msg->src_len);
 }
 
 static void
