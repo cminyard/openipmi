@@ -1066,8 +1066,8 @@ handle_get_msg(lmc_data_t    *mc,
      * Note that we chop off the first byte because the destination
      * address is not in the get message response.
      */
-    memcpy(rdata + 2, qmsg->data + 1, qmsg->len - 1);
-    *rdata_len = qmsg->len - 1 + 2;
+    memcpy(rdata + 2, qmsg->data, qmsg->len);
+    *rdata_len = qmsg->len + 2;
     free(qmsg);
 }
 

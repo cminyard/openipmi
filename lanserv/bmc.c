@@ -468,12 +468,11 @@ static int
 ipmb_format_lun_2(channel_t *chan, msg_t *qmsg,
 		  unsigned char *rdata, unsigned int *rdata_len)
 {
-    qmsg->data[0] = chan->mc->ipmb;
-    qmsg->data[1] = (qmsg->netfn << 2) | qmsg->dlun;
-    qmsg->data[2] = -ipmb_checksum(qmsg->data, 1, 0);
-    qmsg->data[3] = qmsg->saddr;
-    qmsg->data[4] = (qmsg->rq_seq << 2) | qmsg->slun;
-    qmsg->data[5] = qmsg->cmd;
+    qmsg->data[0] = (qmsg->netfn << 2) | qmsg->dlun;
+    qmsg->data[1] = -ipmb_checksum(qmsg->data, 1, 0);
+    qmsg->data[2] = qmsg->saddr;
+    qmsg->data[3] = (qmsg->rq_seq << 2) | qmsg->slun;
+    qmsg->data[4] = qmsg->cmd;
     qmsg->data[qmsg->len - 1] = -ipmb_checksum(qmsg->data, qmsg->len - 2, 0);
     return 0;
 }
@@ -1037,8 +1036,8 @@ is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
     mc->ipmb_channel.active_sessions = 0;
     mc->ipmb_channel.chan_info = mc;
     mc->ipmb_channel.prim_ipmb_in_cfg_file = 0;
-    mc->ipmb_channel.get_msg_overhead = 7;/* 6 byte header and a end checksum. */
-    mc->ipmb_channel.get_msg_header_size = 6;
+    mc->ipmb_channel.get_msg_overhead = 6;/* 5 byte header and a end checksum. */
+    mc->ipmb_channel.get_msg_header_size = 5;
     mc->ipmb_channel.handle_send_msg = ipmb_handle_send_msg;
     mc->ipmb_channel.format_lun_2 = ipmb_format_lun_2;
     mc->channels[0] = &mc->ipmb_channel;
