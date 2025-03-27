@@ -440,6 +440,8 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
     uint8_t      *pos;
     int          len;
     int          rv;
+    void *src_addr;
+    unsigned int src_len;
 
     if (!session)
 	session = sid_to_session(lan, msg->sid);
@@ -459,6 +461,13 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
 
     if (!session)
 	return;
+
+    src_addr = msg->src_addr;
+    src_len = msg->src_len;
+    if (!src_addr) {
+	src_addr = session->src_addr;
+	src_len = session->src_len;
+    }
 
     data[0] = 6; /* RMCP version. */
     data[1] = 0;
@@ -510,7 +519,7 @@ return_rsp(lanserv_data_t *lan, msg_t *msg, session_t *session, rsp_msg_t *rsp)
     vec[2].iov_base = &csum;
     vec[2].iov_len = 1;
 
-    raw_send(lan, vec, 3, msg->src_addr, msg->src_len);
+    raw_send(lan, vec, 3, src_addr, src_len);
 }
 
 static void
@@ -523,18 +532,10 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
     msg = lan->sysinfo->mc_get_next_recv_q(chan);
     while (msg) {
-	/*
-	 * Extract relevant header information and remove the header and
-	 * checksum.
-	 */
-	msg->saddr = msg->data[0];
-	msg->slun = msg->data[1] & 0x3;
-	msg->daddr = msg->data[3];
-	msg->dlun = msg->data[4] & 0x3;
-	rrsp.netfn = msg->netfn | 1;
-	rrsp.cmd = msg->data[5];
-	rrsp.data = msg->data + 6;
-	rrsp.data_len = msg->len - 7;
+	rrsp.netfn = msg->netfn;
+	rrsp.cmd = msg->cmd;
+	rrsp.data = msg->data;
+	rrsp.data_len = msg->len;
 
 	return_rsp(lan, msg, NULL, &rrsp);
 
