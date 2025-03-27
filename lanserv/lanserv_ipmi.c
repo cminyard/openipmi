@@ -554,8 +554,6 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
     memset(&msg, 0, sizeof(msg));
     memset(&rmsg, 0, sizeof(rmsg));
 
-    /* First byte of the message is the channel number field. */
-
     if (check_msg_length(imsg, 9, rdata, rdata_len))
 	return;
 
@@ -565,6 +563,8 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
 	if (check_msg_length(imsg, 10, rdata, rdata_len))
 	    return;
     }
+
+    /* First byte of the message is the channel handle field. */
 
     handle = imsg->data[1];
     if (handle > MAX_SESSIONS + 1 || !lan->sessions[handle].active) {

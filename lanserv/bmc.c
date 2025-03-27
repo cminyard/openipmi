@@ -468,11 +468,12 @@ static int
 ipmb_format_lun_2(channel_t *chan, msg_t *qmsg,
 		  unsigned char *rdata, unsigned int *rdata_len)
 {
-    qmsg->data[0] = (qmsg->netfn << 2) | qmsg->dlun;
-    qmsg->data[1] = -ipmb_checksum(qmsg->data, 1, 0);
-    qmsg->data[2] = qmsg->saddr;
-    qmsg->data[3] = (qmsg->rq_seq << 2) | qmsg->slun;
-    qmsg->data[4] = qmsg->cmd;
+    qmsg->data[0] = chan->mc->ipmb;
+    qmsg->data[1] = (qmsg->netfn << 2) | qmsg->dlun;
+    qmsg->data[2] = -ipmb_checksum(qmsg->data, 1, 0);
+    qmsg->data[3] = qmsg->saddr;
+    qmsg->data[4] = (qmsg->rq_seq << 2) | qmsg->slun;
+    qmsg->data[5] = qmsg->cmd;
     qmsg->data[qmsg->len - 1] = -ipmb_checksum(qmsg->data, qmsg->len - 2, 0);
     return 0;
 }
