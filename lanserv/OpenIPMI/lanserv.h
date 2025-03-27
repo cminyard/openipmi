@@ -305,6 +305,10 @@ struct channel_s
 
     unsigned int channel_num;
 
+    /* header/trailer size for a get message command. */
+    unsigned int get_msg_overhead;
+    unsigned int get_msg_header_size;
+
     int has_recv_q;
     msg_t *recv_q_head;
     msg_t *recv_q_tail;
@@ -338,7 +342,7 @@ struct channel_s
      * returns 0, that means success and rdata is not used.  If this
      * returns 1, that means error and rdata will be set to an error.
      */
-    int (*format_lun_2)(channel_t *chan, msg_t *omsg, msg_t *qmsg,
+    int (*format_lun_2)(channel_t *chan, msg_t *qmsg,
 			unsigned char *rdata, unsigned int *rdata_len);
 
     /* Set or clear the attn flag.  If irq is set, set/clear the irq. */

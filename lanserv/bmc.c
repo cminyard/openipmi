@@ -366,11 +366,12 @@ ipmb_handle_send_msg(channel_t *chan,
     emu_data_t *emu = mc->emu;
     channel_t *ochan = omsg->orig_channel;
     unsigned int  data_len;
-    msg_t smsg, *qmsg = NULL;
+    msg_t smsg, qmsg;
+    uint8_t qmsg_data[IPMI_SIM_MAX_MSG_LENGTH];
     unsigned char slave;
     unsigned char *data = NULL;
-    unsigned char *rdata;
-    unsigned int  *rdata_len;
+    unsigned char *rdata, tmp_rdata[1];
+    unsigned int  *rdata_len, tmp_rdata_len = 1;
 
     if (check_msg_length(omsg, 8, ordata, ordata_len))
 	return;
@@ -396,34 +397,29 @@ ipmb_handle_send_msg(channel_t *chan,
 	return;
     }
 
-    qmsg = malloc(sizeof(*qmsg) + IPMI_SIM_MAX_MSG_LENGTH);
-    if (!qmsg) {
-	ordata[0] = IPMI_OUT_OF_SPACE_CC;
+    smsg.netfn = data[1] >> 2;
+    if (smsg.netfn & 1) {
+	/* FIXME - It's a response, deliver it differently. */
+	ordata[0] = 0xff;
 	*ordata_len = 1;
 	return;
     }
 
-    *qmsg = *omsg;
+    /* Set up a response message. */
+    memset(&qmsg, 0, sizeof(qmsg));
+    qmsg.data = qmsg_data;
+    qmsg.len = IPMI_SIM_MAX_MSG_LENGTH;
+    rdata = qmsg.data;
+    rdata_len = &qmsg.len;
 
-    qmsg->data = ((unsigned char *) qmsg) + sizeof(*qmsg);
-    qmsg->len = IPMI_SIM_MAX_MSG_LENGTH - 7; /* header and checksum */
-    qmsg->netfn = (data[1] & 0xfc) >> 2;
-    qmsg->cmd = data[5];
-    qmsg->channel = chan->channel_num;
-    rdata = qmsg->data + 6;
-    rdata_len = &qmsg->len;
-    /* FIXME - qmsg->data[0] is not used, get rid of it for consistency. */
-    qmsg->data[0] = emu->sysinfo->bmc_ipmb;
-    qmsg->data[1] = ((data[1] & 0xfc) | 0x4) | (data[4] & 0x3);
-    qmsg->data[2] = -ipmb_checksum(rdata+1, 2, 0);
-    qmsg->data[3] = data[0];
-    qmsg->data[4] = (data[4] & 0xfc) | (data[1] & 0x03);
-    qmsg->data[5] = data[5];
-
+    /* Now create a message to deliver to the MC for handling. */
     smsg.src_addr = omsg->src_addr;
     smsg.src_len = omsg->src_len;
-    smsg.netfn = data[1] >> 2;
+    smsg.daddr = data[0];
     smsg.dlun = data[1] & 0x3;
+    smsg.saddr = data[3];
+    smsg.slun = data[4] & 0x3;
+    smsg.rq_seq = data[4] >> 2;
     smsg.cmd = data[5];
     smsg.data = data + 6;
     smsg.len = data_len - 7; /* Subtract off the header and
@@ -431,6 +427,13 @@ ipmb_handle_send_msg(channel_t *chan,
     smsg.channel = omsg->channel;
     smsg.orig_channel = omsg->orig_channel;
     smsg.sid = omsg->sid;
+
+    /* Set up tracking, replace the sequence number and track. */
+    if (omsg->track && reserve_mc_seq(ochan->mc, &smsg, rdata, rdata_len))
+	return;
+
+    if (mc->emu->sysinfo->debug & DEBUG_MSG)
+	chan->log(chan, DEBUG, &smsg, "IPMB deliver to MC:");
 
     deliver_msg_to_mc(mc, &smsg, rdata, rdata_len);
 
@@ -441,22 +444,37 @@ ipmb_handle_send_msg(channel_t *chan,
     ordata[0] = 0;
     *ordata_len = 1;
 
+    /* Now set up the response message as if we received it from IPMB. */
+    qmsg.channel = chan->channel_num;
+    qmsg.orig_channel = chan;
+    qmsg.netfn = smsg.netfn | 1;
+    qmsg.cmd = smsg.cmd;
+    qmsg.daddr = smsg.saddr;
+    qmsg.dlun = smsg.slun;
+    qmsg.saddr = smsg.daddr;
+    qmsg.slun = smsg.dlun;
+    qmsg.rq_seq = smsg.rq_seq;
+
     if (ochan->recv_in_q) {
-	if (ochan->recv_in_q(ochan, qmsg))
+	if (ochan->recv_in_q(ochan, &qmsg))
 	    return;
     }
 
-    qmsg->len += 6;
-    qmsg->data[qmsg->len] = -ipmb_checksum(qmsg->data, qmsg->len, 0);
-    qmsg->len += 1;
-
-    enqueue_recv_msg(ochan, mc, qmsg);
+    /* Act as though we received a message over IPMB. */
+    ipmi_emu_handle_msg(mc->emu, chan->mc, &qmsg, tmp_rdata, &tmp_rdata_len);
 }
 
 static int
-ipmb_format_lun_2(channel_t *chan, msg_t *omsg, msg_t *qmsg,
+ipmb_format_lun_2(channel_t *chan, msg_t *qmsg,
 		  unsigned char *rdata, unsigned int *rdata_len)
 {
+    qmsg->data[0] = (qmsg->netfn << 2) | qmsg->dlun;
+    qmsg->data[1] = -ipmb_checksum(qmsg->data, 1, 0);
+    qmsg->data[2] = qmsg->saddr;
+    qmsg->data[3] = (qmsg->rq_seq << 2) | qmsg->slun;
+    qmsg->data[4] = qmsg->cmd;
+    qmsg->data[qmsg->len - 1] = -ipmb_checksum(qmsg->data, qmsg->len - 2, 0);
+    return 0;
 }
 
 /*
@@ -466,40 +484,41 @@ static int
 handle_lun_2_cmd(emu_data_t    *emu,
 		 lmc_data_t    *mc,
 		 msg_t         *omsg,
-		 unsigned char *ordata,
-		 unsigned int  *ordata_len)
+		 unsigned char *rdata,
+		 unsigned int  *rdata_len)
 {
     channel_t *ochan = omsg->orig_channel;
     msg_t *qmsg;
 
     if (!mc->channels[15]) {
-	ordata[0] = 0xff;
-	*ordata_len = 1;
+	rdata[0] = 0xff;
+	*rdata_len = 1;
 	return 1;
     }
 
     if (!ochan->format_lun_2) {
-	ordata[0] = IPMI_INVALID_DATA_FIELD_CC;
-	*ordata_len = 1;
+	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+	*rdata_len = 1;
 	return 1;
     }
 
-    qmsg = malloc(sizeof(*qmsg) + IPMI_SIM_MAX_MSG_LENGTH);
+    qmsg = malloc(sizeof(*qmsg) + omsg->len + ochan->get_msg_overhead);
     if (!qmsg) {
-	ordata[0] = IPMI_OUT_OF_SPACE_CC;
-	*ordata_len = 1;
+	rdata[0] = IPMI_OUT_OF_SPACE_CC;
+	*rdata_len = 1;
 	return 1;
     }
+    memset(qmsg, 0, sizeof(*qmsg));
 
     *qmsg = *omsg;
 
     qmsg->data = ((unsigned char *) qmsg) + sizeof(*qmsg);
-    qmsg->len = IPMI_SIM_MAX_MSG_LENGTH;
+    qmsg->len = omsg->len + ochan->get_msg_overhead;
+    memcpy(qmsg->data + ochan->get_msg_header_size, omsg->data, omsg->len);
     qmsg->orig_channel = ochan;
     qmsg->channel = ochan->channel_num;
-    
 
-    if (ochan->format_lun_2(ochan, omsg, qmsg, ordata, ordata_len)) {
+    if (ochan->format_lun_2(ochan, qmsg, rdata, rdata_len)) {
 	free(qmsg);
 	return 1;
     }
@@ -507,6 +526,85 @@ handle_lun_2_cmd(emu_data_t    *emu,
     enqueue_recv_msg(mc->channels[15], mc, qmsg);
 
     return 0; /* Don't return a response. */
+}
+
+int
+reserve_mc_seq(lmc_data_t *mc, msg_t *msg, 
+	       unsigned char *rdata,
+	       unsigned int  *rdata_len)
+{
+    unsigned int i, j;
+
+    for (i = 0, j = mc->next_seq; i < 64; i++) {
+	if (!mc->seq_entries[j].inuse) {
+	    struct seq_entry *e = &mc->seq_entries[j];
+
+	    e->inuse = 1;
+	    e->orig_seq = msg->rq_seq;
+	    e->chan_num = msg->channel;
+	    e->sid = msg->sid;
+	    msg->rq_seq = j;
+	    mc->next_seq = (j + 1) % 64;
+	    return 0;
+	}
+	j = (j + 1) % 64;
+    }
+    *rdata = IPMI_OUT_OF_SPACE_CC;
+    *rdata_len = 1;
+    return 1;
+}
+
+int
+find_mc_seq(lmc_data_t *mc, msg_t *msg,
+	    unsigned char *rdata,
+	    unsigned int  *rdata_len)
+{
+    struct seq_entry *e = &mc->seq_entries[msg->rq_seq];
+
+    if (!e->inuse) {
+	rdata[0] = IPMI_NOT_PRESENT_CC;
+	*rdata_len = 1;
+	return 1;
+    }
+    msg->channel = e->chan_num;
+    msg->rq_seq = e->orig_seq;
+    msg->orig_channel = mc->channels[msg->channel];
+    msg->sid = e->sid;
+    e->inuse = 0;
+    return 0;
+}
+
+int
+handle_response(emu_data_t    *emu,
+		lmc_data_t    *mc,
+		msg_t         *msg,
+		unsigned char *rdata,
+		unsigned int  *rdata_len)
+{
+    msg_t *qmsg;
+
+    qmsg = malloc(sizeof(*qmsg) + msg->len);
+    if (!qmsg) {
+	rdata[0] = IPMI_OUT_OF_SPACE_CC;
+	*rdata_len = 1;
+	return 1;
+    }
+    memset(qmsg, 0, sizeof(*qmsg));
+
+    *qmsg = *msg;
+
+    qmsg->data = ((unsigned char *) qmsg) + sizeof(*qmsg);
+    qmsg->len = msg->len;
+    memcpy(qmsg->data, msg->data, msg->len);
+
+    if (find_mc_seq(mc, qmsg, rdata, rdata_len)) {
+	free(qmsg);
+	return 1;
+    }
+
+    enqueue_recv_msg(qmsg->orig_channel, mc, qmsg);
+
+    return 0;
 }
 
 /*
@@ -590,10 +688,13 @@ ipmi_emu_handle_msg(emu_data_t    *emu,
     }
 
     /* Figure out where the message goes. */
-    if (omsg->slun == 2)
+    if (omsg->dlun == 2)
 	return handle_lun_2_cmd(emu, mc, omsg, rdata, rdata_len);
 
-    deliver_msg_to_mc(mc, omsg, rdata, rdata_len);
+    if (omsg->netfn & 1)
+	handle_response(emu, mc, omsg, rdata, rdata_len);
+    else
+	deliver_msg_to_mc(mc, omsg, rdata, rdata_len);
 
     return 1; /* Return a response. */
 }
@@ -935,6 +1036,8 @@ is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
     mc->ipmb_channel.active_sessions = 0;
     mc->ipmb_channel.chan_info = mc;
     mc->ipmb_channel.prim_ipmb_in_cfg_file = 0;
+    mc->ipmb_channel.get_msg_overhead = 7;/* 6 byte header and a end checksum. */
+    mc->ipmb_channel.get_msg_header_size = 6;
     mc->ipmb_channel.handle_send_msg = ipmb_handle_send_msg;
     mc->ipmb_channel.format_lun_2 = ipmb_format_lun_2;
     mc->channels[0] = &mc->ipmb_channel;
