@@ -543,6 +543,7 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
 static void
 lan_handle_send_msg(channel_t *chan, msg_t *imsg,
+		    send_msg_handle_msg_fixup fixup, void *fixup_data,
 		    unsigned char *rdata, unsigned int *rdata_len)
 {
     lanserv_data_t *lan = chan->chan_info;
@@ -557,8 +558,8 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
     if (check_msg_length(imsg, 9, rdata, rdata_len))
 	return;
 
-    rmsg.netfn = imsg->data[3] >> 2;
-    if (rmsg.netfn & 1) {
+    msg.netfn = imsg->data[3] >> 2;
+    if (msg.netfn & 1) {
 	/* It's a response, check that it has the completion code. */
 	if (check_msg_length(imsg, 10, rdata, rdata_len))
 	    return;
@@ -574,14 +575,17 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
     }
     session = &lan->sessions[handle];
 
-    msg.src_addr = session->src_addr;
-    msg.src_len = session->src_len;
-    msg.daddr = imsg->data[2];
-    msg.dlun = imsg->data[3] & 0x3;
-    msg.saddr = imsg->data[5];
-    msg.slun = imsg->data[6] & 0x3;
+    /* Set this up like it was the received command, return_rsp will swap it. */
+    msg.saddr = imsg->data[2];
+    msg.slun = imsg->data[3] & 0x3;
+    msg.daddr = imsg->data[5];
+    msg.dlun = imsg->data[6] & 0x3;
     msg.rq_seq = imsg->data[6] >> 2;
 
+    if (fixup(fixup_data, chan, &msg, rdata, rdata_len))
+	return;
+
+    rmsg.netfn = msg.netfn;
     rmsg.cmd = imsg->data[7];
     rmsg.data = imsg->data + 8;
     rmsg.data_len = imsg->len - 9;
@@ -596,14 +600,15 @@ static int
 lan_format_lun_2(channel_t *chan, msg_t *qmsg,
 		 unsigned char *rdata, unsigned int *rdata_len)
 {
-    lanserv_data_t *lan = chan->chan_info;
-
-    qmsg->data[0] = (qmsg->sid >> 1) & MAX_SESSIONS;
-    qmsg->data[1] = 0; /* SWID is not used. */
-    qmsg->data[2] = (qmsg->netfn << 2) | 2;
-    qmsg->data[3] = -ipmb_checksum(qmsg->data, 4, 0);
-    qmsg->data[4] = 0;
-    //qmsg->data[5] = (seq << 2) | 
+    qmsg->data[0] = (qmsg->sid >> 1) & MAX_SESSIONS; /* Extract handle. */
+    qmsg->data[1] = qmsg->daddr;
+    qmsg->data[2] = (qmsg->netfn << 2) | qmsg->dlun;
+    qmsg->data[3] = -ipmb_checksum(qmsg->data, 3, 0);
+    qmsg->data[4] = qmsg->saddr;
+    qmsg->data[5] = (qmsg->rq_seq << 2) | qmsg->slun;
+    qmsg->data[6] = qmsg->cmd;
+    qmsg->data[qmsg->len - 1] = -ipmb_checksum(qmsg->data, qmsg->len - 2, 0);
+    return 0;
 }
 
 static void
@@ -3316,8 +3321,8 @@ ipmi_lan_init(lanserv_data_t *lan)
     for (i=0; i<17; i++)
 	lan->lanparm.cipher_suite_entry[i] = i;
 
-    lan->channel.get_msg_overhead = 7; /* 6 byte header and a end checksum. */
-    lan->channel.get_msg_header_size = 6;
+    lan->channel.get_msg_overhead = 8; /* 7 byte header and a end checksum. */
+    lan->channel.get_msg_header_size = 7;
 
     lan->channel.return_rsp = lan_return_rsp;
     lan->channel.handle_send_msg = lan_handle_send_msg;
