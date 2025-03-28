@@ -312,15 +312,15 @@ ipmi_emu_tick(emu_data_t *emu, unsigned int seconds)
 }
 
 static void
-enqueue_recv_msg(channel_t *chan, lmc_data_t *mc, msg_t *msg)
+enqueue_xmit_msg(channel_t *chan, lmc_data_t *mc, msg_t *msg)
 {
-    if (chan->recv_q_tail) {
-	msg->next = chan->recv_q_tail;
-	chan->recv_q_tail = msg;
+    if (chan->xmit_q_tail) {
+	msg->next = chan->xmit_q_tail;
+	chan->xmit_q_tail = msg;
     } else {
 	msg->next = NULL;
-	chan->recv_q_head = msg;
-	chan->recv_q_tail = msg;
+	chan->xmit_q_head = msg;
+	chan->xmit_q_tail = msg;
 	if (chan->channel_num == 15) {
 	    chan->mc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
 	    if (chan->set_atn)
@@ -537,7 +537,19 @@ handle_lun_2_cmd(emu_data_t    *emu,
 	return 1;
     }
 
-    enqueue_recv_msg(mc->channels[15], mc, qmsg);
+    if (mc->recv_q_tail) {
+	qmsg->next = mc->recv_q_tail;
+	mc->recv_q_tail = qmsg;
+    } else {
+	channel_t *chan = mc->channels[15];
+
+	qmsg->next = NULL;
+	mc->recv_q_head = qmsg;
+	mc->recv_q_tail = qmsg;
+	mc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
+	if (chan->set_atn)
+	    chan->set_atn(chan, 1, IPMI_MC_MSG_INTS_ON(mc));
+    }
 
     return 0; /* Don't return a response. */
 }
@@ -616,7 +628,7 @@ handle_response(emu_data_t    *emu,
 	return 1;
     }
 
-    enqueue_recv_msg(qmsg->orig_channel, mc, qmsg);
+    enqueue_xmit_msg(qmsg->orig_channel, mc, qmsg);
 
     return 0;
 }
@@ -720,21 +732,6 @@ is_resend_atn(channel_t *chan)
 
     if (chan->set_atn)
 	chan->set_atn(chan, !!mc->msg_flags, IPMI_MC_MSG_INTS_ON(mc));
-}
-
-msg_t *
-is_mc_get_next_recv_q(channel_t *chan)
-{
-    msg_t *rv;
-
-    if (!chan->recv_q_head)
-	return NULL;
-    rv = chan->recv_q_head;
-    chan->recv_q_head = rv->next;
-    if (!chan->recv_q_head) {
-	chan->recv_q_tail = NULL;
-    }
-    return rv;
 }
 
 emu_data_t *
@@ -1193,7 +1190,6 @@ ipmi_emu_add_mc(emu_data_t    *emu,
 	    mc->channels[15] = &mc->sys_channel;
 	}
 
-	mc->channels[15]->has_recv_q = 1;
 	mc->sysinfo = emu->sysinfo;
 	rv = init_mc(emu, mc, flags & IPMI_MC_PERSIST_SDR);
 	if (rv) {

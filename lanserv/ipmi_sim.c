@@ -1618,7 +1618,6 @@ main(int argc, const char *argv[])
     sysinfo.mc_get_users = is_mc_get_users;
     sysinfo.mc_users_changed = is_mc_users_changed;
     sysinfo.mc_get_pef = is_mc_get_pef;
-    sysinfo.mc_get_next_recv_q = is_mc_get_next_recv_q;
     sysinfo.sol_read_config = is_sol_read_config;
     sysinfo.set_chassis_control_prog = is_set_chassis_control_prog;
     sysinfo.register_tick_handler = is_register_tick_handler;
