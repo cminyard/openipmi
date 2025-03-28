@@ -135,4 +135,27 @@ typedef struct startcmd_s startcmd_t;
 typedef struct user_s user_t;
 typedef struct pef_data_s pef_data_t;
 
+struct msg_q;
+
+struct msg_q_link {
+    msg_t *next;
+    msg_t *prev;
+};
+
+typedef void (*msg_q_op)(struct msg_q *q);
+
+struct msg_q {
+    msg_t *head;
+    msg_t *tail;
+    msg_q_op add_to_empty;
+    msg_q_op now_empty;
+    void *cb_data;
+};
+
+int init_msg_q(struct msg_q *q, msg_q_op add_to_empty, msg_q_op now_empty,
+	       void *cb_data);
+void add_to_msg_q(struct msg_q *q, msg_t *msg);
+msg_t *get_next_msg_q(struct msg_q *q);
+#define msg_q_empty(q) ((q)->head == NULL)
+
 #endif /* __MSG_H_ */

@@ -313,8 +313,7 @@ struct channel_s
     unsigned int get_msg_overhead;
     unsigned int get_msg_header_size;
 
-    msg_t *xmit_q_head;
-    msg_t *xmit_q_tail;
+    struct msg_q xmit_q;
 
     /* Used by channel code. */
     void (*log)(channel_t *chan, int logtype, msg_t *msg,
