@@ -91,7 +91,7 @@ lanserv_read_config(sys_data_t    *sys,
     }
     memset(lan, 0, sizeof(*lan));
 
-    lan->sysinfo = sys;
+    lan->sys = sys;
     lan->channel.chan_info = lan;
     lan->channel.channel_num = channel_num;
     lan->channel.medium_type = IPMI_CHANNEL_MEDIUM_8023_LAN;

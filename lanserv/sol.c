@@ -591,11 +591,12 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     struct addrinfo hints, *addr;
     int rv;
     int options;
+    sys_data_t *sys = sd->sys;
 
     if (sd->fd != -1) {
-	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			 "Error sol activate on active port %s:%s",
-			 sol->tcpdest, sol->tcpport);
+	sys->log(sys, OS_ERROR, NULL,
+		 "Error sol activate on active port %s:%s",
+		 sol->tcpdest, sol->tcpport);
 	return -1;
     }
 	
@@ -604,18 +605,18 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     hints.ai_socktype = SOCK_STREAM;
     rv = getaddrinfo(sol->tcpdest, sol->tcpport, &hints, &addr);
     if (rv != 0) {
-	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			 "Error getting tcp sol port address for %s:%s: %s",
-			 sol->tcpdest, sol->tcpport, gai_strerror(rv));
+	sys->log(sys, OS_ERROR, NULL,
+		 "Error getting tcp sol port address for %s:%s: %s",
+		 sol->tcpdest, sol->tcpport, gai_strerror(rv));
 	return -1;
     }
 
     sd->fd = socket(addr->ai_family, SOCK_STREAM, 0);
     if (sd->fd == -1) {
 	rv = -1;
-	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			 "Error creating tcp sol port socket for %s:%s: %s",
-			 sol->tcpdest, sol->tcpport, strerror(errno));
+	sys->log(sys, OS_ERROR, NULL,
+		 "Error creating tcp sol port socket for %s:%s: %s",
+		 sol->tcpdest, sol->tcpport, strerror(errno));
 	goto out;
     }
 
@@ -623,10 +624,10 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     if (rv == -1) {
 	close_socket(sd->fd);
 	sd->fd = -1;
-	if (sd->sys->debug & DEBUG_SOL)
-	    sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			   "Error connecting tcp sol port socket for %s:%s: %s",
-			   sol->tcpdest, sol->tcpport, strerror(errno));
+	if (sys->debug & DEBUG_SOL)
+	    sys->log(sys, OS_ERROR, NULL,
+		     "Error connecting tcp sol port socket for %s:%s: %s",
+		     sol->tcpdest, sol->tcpport, strerror(errno));
 	goto out;
     }
 
@@ -636,10 +637,10 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     if (rv == -1) {
 	close_socket(sd->fd);
 	sd->fd = -1;
-	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			 "Error setting nodelay on tcp sol port socket"
-			 " for %s:%s: %s",
-			 sol->tcpdest, sol->tcpport, strerror(errno));
+	sys->log(sys, OS_ERROR, NULL,
+		 "Error setting nodelay on tcp sol port socket"
+		 " for %s:%s: %s",
+		 sol->tcpdest, sol->tcpport, strerror(errno));
 	goto out;
     }
 
@@ -647,10 +648,10 @@ sol_tcp_initialize(ipmi_sol_t *sol)
     if (rv == -1) {
 	close_socket(sd->fd);
 	sd->fd = -1;
-	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			 "Error setting nonblock on tcp sol port socket"
-			 " for %s:%s: %s",
-			 sol->tcpdest, sol->tcpport, strerror(errno));
+	sys->log(sys, OS_ERROR, NULL,
+		 "Error setting nonblock on tcp sol port socket"
+		 " for %s:%s: %s",
+		 sol->tcpdest, sol->tcpport, strerror(errno));
 	goto out;
     }
 
@@ -1457,9 +1458,9 @@ sol_write_ready(int fd, void *cb_data)
 
     rv = write(fd, sd->inbuf, sd->inlen);
     if (rv < 0) {
-	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			 "Error writing to serial port: %d, disabling\n",
-			 errno);
+	sd->sys->log(sd->sys, OS_ERROR, NULL,
+		     "Error writing to serial port: %d, disabling\n",
+		     errno);
 	sol_port_error(sol);
 	return;
     }
@@ -1601,9 +1602,9 @@ sol_data_ready(int fd, void *cb_data)
 
     rv = read(fd, buf, readsize);
     if (rv < 0) {
-	sd->logchan->log(sd->logchan, OS_ERROR, NULL,
-			 "Error reading from serial port: %d, disabling\n",
-			 errno);
+	sd->sys->log(sd->sys, OS_ERROR, NULL,
+		     "Error reading from serial port: %d, disabling\n",
+		     errno);
 	sol_port_error(sol);
 	return;
     } else if (rv == 0) {

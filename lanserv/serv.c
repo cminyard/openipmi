@@ -76,12 +76,12 @@ ipmi_oem_send_msg(channel_t     *chan,
 		  long          oem_data)
 {
     msg_t *nmsg;
-    int   rv;
+    int rv;
+    sys_data_t *sys = chan->sys;
 
-    nmsg = chan->alloc(chan, sizeof(*nmsg)+len);
+    nmsg = sys->alloc(sys, sizeof(*nmsg)+len);
     if (!nmsg) {
-	chan->log(chan, OS_ERROR, NULL,
-		  "SMI message: out of memory");
+	sys->log(sys, OS_ERROR, NULL, "SMI message: out of memory");
 	return ENOMEM;
     }
 
@@ -96,9 +96,8 @@ ipmi_oem_send_msg(channel_t     *chan,
     
     rv = chan->smi_send(chan, nmsg);
     if (rv) {
-	chan->log(chan, OS_ERROR, nmsg,
-		  "SMI send: error %d", rv);
-	chan->free(chan, nmsg);
+	sys->log(sys, OS_ERROR, nmsg, "SMI send: error %d", rv);
+	sys->free(sys, nmsg);
     }
 
     return rv;
@@ -120,7 +119,7 @@ ipmi_handle_smi_rsp(channel_t *chan, msg_t *msg, uint8_t *rspd, int rsp_len)
 	return;
 
     chan->return_rsp(chan, msg, &rsp);
-    chan->free(chan, msg);
+    chan->sys->free(chan->sys, msg);
 }
 
 static oem_handler_t *oem_handlers = NULL;
@@ -157,9 +156,9 @@ channel_smi_send(channel_t *chan, msg_t *msg)
 
     msg->orig_channel = chan;
     msg->channel = chan->channel_num;
-    nmsg = chan->alloc(chan, sizeof(*nmsg)+msg->src_len+msg->len);
+    nmsg = chan->sys->alloc(chan->sys, sizeof(*nmsg)+msg->src_len+msg->len);
     if (!nmsg) {
-	chan->log(chan, OS_ERROR, msg, "SMI message: out of memory");
+	chan->sys->log(chan->sys, OS_ERROR, msg, "SMI message: out of memory");
 	return ENOMEM;
     }
 
@@ -184,7 +183,7 @@ channel_smi_send(channel_t *chan, msg_t *msg)
     
     rv = chan->smi_send(chan, nmsg);
     if (rv)
-	chan->free(chan, nmsg);
+	chan->sys->free(chan->sys, nmsg);
     return rv;
 }
 
@@ -205,7 +204,7 @@ look_for_get_devid(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
 	/* Will be set to 1 if we sent it. */
 	if (msg->oem_data) {
-	    chan->free(chan, msg);
+	    chan->sys->free(chan->sys, msg);
 	    return 1;
 	}
     }

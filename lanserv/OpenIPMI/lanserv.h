@@ -280,6 +280,8 @@ typedef int (*send_msg_handle_msg_fixup)(void *cb_data, channel_t *chan,
 #define NUM_PRIV_LEVEL 4
 struct channel_s
 {
+    sys_data_t *sys;
+
     lmc_data_t *mc;
 
     unsigned char medium_type;
@@ -315,14 +317,7 @@ struct channel_s
 
     struct msg_q xmit_q;
 
-    /* Used by channel code. */
-    void (*log)(channel_t *chan, int logtype, msg_t *msg,
-		const char *format, ...)
-	__attribute__ ((__format__ (__printf__, 4, 5)));
-
     int (*smi_send)(channel_t *chan, msg_t *msg);
-    void *(*alloc)(channel_t *chan, int size);
-    void (*free)(channel_t *chan, void *data);
 
     /* Set by channel code */
 
@@ -425,7 +420,7 @@ typedef struct lan_addr_s {
 
 struct lanserv_data_s
 {
-    sys_data_t *sysinfo;
+    sys_data_t *sys;
 
     ipmi_tick_handler_t tick_handler;
 
@@ -691,11 +686,8 @@ struct sys_data_s {
      * These are a hack so the channel code in the MCs can pick up
      * these functions.
      */
-    void (*clog)(channel_t *chan, int logtype, msg_t *msg,
-		 const char *format, ...);
     int (*csmi_send)(channel_t *chan, msg_t *msg);
-    void *(*calloc)(channel_t *chan, int size);
-    void (*cfree)(channel_t *chan, void *data);
+
     int (*lan_channel_init)(void *info, channel_t *chan);
     int (*ser_channel_init)(void *info, channel_t *chan);
     int (*ipmb_channel_init)(void *info, channel_t *chan);

@@ -225,7 +225,7 @@ watchdog_timeout(void *cb_data)
 	    tv.tv_sec = 0;
 	    tv.tv_usec = 0;
 	}
-	mc->sysinfo->start_timer(mc->watchdog_timer, &tv);
+	mc->sys->start_timer(mc->watchdog_timer, &tv);
 	goto out;
     }
 
@@ -287,7 +287,7 @@ do_watchdog_reset(lmc_data_t *mc)
 	}
     }
     mc->watchdog_running = 1;
-    mc->sysinfo->start_timer(mc->watchdog_timer, &tv);
+    mc->sys->start_timer(mc->watchdog_timer, &tv);
 }
 
 static void
@@ -606,7 +606,7 @@ handle_set_user_access(lmc_data_t    *mc,
 	return;
     }
 
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -682,7 +682,7 @@ handle_get_user_access(lmc_data_t    *mc,
 	return;
     }
 
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -730,7 +730,7 @@ handle_set_user_name(lmc_data_t    *mc,
 	return;
     }
 
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -767,7 +767,7 @@ handle_get_user_name(lmc_data_t    *mc,
 	return;
     }
 
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -801,7 +801,7 @@ handle_set_user_password(lmc_data_t    *mc,
 	return;
     }
 
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -863,13 +863,13 @@ handle_set_channel_access(lmc_data_t    *mc,
 	return;
     }
 
-    if (!mc->sysinfo || !mc->channels[lchan]) {
+    if (!mc->sys || !mc->channels[lchan]) {
 	rdata[0] = IPMI_NOT_PRESENT_CC;
 	*rdata_len = 1;
 	return;
     }
 
-    if (!mc->sysinfo || !mc->channels[lchan]) {
+    if (!mc->sys || !mc->channels[lchan]) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -894,7 +894,7 @@ handle_read_event_msg_buffer(lmc_data_t    *mc,
 {
     channel_t *chan = mc->channels[15];
 
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -1035,7 +1035,7 @@ handle_get_msg(lmc_data_t    *mc,
 {
     msg_t *qmsg;
 
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;

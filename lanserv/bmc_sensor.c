@@ -1530,10 +1530,10 @@ sensor_poll(void *cb_data)
 
 	err = sensor->poll(sensor->cb_data, &val, &errstr);
 	if (err) {
-	    mc->sysinfo->log(mc->sysinfo, OS_ERROR, NULL,
-			     "Error getting sensor value (%2.2x,%d,%d): %s, %s",
-			     is_mc_get_ipmb(mc), sensor->lun, sensor->num,
-			     strerror(err), errstr);
+	    mc->sys->log(mc->sys, OS_ERROR, NULL,
+			 "Error getting sensor value (%2.2x,%d,%d): %s, %s",
+			 is_mc_get_ipmb(mc), sensor->lun, sensor->num,
+			 strerror(err), errstr);
 	    goto out_restart;
 	}
 	
@@ -1555,7 +1555,7 @@ sensor_poll(void *cb_data)
 	}
 	sensor->data_ready = 1;
       out_restart:
-	mc->sysinfo->start_timer(sensor->poll_timer, &sensor->poll_timer_time);
+	mc->sys->start_timer(sensor->poll_timer, &sensor->poll_timer_time);
     }
 }
 
@@ -1583,15 +1583,15 @@ ipmi_mc_add_polled_sensor(lmc_data_t    *mc,
     sensor->poll_timer_time.tv_sec = poll_rate / 1000;
     sensor->poll_timer_time.tv_usec = (poll_rate % 1000) * 1000;
     sensor->cb_data = cb_data;
-    
-    err = mc->sysinfo->alloc_timer(mc->sysinfo, sensor_poll, sensor,
-				   &sensor->poll_timer);
+
+    err = mc->sys->alloc_timer(mc->sys, sensor_poll, sensor,
+			       &sensor->poll_timer);
     if (err) {
 	free_sensor(mc, sensor);
 	return err;
     }
 
-    mc->sysinfo->start_timer(sensor->poll_timer, &sensor->poll_timer_time);
+    mc->sys->start_timer(sensor->poll_timer, &sensor->poll_timer_time);
 
     return 0;
 }
@@ -1603,7 +1603,7 @@ handle_ipmi_get_pef_capabilities(lmc_data_t    *mc,
 				 unsigned int  *rdata_len,
 				 void          *cb_data)
 {
-    if (!mc->sysinfo) {
+    if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
 	*rdata_len = 1;
 	return;
@@ -1625,7 +1625,7 @@ handle_ipmi_set_pef_config_parms(lmc_data_t    *mc,
 {
     unsigned char err = 0;
     int           set, block;
-    sys_data_t    *sys = mc->sysinfo;
+    sys_data_t    *sys = mc->sys;
 
     if (msg->len < 2) {
 	rdata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
@@ -1805,8 +1805,7 @@ handle_ipmi_get_pef_config_parms(lmc_data_t    *mc,
     unsigned int  length = 0;
     unsigned char err = 0;
     unsigned char tmpdata[18];
-
-    sys_data_t    *sys = mc->sysinfo;
+    sys_data_t    *sys = mc->sys;
 
     if (msg->len < 3) {
 	rdata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;

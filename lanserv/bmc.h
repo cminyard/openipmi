@@ -208,6 +208,8 @@ struct seq_entry {
 
 struct lmc_data_s
 {
+    sys_data_t *sys;
+
     emu_data_t *emu;
 
     char enabled;
@@ -276,8 +278,6 @@ struct lmc_data_s
 #define IPMI_MC_EVENT_MSG_BUF_ENABLED(mc) ((mc)->global_enables & \
 					   (1 << IPMI_MC_EVENT_MSG_BUF_BIT))
     unsigned char global_enables;
-
-    sys_data_t *sysinfo;
 
     sel_t sel;
 

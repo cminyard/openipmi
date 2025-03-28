@@ -86,8 +86,8 @@ force_rsp_handler(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
 		if (new_addr != fdata->curr_addr) {
 		    fdata->curr_addr = fdata->slave_addr;
-		    chan->log(chan, INFO, NULL,
-			      "Change Force MC address to 0x%x", new_addr);
+		    chan->sys->log(chan->sys, INFO, NULL,
+				   "Change Force MC address to 0x%x", new_addr);
 		    if (chan->oem.ipmb_addr_change)
 			chan->oem.ipmb_addr_change(chan, fdata->curr_addr);
 		}
