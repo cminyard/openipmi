@@ -548,7 +548,7 @@ handle_set_global_enables(lmc_data_t    *mc,
 	bchan->hw_op(bchan, HW_OP_IRQ_DISABLE);
 
     if ((!old_evint && IPMI_MC_EVBUF_FULL_INT_ENABLED(mc) && mc->ev_in_q) ||
-	(old_int && !IPMI_MC_MSG_INTS_ON(mc) && mc->channels[15]->xmit_q_tail))
+	    (old_int && !IPMI_MC_MSG_INTS_ON(mc) && !msg_q_empty(&mc->recv_q)))
 	bchan->set_atn(bchan, 1, IPMI_MC_EVBUF_FULL_INT_ENABLED(mc));
 }
 
@@ -946,13 +946,11 @@ handle_clear_msg_flags(lmc_data_t    *mc,
 	mc->ev_in_q = 0;
 
     if (msg->data[0] & IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE) {
-	while (mc->recv_q_head) {
-	    msg_t *qmsg = mc->recv_q_head;
-
-	    mc->recv_q_head = qmsg->next;
+	msg_t *qmsg = get_next_msg_q(&mc->recv_q);
+	while (qmsg) {
 	    free(qmsg);
+	    qmsg = get_next_msg_q(&mc->recv_q);
 	}
-	mc->recv_q_tail = NULL;
     }
 
     if (chan->set_atn)
@@ -1036,7 +1034,6 @@ handle_get_msg(lmc_data_t    *mc,
 	       void          *cb_data)
 {
     msg_t *qmsg;
-    channel_t *chan = mc->channels[15];
 
     if (!mc->sysinfo) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
@@ -1044,7 +1041,7 @@ handle_get_msg(lmc_data_t    *mc,
 	return;
     }
 
-    qmsg = mc->recv_q_head;
+    qmsg = get_next_msg_q(&mc->recv_q);
     if (!qmsg) {
 	rdata[0] = 0x80;
 	*rdata_len = 1;
@@ -1055,14 +1052,6 @@ handle_get_msg(lmc_data_t    *mc,
 	rdata[0] = IPMI_REQUESTED_DATA_LENGTH_EXCEEDED_CC;
 	*rdata_len = 1;
 	return;
-    }
-
-    mc->recv_q_head = qmsg->next;
-    if (!qmsg->next) {
-	mc->recv_q_tail = NULL;
-	mc->msg_flags &= ~IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
-	if (chan->set_atn)
-	    chan->set_atn(chan, !!mc->msg_flags, IPMI_MC_MSG_INTS_ON(mc));
     }
 
     rdata[0] = 0;

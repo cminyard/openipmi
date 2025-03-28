@@ -526,7 +526,7 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
     return_rsp(lan, msg, NULL, rsp);
 
-    msg = chan->xmit_q_head;
+    msg = get_next_msg_q(&chan->xmit_q);
     while (msg) {
 	rrsp.netfn = msg->netfn;
 	rrsp.cmd = msg->cmd;
@@ -535,14 +535,8 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
 	return_rsp(lan, msg, NULL, &rrsp);
 
-	if (msg->next) {
-	    chan->xmit_q_head = msg->next;
-	} else {
-	    chan->xmit_q_head = NULL;
-	    chan->xmit_q_tail = NULL;
-	}
 	chan->free(chan, msg);
-	msg = chan->xmit_q_head;
+	msg = get_next_msg_q(&chan->xmit_q);
     }
 }
 

@@ -312,24 +312,6 @@ ipmi_emu_tick(emu_data_t *emu, unsigned int seconds)
 }
 
 static void
-enqueue_xmit_msg(channel_t *chan, lmc_data_t *mc, msg_t *msg)
-{
-    if (chan->xmit_q_tail) {
-	msg->next = chan->xmit_q_tail;
-	chan->xmit_q_tail = msg;
-    } else {
-	msg->next = NULL;
-	chan->xmit_q_head = msg;
-	chan->xmit_q_tail = msg;
-	if (chan->channel_num == 15) {
-	    chan->mc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
-	    if (chan->set_atn)
-		chan->set_atn(chan, 1, IPMI_MC_MSG_INTS_ON(chan->mc));
-	}
-    }
-}
-
-static void
 deliver_msg_to_mc(lmc_data_t *mc, msg_t *msg,
 		  unsigned char *rdata, unsigned int *rdata_len)
 {
@@ -537,19 +519,7 @@ handle_lun_2_cmd(emu_data_t    *emu,
 	return 1;
     }
 
-    if (mc->recv_q_tail) {
-	qmsg->next = mc->recv_q_tail;
-	mc->recv_q_tail = qmsg;
-    } else {
-	channel_t *chan = mc->channels[15];
-
-	qmsg->next = NULL;
-	mc->recv_q_head = qmsg;
-	mc->recv_q_tail = qmsg;
-	mc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
-	if (chan->set_atn)
-	    chan->set_atn(chan, 1, IPMI_MC_MSG_INTS_ON(mc));
-    }
+    add_to_msg_q(&mc->recv_q, qmsg);
 
     return 0; /* Don't return a response. */
 }
@@ -628,7 +598,7 @@ handle_response(emu_data_t    *emu,
 	return 1;
     }
 
-    enqueue_xmit_msg(qmsg->orig_channel, mc, qmsg);
+    add_to_msg_q(&qmsg->orig_channel->xmit_q, qmsg);
 
     return 0;
 }
@@ -1101,6 +1071,35 @@ handle_child_quit(void *info, pid_t pid)
     }
 }
 
+/*
+ * A message was added to the receive queue and it was empty.  Enable
+ * the flags.
+ */
+static void
+recv_q_first_msg(struct msg_q *q)
+{
+    lmc_data_t *mc = q->cb_data;
+    channel_t *chan = mc->channels[15];
+
+    mc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
+    if (chan->set_atn)
+	chan->set_atn(chan, 1, IPMI_MC_MSG_INTS_ON(mc));
+}
+
+/*
+ * The last message was removed from the receive queue, disable the flags.
+ */
+static void
+recv_q_now_empty(struct msg_q *q)
+{
+    lmc_data_t *mc = q->cb_data;
+    channel_t *chan = mc->channels[15];
+
+    mc->msg_flags &= ~IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
+    if (chan->set_atn)
+	chan->set_atn(chan, !!mc->msg_flags, IPMI_MC_MSG_INTS_ON(mc));
+}
+
 int
 ipmi_emu_add_mc(emu_data_t    *emu,
 		unsigned char ipmb,
@@ -1189,6 +1188,8 @@ ipmi_emu_add_mc(emu_data_t    *emu,
 	    mc->sys_channel.active_sessions = 0;
 	    mc->channels[15] = &mc->sys_channel;
 	}
+
+	init_msg_q(&mc->recv_q, recv_q_first_msg, recv_q_now_empty, mc);
 
 	mc->sysinfo = emu->sysinfo;
 	rv = init_mc(emu, mc, flags & IPMI_MC_PERSIST_SDR);

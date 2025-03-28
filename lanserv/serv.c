@@ -329,3 +329,48 @@ check_msg_length(msg_t         *msg,
 
     return 0;
 }
+
+int
+init_msg_q(struct msg_q *q, msg_q_op add_to_empty, msg_q_op now_empty,
+	   void *cb_data)
+{
+    q->head = NULL;
+    q->tail = NULL;
+    q->add_to_empty = add_to_empty;
+    q->now_empty = now_empty;
+    q->cb_data = cb_data;
+    return 0;
+}
+
+void
+add_to_msg_q(struct msg_q *q, msg_t *msg)
+{
+    int was_empty = q->head == NULL;
+
+    msg->next = NULL;
+    if (was_empty) {
+	q->head = msg;
+	q->tail = msg;
+    } else {
+	q->tail->next = msg;
+	q->tail = msg;
+    }
+    if (was_empty && q->add_to_empty)
+	q->add_to_empty(q);
+}
+
+msg_t *
+get_next_msg_q(struct msg_q *q)
+{
+    msg_t *msg = q->head;
+
+    if (msg) {
+	q->head = msg->next;
+	if (!q->head) {
+	    q->tail = NULL;
+	    if (q->now_empty)
+		q->now_empty(q);
+	}
+    }
+    return msg;
+}
