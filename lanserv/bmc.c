@@ -419,7 +419,7 @@ ipmb_handle_send_msg(channel_t *chan,
 	return;
 
     if (mc->emu->sysinfo->debug & DEBUG_MSG)
-	chan->log(chan, DEBUG, &smsg, "IPMB deliver to MC:");
+	mc->sys->log(mc->sys, DEBUG, &smsg, "IPMB deliver to MC:");
 
     deliver_msg_to_mc(mc, &smsg, rdata, rdata_len);
 
@@ -801,7 +801,7 @@ void
 ipmi_mc_enable(lmc_data_t *mc)
 {
     unsigned int i;
-    sys_data_t *sys = mc->sysinfo;
+    sys_data_t *sys = mc->sys;
 
     mc->enabled = 1;
 
@@ -812,11 +812,9 @@ ipmi_mc_enable(lmc_data_t *mc)
 	if (!chan)
 	    continue;
 
+	chan->sys = sys;
 	chan->smi_send = sys->csmi_send;
 	chan->oem.user_data = sys->info;
-	chan->alloc = sys->calloc;
-	chan->free = sys->cfree;
-	chan->log = sys->clog;
 	chan->mc = mc;
 
 	if (chan->medium_type == IPMI_CHANNEL_MEDIUM_8023_LAN)
@@ -829,10 +827,10 @@ ipmi_mc_enable(lmc_data_t *mc)
 	else 
 	    chan_init(chan);
 	if (err) {
-	    chan->log(chan, SETUP_ERROR, NULL,
-		      "Unable to initialize channel for "
-		      "IPMB 0x%2.2x, channel %d: %d",
-		      mc->ipmb, chan->channel_num, err);
+	    sys->log(sys, SETUP_ERROR, NULL,
+		     "Unable to initialize channel for "
+		     "IPMB 0x%2.2x, channel %d: %d",
+		     mc->ipmb, chan->channel_num, err);
 	}
     }
 
@@ -858,8 +856,8 @@ init_mc(emu_data_t *emu, lmc_data_t *mc, unsigned int persist_sdr)
 {
     int err;
 
-    err = mc->sysinfo->alloc_timer(mc->sysinfo, watchdog_timeout,
-				   mc, &mc->watchdog_timer);
+    err = mc->sys->alloc_timer(mc->sys, watchdog_timeout,
+			       mc, &mc->watchdog_timer);
     if (err)
 	return err;
 
@@ -880,8 +878,8 @@ static void
 ipmi_mc_start_cmd(lmc_data_t *mc)
 {
     if (!mc->startcmd.startcmd) {
-	mc->sysinfo->log(mc->sysinfo, OS_ERROR, NULL,
-			 "Power on issued, no start command set");
+	mc->sys->log(mc->sys, OS_ERROR, NULL,
+		     "Power on issued, no start command set");
 	return;
     }
 
@@ -1021,8 +1019,8 @@ is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
     mc->ipmb_channel.get_msg_header_size = 5;
     mc->ipmb_channel.handle_send_msg = ipmb_handle_send_msg;
     mc->ipmb_channel.format_lun_2 = ipmb_format_lun_2;
+    mc->ipmb_channel.sys = sys;
     mc->channels[0] = &mc->ipmb_channel;
-    mc->channels[0]->log = sys->clog;
 
  out:
     *rmc = mc;
@@ -1122,7 +1120,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
     if (i)
 	return i;
 
-    mc->sysinfo = sys;
+    mc->sys = sys;
     mc->emu = emu;
     mc->ipmb = ipmb;
 
@@ -1191,7 +1189,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
 
 	init_msg_q(&mc->recv_q, recv_q_first_msg, recv_q_now_empty, mc);
 
-	mc->sysinfo = emu->sysinfo;
+	mc->sys = emu->sysinfo;
 	rv = init_mc(emu, mc, flags & IPMI_MC_PERSIST_SDR);
 	if (rv) {
 	    free(mc);
@@ -1260,7 +1258,7 @@ ipmi_emu_set_bmc_mc(emu_data_t *emu, unsigned char ipmb)
 	return EINVAL;
     emu->sysinfo->bmc_ipmb = ipmb;
     if (!ipmi_emu_get_mc_by_addr(emu, ipmb, &mc))
-	mc->sysinfo = emu->sysinfo;
+	mc->sys = emu->sysinfo;
     return 0;
 }
 

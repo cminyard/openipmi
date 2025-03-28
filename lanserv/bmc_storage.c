@@ -98,9 +98,9 @@ handle_sel(const char *name, void *data, unsigned int len, void *cb_data)
     lmc_data_t *mc = cb_data;
 
     if (len != 16) {
-	mc->sysinfo->log(mc->sysinfo, INFO, NULL,
-			 "Got invalid SEL entry for %2.2x, name is %s",
-			 is_mc_get_ipmb(mc), name);
+	mc->sys->log(mc->sys, INFO, NULL,
+		     "Got invalid SEL entry for %2.2x, name is %s",
+		     is_mc_get_ipmb(mc), name);
 	goto out;
     }
 
@@ -197,9 +197,9 @@ rewrite_sels(lmc_data_t *mc)
     return;
 
   out_err:
-    mc->sysinfo->log(mc->sysinfo, OS_ERROR, NULL,
-		     "Unable to write persistent SELs for MC %d: %d",
-		     is_mc_get_ipmb(mc), err);
+    mc->sys->log(mc->sys, OS_ERROR, NULL,
+		 "Unable to write persistent SELs for MC %d: %d",
+		 is_mc_get_ipmb(mc), err);
     if (p)
 	free_persist(p);
 }
@@ -768,9 +768,9 @@ rewrite_sdrs(lmc_data_t *mc, sdrs_t *sdrs)
     return;
 
   out_err:
-    mc->sysinfo->log(mc->sysinfo, OS_ERROR, NULL,
-		     "Unable to write persistent SDRs for MC %d: %d",
-		     is_mc_get_ipmb(mc), err);
+    mc->sys->log(mc->sys, OS_ERROR, NULL,
+		 "Unable to write persistent SDRs for MC %d: %d",
+		 is_mc_get_ipmb(mc), err);
     if (p)
 	free_persist(p);
 }
@@ -1998,19 +1998,19 @@ static int fru_file_io_cb(void *cb_data,
 	fd = open(info->filename, O_RDONLY);
 	if (fd == -1) {
 	    rv = errno;
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: (read) error on open of %s: %s",
-				   info->filename, strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: (read) error on open of %s: %s",
+			       info->filename, strerror(rv));
 	    return rv;
 	}
 	if (lseek(fd, info->file_offset + offset, SEEK_SET) == -1) {
 	    rv = errno;
 	    close(fd);
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: (read) error on lseek"
-				   " of %s to %u: %s",
-				   info->filename, info->file_offset + offset,
-				   strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: (read) error on lseek"
+			       " of %s to %u: %s",
+			       info->filename, info->file_offset + offset,
+			       strerror(rv));
 	    return rv;
 	}
     restart_read:
@@ -2019,20 +2019,20 @@ static int fru_file_io_cb(void *cb_data,
 	    if (errno == EINTR)
 		goto restart_read;
 	    rv = errno;
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: error on read of %u bytes of %s"
-				   " at %u: %s",
-				   length, info->filename,
-				   info->file_offset + offset,
-				   strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: error on read of %u bytes of %s"
+			       " at %u: %s",
+			       length, info->filename,
+			       info->file_offset + offset,
+			       strerror(rv));
 	} else if (l == 0) {
 	    rv = EIO;
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: end of file read of %u bytes of %s"
-				   " at %u: %s",
-				   length, info->filename,
-				   info->file_offset + offset,
-				   strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: end of file read of %u bytes of %s"
+			       " at %u: %s",
+			       length, info->filename,
+			       info->file_offset + offset,
+			       strerror(rv));
 	} else if (((unsigned int) l) != length) {
 	    length -= l;
 	    data += l;
@@ -2045,19 +2045,19 @@ static int fru_file_io_cb(void *cb_data,
 	fd = open(info->filename, O_WRONLY);
 	if (fd == -1) {
 	    rv = errno;
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: (write) error on open of %s: %s",
-				   info->filename, strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: (write) error on open of %s: %s",
+			       info->filename, strerror(rv));
 	    return rv;
 	}
 	if (lseek(fd, info->file_offset + offset, SEEK_SET) == -1) {
 	    rv = errno;
 	    close(fd);
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: (write) error on lseek"
-				   " of %s to %u: %s",
-				   info->filename, info->file_offset + offset,
-				   strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: (write) error on lseek"
+			       " of %s to %u: %s",
+			       info->filename, info->file_offset + offset,
+			       strerror(rv));
 	    return rv;
 	}
     restart_write:
@@ -2066,20 +2066,20 @@ static int fru_file_io_cb(void *cb_data,
 	    if (errno == EINTR)
 		goto restart_write;
 	    rv = errno;
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: error on write of %u bytes of %s"
-				   " at %u: %s",
-				   length, info->filename,
-				   info->file_offset + offset,
-				   strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: error on write of %u bytes of %s"
+			       " at %u: %s",
+			       length, info->filename,
+			       info->file_offset + offset,
+			       strerror(rv));
 	} else if (l == 0) {
 	    rv = EIO;
-	    info->mc->sysinfo->log(info->mc->sysinfo, OS_ERROR, NULL,
-				   "fru_io: end of file write of %u bytes of %s"
-				   " at %u: %s",
-				   length, info->filename,
-				   info->file_offset + offset,
-				   strerror(rv));
+	    info->mc->sys->log(info->mc->sys, OS_ERROR, NULL,
+			       "fru_io: end of file write of %u bytes of %s"
+			       " at %u: %s",
+			       length, info->filename,
+			       info->file_offset + offset,
+			       strerror(rv));
 	} else if (((unsigned int) l) != length) {
 	    length -= l;
 	    data += l;

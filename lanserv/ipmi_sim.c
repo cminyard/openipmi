@@ -263,11 +263,10 @@ lan_data_ready(int lan_fd, void *cb_data, os_hnd_fd_id_t *id)
     }
     l->xmit_fd = lan_fd;
 
-    if (lan->sysinfo->debug & DEBUG_RAW_MSG) {
-	debug_log_raw_msg(lan->sysinfo, (uint8_t *) addr, l->addr_len,
+    if (lan->sys->debug & DEBUG_RAW_MSG) {
+	debug_log_raw_msg(lan->sys, (uint8_t *) addr, l->addr_len,
 			  "Raw LAN receive from:");
-	debug_log_raw_msg(lan->sysinfo, msgd, len,
-			  " Receive message:");
+	debug_log_raw_msg(lan->sys, msgd, len, " Receive message:");
     }
 
     if (len < 4)
@@ -801,21 +800,6 @@ sim_log(sys_data_t *sys, int logtype, msg_t *msg, const char *format, ...)
     va_end(ap);
     va_start(ap, format);
     isim_log(sys, logtype, msg, format, ap, len);
-    va_end(ap);
-}
-
-static void
-sim_chan_log(channel_t *chan, int logtype, msg_t *msg, const char *format, ...)
-{
-    va_list ap;
-    char dummy;
-    int len;
-
-    va_start(ap, format);
-    len = vsnprintf(&dummy, 1, format, ap);
-    va_end(ap);
-    va_start(ap, format);
-    isim_log(global_misc_data->sys, logtype, msg, format, ap, len);
     va_end(ap);
 }
 
@@ -1397,18 +1381,6 @@ tick(void *cb_data, os_hnd_timer_id_t *id)
     }
 }
 
-static void *
-ialloc(channel_t *chan, int size)
-{
-    return malloc(size);
-}
-
-static void
-ifree(channel_t *chan, void *data)
-{
-    return free(data);
-}
-
 static int sigpipeh[2] = {-1, -1};
 
 static void
@@ -1603,9 +1575,6 @@ main(int argc, const char *argv[])
     sysinfo.debug = debug;
     sysinfo.log = sim_log;
     sysinfo.csmi_send = smi_send;
-    sysinfo.clog = sim_chan_log;
-    sysinfo.calloc = ialloc;
-    sysinfo.cfree = ifree;
     sysinfo.lan_channel_init = lan_channel_init;
     sysinfo.ser_channel_init = ser_channel_init;
     sysinfo.ipmb_channel_init = ipmb_channel_init;

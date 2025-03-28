@@ -81,8 +81,8 @@ set_power(lmc_data_t *mc, int pval)
     int rv = 0;
 
     if (mc->power_timer) {
-	mc->sysinfo->stop_timer(mc->power_timer);
-	mc->sysinfo->free_timer(mc->power_timer);
+	mc->sys->stop_timer(mc->power_timer);
+	mc->sys->free_timer(mc->power_timer);
 	mc->power_timer = NULL;
     }
 
@@ -92,7 +92,7 @@ set_power(lmc_data_t *mc, int pval)
 					  mc->chassis_control_cb_data);
     } else if (mc->chassis_control_prog) {
 	int val = !!pval;
-	if (extcmd_setvals(mc->sysinfo, &val, mc->chassis_control_prog,
+	if (extcmd_setvals(mc->sys, &val, mc->chassis_control_prog,
 			   &chassis_prog[CHASSIS_CONTROL_POWER], NULL, 1)) 
 	    rv = EINVAL;
     } else if (HW_OP_CAN_POWER(mc->channels[15])) {
@@ -112,7 +112,7 @@ power_timeout(void *cb_data)
 
     if (ipmi_mc_is_power_on(mc)) {
 	struct timeval tv = { 1, 0 };
-	mc->sysinfo->start_timer(mc->power_timer, &tv);
+	mc->sys->start_timer(mc->power_timer, &tv);
     } else {
 	set_power(mc, 1);
     }
@@ -127,12 +127,11 @@ start_poweron_timer(lmc_data_t *mc)
     if (mc->power_timer)
 	return 0;
 
-    rv = mc->sysinfo->alloc_timer(mc->sysinfo, power_timeout,
-				  mc, &mc->power_timer);
+    rv = mc->sys->alloc_timer(mc->sys, power_timeout, mc, &mc->power_timer);
     if (rv)
 	return rv;
     
-    mc->sysinfo->start_timer(mc->power_timer, &tv);
+    mc->sys->start_timer(mc->power_timer, &tv);
     return 0;
 }
 
@@ -145,10 +144,10 @@ handle_get_chassis_capabilities(lmc_data_t    *mc,
 {
     rdata[0] = 0;
     rdata[1] = 0;
-    rdata[2] = mc->sysinfo->bmc_ipmb;
-    rdata[3] = mc->sysinfo->bmc_ipmb;
-    rdata[4] = mc->sysinfo->bmc_ipmb;
-    rdata[5] = mc->sysinfo->bmc_ipmb;
+    rdata[2] = mc->sys->bmc_ipmb;
+    rdata[3] = mc->sys->bmc_ipmb;
+    rdata[4] = mc->sys->bmc_ipmb;
+    rdata[5] = mc->sys->bmc_ipmb;
 }
 
 int
@@ -164,7 +163,7 @@ ipmi_mc_is_power_on(lmc_data_t *mc)
 	return val;
     } else if (mc->chassis_control_prog) {
 	int val;
-	if (extcmd_getvals(mc->sysinfo, &val, mc->chassis_control_prog,
+	if (extcmd_getvals(mc->sys, &val, mc->chassis_control_prog,
 			   &chassis_prog[CHASSIS_CONTROL_POWER], 1))
 	    return -1;
 	return val;
@@ -271,7 +270,7 @@ handle_chassis_control(lmc_data_t    *mc,
 	    }
 	} else if (mc->chassis_control_prog) {
 	    int val = 1;
-	    if (extcmd_setvals(mc->sysinfo, &val, mc->chassis_control_prog,
+	    if (extcmd_setvals(mc->sys, &val, mc->chassis_control_prog,
 			       &chassis_prog[CHASSIS_CONTROL_RESET], NULL, 1)) {
 		rdata[0] = IPMI_UNKNOWN_ERR_CC;
 		*rdata_len = 1;
@@ -298,7 +297,7 @@ handle_chassis_control(lmc_data_t    *mc,
 	    }
 	} else if (mc->chassis_control_prog) {
 	    int val = 1;
-	    if (extcmd_setvals(mc->sysinfo, &val, mc->chassis_control_prog,
+	    if (extcmd_setvals(mc->sys, &val, mc->chassis_control_prog,
 			       &chassis_prog[CHASSIS_CONTROL_GRACEFUL_SHUTDOWN],
 			       NULL, 1)) {
 		rdata[0] = IPMI_UNKNOWN_ERR_CC;
@@ -349,7 +348,7 @@ handle_chassis_identify(lmc_data_t    *mc,
 	    return;
 	}
     } else if (mc->chassis_control_prog) {
-	if (extcmd_setvals(mc->sysinfo, val, mc->chassis_control_prog,
+	if (extcmd_setvals(mc->sys, val, mc->chassis_control_prog,
 			   &chassis_prog[CHASSIS_CONTROL_IDENTIFY], NULL, 1)) {
 	    rdata[0] = IPMI_UNKNOWN_ERR_CC;
 	    *rdata_len = 1;
@@ -419,7 +418,7 @@ set_system_boot_options(lmc_data_t    *mc,
 		return;
 	    }
 	} else if (mc->chassis_control_prog) {
-	    if (extcmd_getvals(mc->sysinfo, &val, mc->chassis_control_prog,
+	    if (extcmd_getvals(mc->sys, &val, mc->chassis_control_prog,
 			    &chassis_prog[CHASSIS_CONTROL_BOOT_INFO_ACK], 1)) {
 		rdata[0] = IPMI_UNKNOWN_ERR_CC;
 		*rdata_len = 1;
@@ -449,7 +448,7 @@ set_system_boot_options(lmc_data_t    *mc,
 		return;
 	    }
 	} else if (mc->chassis_control_prog) {
-	    if (extcmd_setvals(mc->sysinfo, &val, mc->chassis_control_prog,
+	    if (extcmd_setvals(mc->sys, &val, mc->chassis_control_prog,
 			       &chassis_prog[CHASSIS_CONTROL_BOOT], NULL, 1)) {
 		rdata[0] = IPMI_UNKNOWN_ERR_CC;
 		*rdata_len = 1;
@@ -521,7 +520,7 @@ get_system_boot_options(lmc_data_t    *mc,
 		return;
 	    }
 	} else if (mc->chassis_control_prog) {
-	    if (extcmd_getvals(mc->sysinfo, &val, mc->chassis_control_prog,
+	    if (extcmd_getvals(mc->sys, &val, mc->chassis_control_prog,
 			       &chassis_prog[CHASSIS_CONTROL_BOOT], 1)) {
 		rdata[0] = IPMI_UNKNOWN_ERR_CC;
 		*rdata_len = 1;

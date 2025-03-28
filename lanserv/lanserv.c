@@ -162,8 +162,8 @@ ipmb_addr_change_dev(channel_t     *chan,
     info->bmc_ipmb = addr;
     rv = ioctl(info->smi_fd, IPMICTL_SET_MY_ADDRESS_CMD, &slave_addr);
     if (rv) {
-	chan->log(chan, OS_ERROR, NULL,
-		  "Error setting IPMB address: 0x%x", errno);
+	chan->sys->log(chan->sys, OS_ERROR, NULL,
+		       "Error setting IPMB address: 0x%x", errno);
     }    
 }
 
@@ -328,10 +328,10 @@ lan_data_ready(int lan_fd, void *cb_data, os_hnd_fd_id_t *id)
     }
     l.xmit_fd = lan_fd;
 
-    if (lan->sysinfo->debug & DEBUG_RAW_MSG) {
-	debug_log_raw_msg(lan->sysinfo, (void *) &l.addr, l.addr_len,
+    if (lan->sys->debug & DEBUG_RAW_MSG) {
+	debug_log_raw_msg(lan->sys, (void *) &l.addr, l.addr_len,
 			  "Raw LAN receive from:");
-	debug_log_raw_msg(lan->sysinfo, data, len,
+	debug_log_raw_msg(lan->sys, data, len,
 			  " Receive message:");
     }
 
@@ -475,22 +475,6 @@ lanserv_log(sys_data_t *sys, int logtype, msg_t *msg, const char *format, ...)
     va_end(ap);
 }
 
-static void
-lanserv_chan_log(channel_t *sys, int logtype, msg_t *msg,
-		 const char *format, ...)
-{
-    va_list ap;
-    char dummy;
-    int len;
-
-    va_start(ap, format);
-    len = vsnprintf(&dummy, 1, format, ap);
-    va_end(ap);
-    va_start(ap, format);
-    ilanserv_log(NULL, logtype, msg, format, ap, len);
-    va_end(ap);
-}
-
 static char *config_file = "/etc/ipmi/lan.conf";
 static char *ipmi_dev = NULL;
 
@@ -574,18 +558,6 @@ tick(void *cb_data, os_hnd_timer_id_t *id)
 	fprintf(stderr, "Unable to start timer: 0x%x\n", err);
 	exit(1);
     }
-}
-
-static void *
-ialloc(channel_t *chan, int size)
-{
-    return malloc(size);
-}
-
-static void
-ifree(channel_t *chan, void *data)
-{
-    return free(data);
 }
 
 void
@@ -813,9 +785,6 @@ main(int argc, const char *argv[])
 	chan->smi_send = smi_send_dev;
 	chan->oem.user_data = &data;
 	chan->oem.ipmb_addr_change = ipmb_addr_change_dev;
-	chan->alloc = ialloc;
-	chan->free = ifree;
-	chan->log = lanserv_chan_log;
 
 	if (chan->medium_type == IPMI_CHANNEL_MEDIUM_8023_LAN) {
 	    lanserv_data_t *lan = chan->chan_info;
