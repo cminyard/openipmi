@@ -313,9 +313,8 @@ struct channel_s
     unsigned int get_msg_overhead;
     unsigned int get_msg_header_size;
 
-    int has_recv_q;
-    msg_t *recv_q_head;
-    msg_t *recv_q_tail;
+    msg_t *xmit_q_head;
+    msg_t *xmit_q_tail;
 
     /* Used by channel code. */
     void (*log)(channel_t *chan, int logtype, msg_t *msg,
@@ -715,7 +714,6 @@ struct sys_data_s {
     user_t *(*mc_get_users)(lmc_data_t *mc);
     int (*mc_users_changed)(lmc_data_t *mc);
     pef_data_t *(*mc_get_pef)(lmc_data_t *mc);
-    msg_t *(*mc_get_next_recv_q)(channel_t *chan);
     int (*sol_read_config)(char **tokptr, sys_data_t *sys, const char **err);
     void (*set_chassis_control_prog)(lmc_data_t *mc, const char *prog);
 

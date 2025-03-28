@@ -65,7 +65,6 @@ startcmd_t *is_mc_get_startcmdinfo(lmc_data_t *mc);
 user_t *is_mc_get_users(lmc_data_t *mc);
 int is_mc_users_changed(lmc_data_t *mc);
 pef_data_t *is_mc_get_pef(lmc_data_t *mc);
-msg_t *is_mc_get_next_recv_q(channel_t *chan);
 int is_sol_read_config(char **tokptr, sys_data_t *sys, const char **err);
 void is_set_chassis_control_prog(lmc_data_t *mc, const char *prog);
 void is_resend_atn(channel_t *chan);

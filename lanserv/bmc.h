@@ -236,6 +236,9 @@ struct lmc_data_s
     ipmi_child_quit_t child_quit_handler;
     startcmd_t startcmd;
 
+    msg_t *recv_q_head;
+    msg_t *recv_q_tail;
+
     unsigned char evq[16];
     char  ev_in_q;
 

@@ -593,12 +593,6 @@ sys_start_cmd(sys_data_t *sys)
 {
 }
 
-static msg_t *
-ls_mc_get_next_recv_q(channel_t *chan)
-{
-    return NULL;
-}
-
 static void
 ls_set_chassis_control_prog(lmc_data_t *mc, const char *prog)
 {
@@ -792,7 +786,6 @@ main(int argc, const char *argv[])
     sysinfo.mc_get_users = ls_mc_get_users;
     sysinfo.mc_users_changed = ls_mc_users_changed;
     sysinfo.mc_get_pef = ls_mc_get_pef;
-    sysinfo.mc_get_next_recv_q = ls_mc_get_next_recv_q;
     sysinfo.sol_read_config = ls_sol_read_config;
     sysinfo.set_chassis_control_prog = ls_set_chassis_control_prog;
     sysinfo.register_tick_handler = ls_register_tick_handler;
