@@ -50,7 +50,6 @@
 #include "bmc.h"
 
 #include <errno.h>
-#include <malloc.h>
 #include <string.h>
 
 #include <OpenIPMI/ipmi_err.h>
@@ -884,7 +883,7 @@ handle_picmg_cmd_fru_inventory_device_lock_control(lmc_data_t    *mc,
 	    *rdata_len = 1;
 	    break;
 	}
-	emu->temp_fru_inv_data = malloc(fru->length);
+	emu->temp_fru_inv_data = mc->sys->alloc(mc->sys, fru->length);
 	if (!emu->temp_fru_inv_data) {
 	    rdata[0] = IPMI_OUT_OF_SPACE_CC;
 	    *rdata_len = 1;
@@ -916,7 +915,7 @@ handle_picmg_cmd_fru_inventory_device_lock_control(lmc_data_t    *mc,
 	rdata[3] = 0;
 	ipmi_set_uint32(rdata+4, emu->atca_fru_inv_curr_timestamp);
 	*rdata_len = 8;
-	free(emu->temp_fru_inv_data);
+	mc->sys->free(mc->sys, emu->temp_fru_inv_data);
 	emu->temp_fru_inv_data = NULL;
 	break;
 
@@ -944,7 +943,7 @@ handle_picmg_cmd_fru_inventory_device_lock_control(lmc_data_t    *mc,
 	}
 	memcpy(fru->data, emu->temp_fru_inv_data,
 	       emu->temp_fru_inv_data_len);
-	free(emu->temp_fru_inv_data);
+	mc->sys->free(mc->sys, emu->temp_fru_inv_data);
 	emu->temp_fru_inv_data = NULL;
 	break;
 

@@ -42,6 +42,34 @@
 
 /* Primarily to get string handling routines */
 #include <OpenIPMI/ipmi_string.h>
+#include <OpenIPMI/sysinfo.h>
+
+static void *
+balloc(struct sys_data_s *sys, int size)
+{
+    void *r = malloc(size);
+    if (r)
+	memset(r, 0, size);
+    return r;
+}
+
+static void
+bfree(struct sys_data_s *sys, void *mem)
+{
+    free(mem);
+}
+
+static struct sys_data_s sys = { .alloc = balloc, .free = bfree };
+
+char *
+sys_strdup(struct sys_data_s *sys, const char *s)
+{
+    char *r = sys->alloc(sys, strlen(s) + 1);
+
+    if (r)
+	strcpy(r, s);
+    return r;
+}
 
 #include "persist.c"
 #include "string.c"
@@ -2085,7 +2113,7 @@ main(int argc, char *argv[])
     }
 
     if (!outraw && !decompile) {
-	p = alloc_persist("");
+	p = alloc_persist(&sys, "");
 	if (!p) {
 	    fprintf(stderr, "Out of memory\n");
 	    exit(1);

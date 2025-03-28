@@ -260,7 +260,7 @@ read_command_file(emu_out_t *out, emu_data_t *emu, const char *command_file)
 	char *buffer;
 	int  pos = 0;
 
-	buffer = malloc(INPUT_BUFFER_SIZE);
+	buffer = emu->sys->alloc(emu->sys, INPUT_BUFFER_SIZE);
 	if (!buffer) {
 	    out->eprintf(out, "Could not allocate buffer memory\n");
 	    rv = ENOMEM;
@@ -929,7 +929,7 @@ mc_add_fru_data(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 	if (rv)
 	    return rv;
 
-	rv = get_delim_str(toks, &frufn, &errstr);
+	rv = get_delim_str(emu->sys, toks, &frufn, &errstr);
 	if (rv) {
 	    out->eprintf(out, "**Error with FRU filename: %s", errstr);
 	    return rv;
@@ -987,7 +987,7 @@ mc_dump_fru_data(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 	goto out;
     }
 
-    data = malloc(length);
+    data = emu->sys->alloc(emu->sys, length);
     if (!data) {
 	out->eprintf(out, "**Unable to dump FRU data, out of memory\n", rv);
 	goto out;
@@ -1085,7 +1085,7 @@ read_cmds(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
     const char *errstr;
     int err;
 
-    err = get_delim_str(toks, &filename, &errstr);
+    err = get_delim_str(emu->sys, toks, &filename, &errstr);
     if (err) {
 	out->eprintf(out, "Could not get include filename: %s\n", errstr);
 	return err;
@@ -1097,7 +1097,8 @@ read_cmds(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 	strncmp(filename, "./", 2) &&
 	strncmp(filename, "../", 3))
     {
-	char *nf = malloc(strlen(BASE_CONF_STR) + strlen(filename) + 2);
+	char *nf = emu->sys->alloc(emu->sys,
+				   strlen(BASE_CONF_STR) + strlen(filename) + 2);
 	if (!nf) {
 	    out->eprintf(out, "Out of memory in include\n", errstr);
 	    goto out_err;
@@ -1199,12 +1200,12 @@ do_define(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 	out->eprintf(out, "No variable name given for define\n");
 	return EINVAL;
     }
-    err = get_delim_str(toks, &value, &errstr);
+    err = get_delim_str(emu->sys, toks, &value, &errstr);
     if (err) {
 	out->eprintf(out, "Could not get variable %s value: %s\n", name, errstr);
 	return err;
     }
-    err = add_variable(name, value);
+    err = add_variable(emu->sys, name, value);
     if (err) {
 	free(value);
 	out->eprintf(out, "Out of memory setting variable %s\n", name);
@@ -1258,15 +1259,15 @@ static struct emu_cmd_info cmds[] =
 static struct emu_cmd_info *cmdlist = &cmds[0];
 
 int
-ipmi_emu_add_cmd(const char *name, unsigned int flags,
+ipmi_emu_add_cmd(emu_data_t *emu, const char *name, unsigned int flags,
 		 ipmi_emu_cmd_handler handler)
 {
     struct emu_cmd_info *mcmd;
 
-    mcmd = malloc(sizeof(*mcmd));
+    mcmd = emu->sys->alloc(emu->sys, sizeof(*mcmd));
     if (!mcmd)
 	return ENOMEM;
-    mcmd->name = strdup(name);
+    mcmd->name = sys_strdup(emu->sys, name);
     if (!mcmd->name) {
 	free(mcmd);
 	return ENOMEM;

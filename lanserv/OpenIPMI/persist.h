@@ -56,6 +56,7 @@
 #ifndef __PERSIST_H__
 #define __PERSIST_H__
 
+#include <OpenIPMI/sysinfo.h>
 #include <OpenIPMI/lanserv_dllvisibility.h>
 
 typedef struct persist_s persist_t;
@@ -64,9 +65,9 @@ IPMI_LANSERV_DLL_PUBLIC
 int persist_init(const char *app, const char *instance, const char *basedir);
 
 IPMI_LANSERV_DLL_PUBLIC
-persist_t *alloc_persist(const char *name, ...);
+persist_t *alloc_persist(struct sys_data_s *sys, const char *name, ...);
 IPMI_LANSERV_DLL_PUBLIC
-persist_t *read_persist(const char *name, ...);
+persist_t *read_persist(struct sys_data_s *sys, const char *name, ...);
 IPMI_LANSERV_DLL_PUBLIC
 int write_persist(persist_t *p);
 IPMI_LANSERV_DLL_PUBLIC

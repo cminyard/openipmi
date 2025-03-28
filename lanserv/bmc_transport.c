@@ -230,7 +230,7 @@ handle_set_sol_config_parms(lmc_data_t    *mc,
     }
 
     if (write_config)
-	write_sol_config(mc);
+	write_sol_config(mc->sys, mc);
 
     rdata[0] = err;
     *rdata_len = 1;

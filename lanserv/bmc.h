@@ -345,48 +345,6 @@ struct lmc_data_s
     ipmi_timer_t *watchdog_timer;
 };
 
-typedef struct atca_site_s
-{
-    unsigned char valid;
-    unsigned char hw_address;
-    unsigned char site_type;
-    unsigned char site_number;
-} atca_site_t;
-
-#define MAX_EMU_ADDR		16
-#define MAX_EMU_ADDR_DATA	64
-typedef struct emu_addr_s
-{
-    unsigned char valid;
-    unsigned char addr_type;
-    unsigned char addr_data[MAX_EMU_ADDR_DATA];
-    unsigned int  addr_len;
-} emu_addr_t;
-
-struct emu_data_s
-{
-    sys_data_t *sysinfo;
-
-    int users_changed;
-
-    int          atca_mode;
-    atca_site_t  atca_sites[128]; /* Indexed by HW address. */
-    uint32_t     atca_fru_inv_curr_timestamp;
-    uint16_t     atca_fru_inv_curr_lock_id;
-    int          atca_fru_inv_locked;
-    int          atca_fru_inv_lock_timeout;
-
-    unsigned char *temp_fru_inv_data;
-    unsigned int  temp_fru_inv_data_len;
-
-    void *user_data;
-
-    ipmi_emu_sleep_cb sleeper;
-
-    struct timeval last_addr_change_time;
-    emu_addr_t addr[MAX_EMU_ADDR];
-};
-
 /* Device ID support bits */
 #define IPMI_DEVID_CHASSIS_DEVICE	(1 << 7)
 #define IPMI_DEVID_BRIDGE		(1 << 6)
@@ -405,7 +363,7 @@ sdr_t *find_sdr_by_recid(sdrs_t     *sdrs,
 			 uint16_t   record_id,
 			 sdr_t      **prev);
 
-sdr_t *new_sdr_entry(sdrs_t *sdrs, unsigned char length);
+sdr_t *new_sdr_entry(lmc_data_t *mc, sdrs_t *sdrs, unsigned char length);
 void add_sdr_entry(lmc_data_t *mc, sdrs_t *sdrs, sdr_t *entry);
 void read_mc_sdrs(lmc_data_t *mc, sdrs_t *sdrs, const char *sdrtype);
 
@@ -438,6 +396,10 @@ extern cmd_handler_f oem0_netfn_handlers[256];
 #define set_bit(m, b, v) (m) = (v) ? ((m) | (1 << (b))) : ((m) & ~(1 << (b)))
 #define bit_set(m, b) (!!((m) & (1 << (b))))
 
+int ipmi_mc_handle_msg(lmc_data_t    *srcmc,
+		       msg_t         *msg,
+		       unsigned char *rdata,
+		       unsigned int  *rdata_len);
 
 int ipmi_mc_is_power_on(lmc_data_t *mc);
 

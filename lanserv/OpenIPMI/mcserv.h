@@ -65,7 +65,7 @@ typedef int (*ipmi_emu_cmd_handler)(emu_out_t  *out,
 				    emu_data_t *emu,
 				    lmc_data_t *mc,
 				    char       **toks);
-int ipmi_emu_add_cmd(const char *name, unsigned int flags,
+int ipmi_emu_add_cmd(emu_data_t *emu, const char *name, unsigned int flags,
 		     ipmi_emu_cmd_handler handler);
 
 

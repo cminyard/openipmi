@@ -193,7 +193,7 @@ extcmd_getval(void *baseloc, extcmd_info_t *t, char *val)
 }
 
 static char *
-extcmd_setval(void *baseloc, extcmd_info_t *t)
+extcmd_setval(sys_data_t *sys, void *baseloc, extcmd_info_t *t)
 {
     unsigned char *loc = baseloc;
     char cbuf[20]; /* Big enough to hold IP, MAC and src */
@@ -259,7 +259,7 @@ extcmd_setval(void *baseloc, extcmd_info_t *t)
 	return NULL;
     }
 
-    return strdup(buf);
+    return sys_strdup(sys, buf);
 }
 
 static int
@@ -415,7 +415,7 @@ extcmd_setvals(sys_data_t *sys,
 	if (setit && !setit[i])
 	    continue;
 	oneset = 1;
-	rv = add_cmd(&cmd, ts[i].name, extcmd_setval(baseloc, ts + i), 1);
+	rv = add_cmd(&cmd, ts[i].name, extcmd_setval(sys, baseloc, ts + i), 1);
 	if (rv) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "Out of memory in extcmd write command (%d) %s\n",
@@ -481,7 +481,7 @@ extcmd_checkvals(sys_data_t *sys,
     strcat(cmd, " check");
 
     for (i = 0; i < count; i++) {
-	rv = add_cmd(&cmd, ts[i].name, extcmd_setval(baseloc, ts + i), 1);
+	rv = add_cmd(&cmd, ts[i].name, extcmd_setval(sys, baseloc, ts + i), 1);
 	if (rv == ENOMEM) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "Out of memory in extcmd check command\n");

@@ -89,6 +89,7 @@
 #include <OpenIPMI/ipmi_posix.h>
 
 #include "emu.h"
+#include "bmc.h"
 #include <OpenIPMI/serserv.h>
 #include <OpenIPMI/ipmbserv.h>
 #include <OpenIPMI/persist.h>
@@ -175,7 +176,10 @@ static misc_data_t *global_misc_data;
 static void *
 balloc(sys_data_t *sys, int size)
 {
-    return malloc(size);
+    void *rv = malloc(size);
+    if (rv)
+	memset(rv, 0, size);
+    return rv;
 }
 
 static void
@@ -194,11 +198,10 @@ typedef struct sim_addr_s
 static int
 smi_send(channel_t *chan, msg_t *msg)
 {
-    misc_data_t      *data = chan->oem.user_data;
     unsigned char    msgd[36];
     unsigned int     msgd_len = sizeof(msgd);
 
-    if (ipmi_emu_handle_msg(data->emu, chan->mc, msg, msgd, &msgd_len))
+    if (ipmi_mc_handle_msg(chan->mc, msg, msgd, &msgd_len))
 	ipmi_handle_smi_rsp(chan, msg, msgd, msgd_len);
     return 0;
 }

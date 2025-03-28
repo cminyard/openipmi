@@ -300,14 +300,14 @@ ipmi_emu_tick(emu_data_t *emu, unsigned int seconds)
 	emu->atca_fru_inv_lock_timeout -= seconds;
 	if (emu->atca_fru_inv_lock_timeout < 0) {
 	    emu->atca_fru_inv_locked = 0;
-	    free(emu->temp_fru_inv_data);
+	    emu->sys->free(emu->sys, emu->temp_fru_inv_data);
 	    emu->temp_fru_inv_data = NULL;
 	}
     }
 
     if (emu->users_changed) {
 	emu->users_changed = 0;
-	write_persist_users(emu->sysinfo);
+	write_persist_users(emu->sys);
     }
 }
 
@@ -332,8 +332,8 @@ deliver_msg_to_mc(lmc_data_t *mc, msg_t *msg,
     } else
 	handle_invalid_cmd(mc, rdata, rdata_len);
 
-    if (mc->emu->sysinfo->debug & DEBUG_MSG)
-	debug_log_raw_msg(mc->emu->sysinfo, rdata, *rdata_len,
+    if (mc->emu->sys->debug & DEBUG_MSG)
+	debug_log_raw_msg(mc->emu->sys, rdata, *rdata_len,
 			  "Response message:");
 }
 
@@ -373,7 +373,7 @@ ipmb_handle_send_msg(channel_t *chan,
 	}
     }
     slave = data[0];
-    mc = emu->sysinfo->ipmb_addrs[slave];
+    mc = emu->sys->ipmb_addrs[slave];
     if (!mc || !mc->enabled) {
 	ordata[0] = 0x83; /* NAK on Write */
 	*ordata_len = 1;
@@ -418,7 +418,7 @@ ipmb_handle_send_msg(channel_t *chan,
     if (fixup(fixup_data, chan, &smsg, rdata, rdata_len))
 	return;
 
-    if (mc->emu->sysinfo->debug & DEBUG_MSG)
+    if (mc->emu->sys->debug & DEBUG_MSG)
 	mc->sys->log(mc->sys, DEBUG, &smsg, "IPMB deliver to MC:");
 
     deliver_msg_to_mc(mc, &smsg, rdata, rdata_len);
@@ -447,7 +447,7 @@ ipmb_handle_send_msg(channel_t *chan,
     }
 
     /* Act as though we received a message over IPMB. */
-    ipmi_emu_handle_msg(mc->emu, chan->mc, &qmsg, tmp_rdata, &tmp_rdata_len);
+    ipmi_mc_handle_msg(chan->mc, &qmsg, tmp_rdata, &tmp_rdata_len);
 }
 
 static int
@@ -467,8 +467,7 @@ ipmb_format_lun_2(channel_t *chan, msg_t *qmsg,
  * Route a send message command.
  */
 static int
-handle_lun_2_cmd(emu_data_t    *emu,
-		 lmc_data_t    *mc,
+handle_lun_2_cmd(lmc_data_t    *mc,
 		 msg_t         *omsg,
 		 unsigned char *rdata,
 		 unsigned int  *rdata_len)
@@ -490,13 +489,13 @@ handle_lun_2_cmd(emu_data_t    *emu,
 	return 1;
     }
 
-    qmsg = malloc(sizeof(*qmsg) + omsg->len + ochan->get_msg_overhead);
+    qmsg = mc->sys->alloc(mc->sys,
+			  sizeof(*qmsg) + omsg->len + ochan->get_msg_overhead);
     if (!qmsg) {
 	rdata[0] = IPMI_OUT_OF_SPACE_CC;
 	*rdata_len = 1;
 	return 1;
     }
-    memset(qmsg, 0, sizeof(*qmsg));
 
     *qmsg = *omsg;
 
@@ -515,7 +514,7 @@ handle_lun_2_cmd(emu_data_t    *emu,
     if (ochan->format_lun_2(ochan, qmsg, rdata, rdata_len)) {
 	if (qmsg->track)
 	    find_mc_seq(ochan->mc, qmsg, tmp_rdata, &tmp_rdata_len);
-	free(qmsg);
+	mc->sys->free(mc->sys, qmsg);
 	return 1;
     }
 
@@ -571,21 +570,19 @@ find_mc_seq(lmc_data_t *mc, msg_t *msg,
 }
 
 int
-handle_response(emu_data_t    *emu,
-		lmc_data_t    *mc,
+handle_response(lmc_data_t    *mc,
 		msg_t         *msg,
 		unsigned char *rdata,
 		unsigned int  *rdata_len)
 {
     msg_t *qmsg;
 
-    qmsg = malloc(sizeof(*qmsg) + msg->len);
+    qmsg = mc->sys->alloc(mc->sys, sizeof(*qmsg) + msg->len);
     if (!qmsg) {
 	rdata[0] = IPMI_OUT_OF_SPACE_CC;
 	*rdata_len = 1;
 	return 1;
     }
-    memset(qmsg, 0, sizeof(*qmsg));
 
     *qmsg = *msg;
 
@@ -594,7 +591,7 @@ handle_response(emu_data_t    *emu,
     memcpy(qmsg->data, msg->data, msg->len);
 
     if (find_mc_seq(mc, qmsg, rdata, rdata_len)) {
-	free(qmsg);
+	mc->sys->free(mc->sys, qmsg);
 	return 1;
     }
 
@@ -668,14 +665,13 @@ handle_response(emu_data_t    *emu,
  * least 1.
  */
 int
-ipmi_emu_handle_msg(emu_data_t    *emu,
-		    lmc_data_t    *mc,
-		    msg_t         *omsg,
-		    unsigned char *rdata,
-		    unsigned int  *rdata_len)
+ipmi_mc_handle_msg(lmc_data_t    *mc,
+		   msg_t         *omsg,
+		   unsigned char *rdata,
+		   unsigned int  *rdata_len)
 {
-    if (emu->sysinfo->debug & DEBUG_MSG)
-	emu->sysinfo->log(emu->sysinfo, DEBUG, omsg, "Receive message:");
+    if (mc->sys->debug & DEBUG_MSG)
+	mc->sys->log(mc->sys, DEBUG, omsg, "Receive message:");
 
     if (!mc->enabled) {
 	rdata[0] = 0xff;
@@ -685,10 +681,10 @@ ipmi_emu_handle_msg(emu_data_t    *emu,
 
     /* Figure out where the message goes. */
     if (omsg->dlun == 2)
-	return handle_lun_2_cmd(emu, mc, omsg, rdata, rdata_len);
+	return handle_lun_2_cmd(mc, omsg, rdata, rdata_len);
 
     if (omsg->netfn & 1)
-	handle_response(emu, mc, omsg, rdata, rdata_len);
+	handle_response(mc, omsg, rdata, rdata_len);
     else
 	deliver_msg_to_mc(mc, omsg, rdata, rdata_len);
 
@@ -705,18 +701,17 @@ is_resend_atn(channel_t *chan)
 }
 
 emu_data_t *
-ipmi_emu_alloc(void *user_data, ipmi_emu_sleep_cb sleeper, sys_data_t *sysinfo)
+ipmi_emu_alloc(void *user_data, ipmi_emu_sleep_cb sleeper, sys_data_t *sys)
 {
-    emu_data_t *data = malloc(sizeof(*data));
+    emu_data_t *emu = sys->alloc(sys, sizeof(*emu));
 
-    if (data) {
-	memset(data, 0, sizeof(*data));
-	data->user_data = user_data;
-	data->sleeper = sleeper;
-	data->sysinfo = sysinfo;
+    if (emu) {
+	emu->user_data = user_data;
+	emu->sleeper = sleeper;
+	emu->sys = sys;
     }
 	
-    return data;
+    return emu;
 }
 
 int
@@ -733,7 +728,7 @@ ipmi_emu_set_addr(emu_data_t *emu, unsigned int addr_num,
     if (addr_len > sizeof(addr->addr_data))
 	return EINVAL;
 
-    emu->sysinfo->get_monotonic_time(emu->sysinfo, &emu->last_addr_change_time);
+    emu->sys->get_monotonic_time(emu->sys, &emu->last_addr_change_time);
     addr->addr_type = addr_type;
     memcpy(addr->addr_data, addr_data, addr_len);
     addr->addr_len = addr_len;
@@ -774,10 +769,10 @@ ipmi_mc_destroy(lmc_data_t *mc)
     entry = mc->sel.entries;
     while (entry) {
 	n_entry = entry->next;
-	free(entry);
+	mc->sys->free(mc->sys, entry);
 	entry = n_entry;
     }
-    free(mc);
+    mc->sys->free(mc->sys, mc);
 }
 
 int
@@ -980,20 +975,19 @@ is_mc_alloc_unconfigured(sys_data_t *sys, unsigned char ipmb,
 	goto out;
     }
 
-    mc = malloc(sizeof(*mc));
+    mc = sys->alloc(sys, sizeof(*mc));
     if (!mc)
 	return ENOMEM;
-    memset(mc, 0, sizeof(*mc));
     mc->ipmb = ipmb;
+    mc->sys = sys;
     sys->ipmb_addrs[ipmb] = mc;
 
     mc->startcmd.poweroff_wait_time = 60;
     mc->startcmd.kill_wait_time = 20;
     mc->startcmd.startnow = 0;
 
-    for (i=0; i<=MAX_USERS; i++) {
+    for (i=0; i<=MAX_USERS; i++)
 	mc->users[i].idx = i;
-    }
 
     mc->pef.num_event_filters = MAX_EVENT_FILTERS;
     for (i=0; i<MAX_EVENT_FILTERS; i++) {
@@ -1114,13 +1108,12 @@ ipmi_emu_add_mc(emu_data_t    *emu,
     lmc_data_t     *mc;
     struct timeval t;
     int            i;
-    sys_data_t     *sys = emu->sysinfo;
+    sys_data_t     *sys = emu->sys;
 
     i = is_mc_alloc_unconfigured(sys, ipmb, &mc);
     if (i)
 	return i;
 
-    mc->sys = sys;
     mc->emu = emu;
     mc->ipmb = ipmb;
 
@@ -1138,7 +1131,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
     mc->global_enables = 1 << IPMI_MC_EVENT_LOG_BIT;
 
     /* Start the time at zero. */
-    emu->sysinfo->get_monotonic_time(emu->sysinfo, &t);
+    emu->sys->get_monotonic_time(emu->sys, &t);
     mc->sel.time_offset = 0;
     mc->main_sdrs.time_offset = 0;
     mc->main_sdrs.next_entry = 1;
@@ -1174,7 +1167,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
 	}
     }
 
-    if (ipmb == emu->sysinfo->bmc_ipmb) {
+    if (ipmb == emu->sys->bmc_ipmb) {
 	int rv;
 
 	if (!mc->channels[15]) {
@@ -1189,10 +1182,10 @@ ipmi_emu_add_mc(emu_data_t    *emu,
 
 	init_msg_q(&mc->recv_q, recv_q_first_msg, recv_q_now_empty, mc);
 
-	mc->sys = emu->sysinfo;
+	mc->sys = emu->sys;
 	rv = init_mc(emu, mc, flags & IPMI_MC_PERSIST_SDR);
 	if (rv) {
-	    free(mc);
+	    mc->sys->free(mc->sys, mc);
 	    return rv;
 	}
     }
@@ -1203,7 +1196,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
 	ipmi_register_child_quit_handler(&mc->child_quit_handler);
 	mc->tick_handler.info = mc;
 	mc->tick_handler.handler = handle_tick;
-	emu->sysinfo->register_tick_handler(&mc->tick_handler);
+	emu->sys->register_tick_handler(&mc->tick_handler);
 	mc->channels[15]->start_cmd = chan_start_cmd;
 	mc->channels[15]->stop_cmd = chan_stop_cmd;
     }
@@ -1243,9 +1236,9 @@ ipmi_get_product_id(lmc_data_t *mc, unsigned char product_id[2])
 int
 ipmi_emu_get_mc_by_addr(emu_data_t *emu, unsigned char ipmb, lmc_data_t **mc)
 {
-    if (!emu->sysinfo->ipmb_addrs[ipmb])
+    if (!emu->sys->ipmb_addrs[ipmb])
 	return ENOSYS;
-    *mc = emu->sysinfo->ipmb_addrs[ipmb];
+    *mc = emu->sys->ipmb_addrs[ipmb];
     return 0;
 }
 
@@ -1256,9 +1249,9 @@ ipmi_emu_set_bmc_mc(emu_data_t *emu, unsigned char ipmb)
 
     if (ipmb & 1)
 	return EINVAL;
-    emu->sysinfo->bmc_ipmb = ipmb;
+    emu->sys->bmc_ipmb = ipmb;
     if (!ipmi_emu_get_mc_by_addr(emu, ipmb, &mc))
-	mc->sys = emu->sysinfo;
+	mc->sys = emu->sys;
     return 0;
 }
 
@@ -1267,7 +1260,7 @@ ipmi_emu_get_bmc_mc(emu_data_t *emu)
 {
     lmc_data_t *mc;
     
-    if (!ipmi_emu_get_mc_by_addr(emu, emu->sysinfo->bmc_ipmb, &mc))
+    if (!ipmi_emu_get_mc_by_addr(emu, emu->sys->bmc_ipmb, &mc))
 	return mc;
     return NULL;
 }
@@ -1275,5 +1268,5 @@ ipmi_emu_get_bmc_mc(emu_data_t *emu)
 void
 emu_set_debug_level(emu_data_t *emu, unsigned int debug_level)
 {
-    emu->sysinfo->debug = debug_level;
+    emu->sys->debug = debug_level;
 }
