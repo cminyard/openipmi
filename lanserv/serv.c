@@ -373,3 +373,13 @@ get_next_msg_q(struct msg_q *q)
     }
     return msg;
 }
+
+char *
+sys_strdup(sys_data_t *sys, const char *s)
+{
+    char *r = sys->alloc(sys, strlen(s) + 1);
+
+    if (r)
+	strcpy(r, s);
+    return r;
+}

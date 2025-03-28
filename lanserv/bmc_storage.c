@@ -50,7 +50,6 @@
 #include "bmc.h"
 
 #include <errno.h>
-#include <malloc.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -104,7 +103,7 @@ handle_sel(const char *name, void *data, unsigned int len, void *cb_data)
 	goto out;
     }
 
-    n = malloc(sizeof(*n));
+    n = mc->sys->alloc(mc->sys, sizeof(*n));
     if (!n)
 	return ENOMEM;
 
@@ -154,7 +153,7 @@ ipmi_mc_enable_sel(lmc_data_t    *mc,
     mc->sel.reservation = 0;
     mc->sel.next_entry = 1;
 
-    p = read_persist("sel.%2.2x", is_mc_get_ipmb(mc));
+    p = read_persist(mc->sys, "sel.%2.2x", is_mc_get_ipmb(mc));
     if (!p)
 	return 0;
 
@@ -170,7 +169,7 @@ rewrite_sels(lmc_data_t *mc)
     sel_entry_t *e;
     int err;
 
-    p = alloc_persist("sel.%2.2x", is_mc_get_ipmb(mc));
+    p = alloc_persist(mc->sys, "sel.%2.2x", is_mc_get_ipmb(mc));
     if (!p) {
 	err = ENOMEM;
 	goto out_err;
@@ -222,7 +221,7 @@ ipmi_mc_add_to_sel(lmc_data_t    *mc,
 	return EAGAIN;
     }
 
-    e = malloc(sizeof(*e));
+    e = mc->sys->alloc(mc->sys, sizeof(*e));
     if (!e)
 	return ENOMEM;
 
@@ -235,13 +234,13 @@ ipmi_mc_add_to_sel(lmc_data_t    *mc,
     {
 	e->record_id++;
 	if (e->record_id == start_record_id) {
-	    free(e);
+	    mc->sys->free(mc->sys, e);
 	    return EAGAIN;
 	}
 	mc->sel.next_entry++;
     }
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
 
     ipmi_set_uint16(e->data, e->record_id);
     e->data[2] = record_type;
@@ -547,7 +546,7 @@ handle_delete_sel_entry(lmc_data_t    *mc,
     *rdata_len = 3;
 
     mc->sel.count--;
-    free(entry);
+    mc->sys->free(mc->sys, entry);
 
     rewrite_sels(mc);
 }
@@ -605,12 +604,12 @@ handle_clear_sel(lmc_data_t    *mc,
 	mc->sel.count = 0;
 	while (entry) {
 	    n_entry = entry->next;
-	    free(entry);
+	    mc->sys->free(mc->sys, entry);
 	    entry = n_entry;
 	}
     }
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     mc->sel.last_erase_time = t.tv_sec + mc->sel.time_offset;
 
     rdata[0] = 0;
@@ -636,7 +635,7 @@ handle_get_sel_time(lmc_data_t    *mc,
 	return;
     }
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     rdata[0] = 0;
     ipmi_set_uint32(rdata+1, t.tv_sec + mc->sel.time_offset);
     *rdata_len = 5;
@@ -659,7 +658,7 @@ handle_set_sel_time(lmc_data_t    *mc,
     if (check_msg_length(msg, 4, rdata, rdata_len))
 	return;
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     mc->sel.time_offset = ipmi_get_uint32(msg->data) - t.tv_sec;
 
     rdata[0] = 0;
@@ -698,7 +697,7 @@ find_sdr_by_recid(sdrs_t     *sdrs,
 }
 
 sdr_t *
-new_sdr_entry(sdrs_t *sdrs, unsigned char length)
+new_sdr_entry(lmc_data_t *mc, sdrs_t *sdrs, unsigned char length)
 {
     sdr_t    *entry;
     uint16_t start_recid;
@@ -712,13 +711,13 @@ new_sdr_entry(sdrs_t *sdrs, unsigned char length)
 	    return NULL;
     }
 
-    entry = malloc(sizeof(*entry));
+    entry = mc->sys->alloc(mc->sys, sizeof(*entry));
     if (!entry)
 	return NULL;
 
-    entry->data = malloc(length + 6);
+    entry->data = mc->sys->alloc(mc->sys, length + 6);
     if (!entry->data) {
-	free(entry);
+	mc->sys->free(mc->sys, entry);
 	return NULL;
     }
 
@@ -740,7 +739,7 @@ rewrite_sdrs(lmc_data_t *mc, sdrs_t *sdrs)
     sdr_t *sdr;
     int err;
 
-    p = alloc_persist("sdr.%2.2x.main", is_mc_get_ipmb(mc));
+    p = alloc_persist(mc->sys, "sdr.%2.2x.main", is_mc_get_ipmb(mc));
     if (!p) {
 	err = ENOMEM;
 	goto out_err;
@@ -791,7 +790,7 @@ add_sdr_entry(lmc_data_t *mc, sdrs_t *sdrs, sdr_t *entry)
 	p->next = entry;
     }
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     sdrs->last_add_time = t.tv_sec + mc->main_sdrs.time_offset;
     sdrs->sdr_count++;
 
@@ -799,19 +798,25 @@ add_sdr_entry(lmc_data_t *mc, sdrs_t *sdrs, sdr_t *entry)
 }
 
 static void
-free_sdr(sdr_t *sdr)
+free_sdr(lmc_data_t *mc, sdr_t *sdr)
 {
-    free(sdr->data);
-    free(sdr);
+    mc->sys->free(mc->sys, sdr->data);
+    mc->sys->free(mc->sys, sdr);
 }
+
+struct mc_sdr_cb_data {
+    lmc_data_t *mc;
+    sdrs_t *sdrs;
+};
 
 static int
 handle_sdr(const char *name, void *data, unsigned int len, void *cb_data)
 {
+    struct mc_sdr_cb_data *c = cb_data;
     sdr_t *sdr, *p;
-    sdrs_t *sdrs = cb_data;
+    sdrs_t *sdrs = c->sdrs;
 
-    sdr = new_sdr_entry(sdrs, len);
+    sdr = new_sdr_entry(c->mc, sdrs, len);
     if (!sdr)
 	return ENOMEM;
     memcpy(sdr->data, data, len);
@@ -833,7 +838,8 @@ handle_sdr(const char *name, void *data, unsigned int len, void *cb_data)
 static int
 handle_sdr_time(const char *name, long val, void *cb_data)
 {
-    sdrs_t *sdrs = cb_data;
+    struct mc_sdr_cb_data *c = cb_data;
+    sdrs_t *sdrs = c->sdrs;
 
     if (strcmp(name, "last_add_time") == 0)
 	sdrs->last_add_time = val;
@@ -846,12 +852,13 @@ void
 read_mc_sdrs(lmc_data_t *mc, sdrs_t *sdrs, const char *sdrtype)
 {
     persist_t *p;
+    struct mc_sdr_cb_data cb_data = { mc, sdrs };
 
-    p = read_persist("sdr.%2.2x.%s", is_mc_get_ipmb(mc), sdrtype);
+    p = read_persist(mc->sys, "sdr.%2.2x.%s", is_mc_get_ipmb(mc), sdrtype);
     if (!p)
 	return;
 
-    iterate_persist(p, sdrs, handle_sdr, handle_sdr_time);
+    iterate_persist(p, &cb_data, handle_sdr, handle_sdr_time);
     free_persist(p);
 }
 
@@ -868,7 +875,7 @@ ipmi_mc_add_main_sdr(lmc_data_t    *mc,
     if ((data_len < 5) || (data_len != (((unsigned int) data[4]) + 5)))
 	return EINVAL;
 
-    entry = new_sdr_entry(&mc->main_sdrs, data_len);
+    entry = new_sdr_entry(mc, &mc->main_sdrs, data_len);
     if (!entry)
 	return ENOMEM;
 
@@ -895,7 +902,7 @@ ipmi_mc_add_device_sdr(lmc_data_t    *mc,
 	return ENOSYS;
     }
 
-    entry = new_sdr_entry(&mc->device_sdrs[lun], data_len);
+    entry = new_sdr_entry(mc, &mc->device_sdrs[lun], data_len);
     if (!entry)
 	return ENOMEM;
 
@@ -903,7 +910,7 @@ ipmi_mc_add_device_sdr(lmc_data_t    *mc,
 
     memcpy(entry->data+2, data+2, data_len-2);
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     mc->sensor_population_change_time = t.tv_sec + mc->main_sdrs.time_offset;
     mc->lun_has_sensors[lun] = 1;
     mc->num_sensors_per_lun[lun]++;
@@ -991,7 +998,7 @@ handle_reserve_sdr_repository(lmc_data_t    *mc,
     /* If adding an SDR and the reservation changes, we have to
        destroy the working SDR addition. */
     if (mc->part_add_sdr) {
-	free_sdr(mc->part_add_sdr);
+	free_sdr(mc, mc->part_add_sdr);
 	mc->part_add_sdr = NULL;
     }
 }
@@ -1109,7 +1116,7 @@ handle_add_sdr(lmc_data_t    *mc,
 	return;
     }
 
-    entry = new_sdr_entry(&mc->main_sdrs, msg->data[5]);
+    entry = new_sdr_entry(mc, &mc->main_sdrs, msg->data[5]);
     if (!entry) {
 	rdata[0] = IPMI_OUT_OF_SPACE_CC;
 	*rdata_len = 1;
@@ -1183,13 +1190,13 @@ handle_partial_add_sdr(lmc_data_t    *mc,
 	if (mc->part_add_sdr) {
 	    /* Still working on a previous one, return an error and
 	       abort. */
-	    free_sdr(mc->part_add_sdr);
+	    free_sdr(mc, mc->part_add_sdr);
 	    mc->part_add_sdr = NULL;
 	    rdata[0] = IPMI_UNKNOWN_ERR_CC;
 	    *rdata_len = 1;
 	    return;
 	}
-	mc->part_add_sdr = new_sdr_entry(&mc->main_sdrs, msg->data[11]);
+	mc->part_add_sdr = new_sdr_entry(mc, &mc->main_sdrs, msg->data[11]);
 	if (!mc->part_add_sdr)
 	    return;
 	memcpy(mc->part_add_sdr->data+2, msg->data+8, msg->len - 8);
@@ -1201,14 +1208,14 @@ handle_partial_add_sdr(lmc_data_t    *mc,
 	    return;
 	}
 	if (offset != mc->part_add_next) {
-	    free_sdr(mc->part_add_sdr);
+	    free_sdr(mc, mc->part_add_sdr);
 	    mc->part_add_sdr = NULL;
 	    rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	    *rdata_len = 1;
 	    return;
 	}
 	if ((offset + msg->len - 6) > mc->part_add_sdr->length) {
-	    free_sdr(mc->part_add_sdr);
+	    free_sdr(mc, mc->part_add_sdr);
 	    mc->part_add_sdr = NULL;
 	    rdata[0] = 0x80; /* Invalid data length */
 	    *rdata_len = 1;
@@ -1221,7 +1228,7 @@ handle_partial_add_sdr(lmc_data_t    *mc,
     if ((msg->data[5] & 0xf) == 1) {
 	/* End of the operation. */
 	if (mc->part_add_next != mc->part_add_sdr->length) {
-	    free_sdr(mc->part_add_sdr);
+	    free_sdr(mc, mc->part_add_sdr);
 	    mc->part_add_sdr = NULL;
 	    rdata[0] = 0x80; /* Invalid data length */
 	    *rdata_len = 1;
@@ -1309,9 +1316,9 @@ handle_delete_sdr(lmc_data_t    *mc,
     ipmi_set_uint16(rdata+1, entry->record_id);
     *rdata_len = 3;
 
-    free_sdr(entry);
+    free_sdr(mc, entry);
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     mc->main_sdrs.last_erase_time = t.tv_sec + mc->main_sdrs.time_offset;
     mc->main_sdrs.sdr_count--;
     rewrite_sdrs(mc, &mc->main_sdrs);
@@ -1368,7 +1375,7 @@ handle_clear_sdr_repository(lmc_data_t    *mc,
 	entry = mc->main_sdrs.sdrs;
 	while (entry) {
 	    n_entry = entry->next;
-	    free_sdr(entry);
+	    free_sdr(mc, entry);
 	    entry = n_entry;
 	}
     }
@@ -1376,7 +1383,7 @@ handle_clear_sdr_repository(lmc_data_t    *mc,
     rdata[0] = 0;
     *rdata_len = 2;
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     mc->main_sdrs.last_erase_time = t.tv_sec + mc->main_sdrs.time_offset;
     rewrite_sdrs(mc, &mc->main_sdrs);
 }
@@ -1395,7 +1402,7 @@ handle_get_sdr_repository_time(lmc_data_t    *mc,
 	return;
     }
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     rdata[0] = 0;
     ipmi_set_uint32(rdata+1, t.tv_sec + mc->main_sdrs.time_offset);
     *rdata_len = 5;
@@ -1418,7 +1425,7 @@ handle_set_sdr_repository_time(lmc_data_t    *mc,
     if (check_msg_length(msg, 4, rdata, rdata_len))
 	return;
 
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &t);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &t);
     mc->main_sdrs.time_offset = ipmi_get_uint32(msg->data) - t.tv_sec;
 
     rdata[0] = 0;
@@ -1525,7 +1532,7 @@ fru_session_closed(lmc_data_t *mc, uint32_t session_id, void *cb_data)
 	    p->next = ses->next;
     }
     fru->free(mc, ses->data_to_free);
-    free(ses);
+    mc->sys->free(mc->sys, ses);
 }
 
 static void
@@ -1565,7 +1572,7 @@ handle_get_fru_inventory_area_info(lmc_data_t    *mc,
 	    ses = ses->next;
 	}
 	if (!ses) {
-	    ses = malloc(sizeof(*ses));
+	    ses = mc->sys->alloc(mc->sys, sizeof(*ses));
 	    if (!ses) {
 		rdata[0] = IPMI_OUT_OF_SPACE_CC;
 		*rdata_len = 1;
@@ -1899,12 +1906,12 @@ ipmi_mc_add_fru_data(lmc_data_t    *mc,
     fru = find_fru(mc, device_id);
     if (!fru) {
 	int rv;
-	fru = malloc(sizeof(*fru));
+	fru = mc->sys->alloc(mc->sys, sizeof(*fru));
 	memset(fru, 0, sizeof(*fru));
 	rv = sem_init(&fru->sem, 0, 1);
 	if (rv) {
 	    rv = errno;
-	    free(fru);
+	    mc->sys->free(mc->sys, fru);
 	    return rv;
 	}
 	fru->devid = device_id;
@@ -1913,7 +1920,7 @@ ipmi_mc_add_fru_data(lmc_data_t    *mc,
     }
 
     if (fru->data) {
-	free(fru->data);
+	mc->sys->free(mc->sys, fru->data);
 	fru->length = 0;
     }
 
@@ -1921,7 +1928,7 @@ ipmi_mc_add_fru_data(lmc_data_t    *mc,
 	fru->fru_io_cb = fru_io_cb;
 	fru->data = data;
     } else if (length) {
-	fru->data = malloc(length);
+	fru->data = mc->sys->alloc(mc->sys, length);
 	if (!fru->data)
 	    return ENOMEM;
 	memcpy(fru->data, data, length);
@@ -2104,12 +2111,12 @@ int ipmi_mc_add_fru_file(lmc_data_t    *mc,
     struct fru_file_io_info *info;
     int rv;
     
-    info = malloc(sizeof(*info));
+    info = mc->sys->alloc(mc->sys, sizeof(*info));
     if (!info)
 	return ENOMEM;
-    info->filename = strdup(filename);
+    info->filename = sys_strdup(mc->sys, filename);
     if (!info->filename) {
-	free(info);
+	mc->sys->free(mc->sys, info);
 	return ENOMEM;
     }
     info->mc = mc;
@@ -2118,8 +2125,8 @@ int ipmi_mc_add_fru_file(lmc_data_t    *mc,
 
     rv = ipmi_mc_add_fru_data(mc, device_id, length, fru_file_io_cb, info);
     if (rv) {
-	free(info->filename);
-	free(info);
+	mc->sys->free(mc->sys, info->filename);
+	mc->sys->free(mc->sys, info);
     }
 
     return rv;

@@ -53,7 +53,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1155,10 +1154,9 @@ ipmi_mc_add_sensor(lmc_data_t    *mc,
     if ((lun >= 4) || (sens_num >= 255) || (mc->sensors[lun][sens_num]))
 	return EINVAL;
 
-    sensor = malloc(sizeof(*sensor));
+    sensor = mc->sys->alloc(mc->sys, sizeof(*sensor));
     if (!sensor)
 	return ENOMEM;
-    memset(sensor, 0, sizeof(*sensor));
 
     sensor->mc = mc;
     sensor->lun = lun;
@@ -1330,15 +1328,14 @@ file_init(lmc_data_t *mc,
 	return EINVAL;
     }
 
-    err = get_delim_str(toks, &fname, errstr);
+    err = get_delim_str(mc->sys, toks, &fname, errstr);
     if (err)
 	return ENOMEM;
-    f = malloc(sizeof(*f));
+    f = mc->sys->alloc(mc->sys, sizeof(*f));
     if (!f) {
-	free(fname);
+	mc->sys->free(mc->sys, fname);
 	return ENOMEM;
     }
-    memset(f, 0, sizeof(*f));
     f->emu = mc->emu;
     f->sensor_mc = mc;
     f->sensor_lun = lun;
@@ -1456,8 +1453,8 @@ file_init(lmc_data_t *mc,
     return 0;
 
   out_err:
-    free(fname);
-    free(f);
+    mc->sys->free(mc->sys, fname);
+    mc->sys->free(mc->sys, f);
     return -1;
 }
 
@@ -1514,7 +1511,7 @@ static void
 free_sensor(lmc_data_t *mc, sensor_t *sensor)
 {
     mc->sensors[sensor->lun][sensor->num] = NULL;
-    free(sensor);
+    mc->sys->free(mc->sys, sensor);
 }
 
 static void

@@ -173,7 +173,7 @@ lanserv_read_config(sys_data_t    *sys,
 	    if (err)
 		goto out_err;
 	} else if (strcmp(tok, "lan_config_program") == 0) {
-	    err = get_delim_str(&tokptr, &lan->config_prog, &errstr);
+	    err = get_delim_str(sys, &tokptr, &lan->config_prog, &errstr);
 	    if (err)
 		goto out_err;
 	} else {

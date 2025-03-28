@@ -60,9 +60,51 @@
 #include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/mcserv.h>
 
-void ipmi_emu_tick(emu_data_t *emu, unsigned int seconds);
+typedef struct atca_site_s
+{
+    unsigned char valid;
+    unsigned char hw_address;
+    unsigned char site_type;
+    unsigned char site_number;
+} atca_site_t;
 
 typedef void (*ipmi_emu_sleep_cb)(emu_data_t *emu, struct timeval *time);
+
+#define MAX_EMU_ADDR		16
+#define MAX_EMU_ADDR_DATA	64
+typedef struct emu_addr_s
+{
+    unsigned char valid;
+    unsigned char addr_type;
+    unsigned char addr_data[MAX_EMU_ADDR_DATA];
+    unsigned int  addr_len;
+} emu_addr_t;
+
+struct emu_data_s
+{
+    sys_data_t *sys;
+
+    int users_changed;
+
+    int          atca_mode;
+    atca_site_t  atca_sites[128]; /* Indexed by HW address. */
+    uint32_t     atca_fru_inv_curr_timestamp;
+    uint16_t     atca_fru_inv_curr_lock_id;
+    int          atca_fru_inv_locked;
+    int          atca_fru_inv_lock_timeout;
+
+    unsigned char *temp_fru_inv_data;
+    unsigned int  temp_fru_inv_data_len;
+
+    void *user_data;
+
+    ipmi_emu_sleep_cb sleeper;
+
+    struct timeval last_addr_change_time;
+    emu_addr_t addr[MAX_EMU_ADDR];
+};
+
+void ipmi_emu_tick(emu_data_t *emu, unsigned int seconds);
 
 emu_data_t *ipmi_emu_alloc(void *user_data, ipmi_emu_sleep_cb sleeper,
 			   sys_data_t *sysinfo);
@@ -70,12 +112,6 @@ emu_data_t *ipmi_emu_alloc(void *user_data, ipmi_emu_sleep_cb sleeper,
 void *ipmi_emu_get_user_data(emu_data_t *emu);
 
 void ipmi_emu_sleep(emu_data_t *emu, struct timeval *time);
-
-int ipmi_emu_handle_msg(emu_data_t    *emu,
-			lmc_data_t    *srcmc,
-			msg_t         *msg,
-			unsigned char *rdata,
-			unsigned int  *rdata_len);
 
 #define IPMI_MC_DYNAMIC_SENSOR_POPULATION	(1 << 0)
 #define IPMI_MC_PERSIST_SDR			(1 << 1)

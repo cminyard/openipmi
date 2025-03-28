@@ -155,10 +155,10 @@ if a normal message comes in, it will send it to channel_smi_send()
 
 channel_smi_send() will call the channel-specific handling callback,
 which will generall result it in going back to ipmi_sim.c's smi_send()
-function.  smi_send() calls ipmi_emu_handle_msg() in bmc.c to handle
+function.  smi_send() calls ipmi_mc_handle_msg() in bmc.c to handle
 the message
 
-ipmi_emu_handle_msg() will route the command to the proper function to
+ipmi_mc_handle_msg() will route the command to the proper function to
 handle it.  It passes in a response message to the handler, which the
 handler must fill in.  Then it will call ipmi_handle_smi_rsp() (in
 serv.c) to send the response.

@@ -183,7 +183,7 @@ ipmbserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
 	*errstr = "Length of device file name %s > 15";
 	return -1;
     }
-    ipmbdev = strdup(tok);
+    ipmbdev = sys_strdup(sys, tok);
     if (!ipmbdev) {
 	*errstr = "Unable to alloc device file name";
 	return -1;

@@ -80,7 +80,7 @@ read_persist_users(sys_data_t *sys)
 	if (!mc)
 	    continue;
 
-	p = read_persist("users.mc%2.2x", sys->mc_get_ipmb(mc));
+	p = read_persist(sys, "users.mc%2.2x", sys->mc_get_ipmb(mc));
 	if (!p)
 	    continue;
 
@@ -127,7 +127,7 @@ write_persist_users(sys_data_t *sys)
 	if (!mc || !sys->mc_users_changed(mc))
 	    continue;
 
-	p = alloc_persist("users.mc%2.2x", sys->mc_get_ipmb(mc));
+	p = alloc_persist(sys, "users.mc%2.2x", sys->mc_get_ipmb(mc));
 	if (!p)
 	    return ENOMEM;
 
@@ -159,7 +159,7 @@ struct variable {
  *
  */
 int
-add_variable(const char *name, char *value)
+add_variable(sys_data_t *sys, const char *name, char *value)
 {
     struct variable *var = vars, *last = NULL;
 
@@ -170,14 +170,14 @@ add_variable(const char *name, char *value)
 	var = var->next;
     }
     if (var) {
-	free(var->value);
+	sys->free(sys, var->value);
     } else {
-	var = malloc(sizeof(*var));
+	var = sys->alloc(sys, sizeof(*var));
 	if (!var)
 	    return ENOMEM;
-	var->name = strdup(name);
+	var->name = sys_strdup(sys, name);
 	if (!var->name) {
-	    free(var);
+	    sys->free(sys, var);
 	    return ENOMEM;
 	}
 	var->next = NULL;
@@ -274,7 +274,7 @@ isquote(char c)
 }
 
 int
-get_delim_str(char **rtokptr, char **rval, const char **err)
+get_delim_str(sys_data_t *sys, char **rtokptr, char **rval, const char **err)
 {
     char *tokptr = *rtokptr;
     char endc;
@@ -303,7 +303,7 @@ get_delim_str(char **rtokptr, char **rval, const char **err)
 	    val = find_variable(val);
 	    if (!val) {
 		if (rv)
-		    free(rv);
+		    sys->free(sys, rv);
 		*err = "unable to find variable";
 		return -1;
 	    }
@@ -325,13 +325,13 @@ get_delim_str(char **rtokptr, char **rval, const char **err)
 	    tokptr++;
 	} else {
 	    if (rv)
-		free(rv);
+		sys->free(sys, rv);
 	    *err = "string value must start with '\"' or '''";
 	    return -1;
 	}
 
 	if (rv) {
-	    char *newrv = malloc(strlen(rv) + strlen(val) + 1);
+	    char *newrv = sys->alloc(sys, strlen(rv) + strlen(val) + 1);
 	    if (!newrv) {
 		free(rv);
 		*err = "Out of memory copying string";
@@ -339,10 +339,10 @@ get_delim_str(char **rtokptr, char **rval, const char **err)
 	    }
 	    strcpy(newrv, rv);
 	    strcat(newrv, val);
-	    free(rv);
+	    sys->free(sys, rv);
 	    rv = newrv;
 	} else {
-	    rv = strdup(val);
+	    rv = sys_strdup(sys, val);
 	    if (!rv) {
 		*err = "Out of memory copying string";
 		return -1;
@@ -775,10 +775,10 @@ read_config(sys_data_t *sys,
 		errstr = "No variable supplied for define";
 		goto next;
 	    }
-	    err = get_delim_str(&tokptr, &value, &errstr);
+	    err = get_delim_str(sys, &tokptr, &value, &errstr);
 	    if (err)
 		goto next;
-	    err = add_variable(varname, value);
+	    err = add_variable(sys, varname, value);
 	    if (err) {
 		free(value);
 		err = ENOMEM;
@@ -789,11 +789,11 @@ read_config(sys_data_t *sys,
 	    char *library = NULL, *initstr = NULL;
 	    struct dliblist *dlib, *dlibp;
 
-	    err = get_delim_str(&tokptr, &library, &errstr);
+	    err = get_delim_str(sys, &tokptr, &library, &errstr);
 	    if (!err)
-		err = get_delim_str(&tokptr, &initstr, &errstr);
+		err = get_delim_str(sys, &tokptr, &initstr, &errstr);
 	    if (!err) {
-		dlib = malloc(sizeof(*dlib));
+		dlib = sys->alloc(sys, sizeof(*dlib));
 		if (!dlib) {
 		    err = ENOMEM;
 		    errstr = "Out of memory";
@@ -813,9 +813,9 @@ read_config(sys_data_t *sys,
 	    }
 	    if (err) {
 		if (library)
-		    free((char *) library);
+		    sys->free(sys, (char *) library);
 		if (initstr)
-		    free((char *) initstr);
+		    sys->free(sys, (char *) initstr);
 	    }
 	    goto next;
 	}
@@ -842,14 +842,15 @@ read_config(sys_data_t *sys,
 	    err = sys->sol_read_config(&tokptr, sys, &errstr);
 	} else if (strcmp(tok, "chassis_control") == 0) {
 	    char *prog;
-	    err = get_delim_str(&tokptr, &prog, &errstr);
+	    err = get_delim_str(sys, &tokptr, &prog, &errstr);
 	    if (!err)
 		sys->set_chassis_control_prog(sys->mc, prog);
 	} else if (strcmp(tok, "name") == 0) {
-	    err = get_delim_str(&tokptr, &sys->name, &errstr);
+	    err = get_delim_str(sys, &tokptr, &sys->name, &errstr);
 	} else if (strcmp(tok, "startcmd") == 0) {
 	    if (sys->startcmd)
-		err = get_delim_str(&tokptr, &sys->startcmd->startcmd, &errstr);
+		err = get_delim_str(sys, &tokptr, &sys->startcmd->startcmd,
+				    &errstr);
 	} else if (strcmp(tok, "startnow") == 0) {
 	    if (sys->startcmd)
 		err = get_bool(&tokptr, &sys->startcmd->startnow, &errstr);

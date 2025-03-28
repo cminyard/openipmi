@@ -1339,7 +1339,7 @@ write_lan_config(lanserv_data_t *lan)
     if (lan->persist_changed) {
 	persist_t *p;
 
-	p = alloc_persist("lanparm.mc%2.2x.%d", 0x20,
+	p = alloc_persist(lan->sys, "lanparm.mc%2.2x.%d", 0x20,
 			  lan->channel.channel_num);
 	if (!p)
 	    return;
@@ -3221,7 +3221,7 @@ read_lan_config(lanserv_data_t *lan)
     unsigned int len;
     long iv;
 
-    p = read_persist("lanparm.mc%2.2x.%d", 0x20,
+    p = read_persist(lan->sys, "lanparm.mc%2.2x.%d", 0x20,
 		     lan->channel.channel_num);
 
     if (p && !read_persist_data(p, &data, &len, "max_priv_for_cipher")) {

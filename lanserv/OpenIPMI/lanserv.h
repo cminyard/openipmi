@@ -70,6 +70,7 @@
 
 #include <OpenIPMI/ipmi_auth.h>
 #include <OpenIPMI/msg.h>
+#include <OpenIPMI/sysinfo.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -401,18 +402,6 @@ struct channel_s
     int prim_ipmb_in_cfg_file;
 };
 
-typedef struct sockaddr_ip_s {
-    union
-        {
-	    struct sockaddr s_addr0;
-            struct sockaddr_in  s_addr4;
-#ifdef PF_INET6
-            struct sockaddr_in6 s_addr6;
-#endif
-        } s_ipsock;
-/*    socklen_t addr_len;*/
-} sockaddr_ip_t;
-
 typedef struct lan_addr_s {
     sockaddr_ip_t addr;
     socklen_t     addr_len;
@@ -597,120 +586,6 @@ struct startcmd_s {
     int wait_poweroff;
 };
 
-/*
- * Note that we keep odd addresses, too.  In some cases that's useful
- * in virtual systems that don't have I2C restrictions.
- */
-#define IPMI_MAX_MCS 256
-
-/*
- * Generic data about the system that is global for the whole system and
- * required for all server types.
- */
-struct sys_data_s {
-    char *name;
-
-    /* The MCs in the system */
-    lmc_data_t *ipmb_addrs[IPMI_MAX_MCS];
-
-#define DEBUG_RAW_MSG	(1 << 0)
-#define DEBUG_MSG	(1 << 1)
-#define DEBUG_SOL	(1 << 2)
-    unsigned int debug;
-
-#define NEW_SESSION			1
-#define NEW_SESSION_FAILED		2
-#define SESSION_CLOSED			3
-#define SESSION_CHALLENGE		4
-#define SESSION_CHALLENGE_FAILED	5
-#define AUTH_FAILED			6
-#define INVALID_MSG			7
-#define OS_ERROR			8
-#define LAN_ERR				9
-#define INFO				10
-#define DEBUG				11
-#define SETUP_ERROR			12
-    void (*log)(sys_data_t *sys, int type, msg_t *msg, const char *format, ...)
-	__attribute__ ((__format__ (__printf__, 4, 5)));
-
-    /* Console port.  Length is zero if not set. */
-    sockaddr_ip_t console_addr;
-    socklen_t console_addr_len;
-    int console_fd;
-
-    unsigned char bmc_ipmb;
-    int sol_present;
-
-    void *info;
-
-    /*
-     * When reading in config, this tracks which information we are
-     * working on.  This is initialized to the MC at 0x20, setting
-     * the working MC changes these to the new MC.
-     */
-    channel_t **chan_set;
-    startcmd_t *startcmd;
-    user_t *cusers;
-    pef_data_t *cpef;
-    ipmi_sol_t *sol;
-    lmc_data_t *mc;
-
-    void *(*alloc)(sys_data_t *sys, int size);
-    void (*free)(sys_data_t *sys, void *data);
-
-    int (*get_monotonic_time)(sys_data_t *sys, struct timeval *tv);
-    int (*get_real_time)(sys_data_t *sys, struct timeval *tv);
-
-    int (*alloc_timer)(sys_data_t *sys, void (*cb)(void *cb_data),
-		       void *cb_data, ipmi_timer_t **timer);
-    int (*start_timer)(ipmi_timer_t *timer, struct timeval *timeout);
-    int (*stop_timer)(ipmi_timer_t *timer);
-    void (*free_timer)(ipmi_timer_t *timer);
-
-    int (*add_io_hnd)(sys_data_t *sys, int fd,
-		      void (*read_hnd)(int fd, void *cb_data),
-		      void *cb_data, ipmi_io_t **io);
-    void (*remove_io_hnd)(ipmi_io_t *io);
-    void (*io_set_hnds)(ipmi_io_t *io,
-			void (*write_hnd)(int fd, void *cb_data),
-			void (*except_hnd)(int fd, void *cb_data));
-    void (*io_set_enables)(ipmi_io_t *io, int read, int write, int except);
-
-    int (*gen_rand)(sys_data_t *sys, void *data, int len);
-
-    /* Called by interface code to report that the target did a reset. */
-    /* FIXME - move */
-    void (*target_reset)(sys_data_t *sys);
-
-    /*
-     * These are a hack so the channel code in the MCs can pick up
-     * these functions.
-     */
-    int (*csmi_send)(channel_t *chan, msg_t *msg);
-
-    int (*lan_channel_init)(void *info, channel_t *chan);
-    int (*ser_channel_init)(void *info, channel_t *chan);
-    int (*ipmb_channel_init)(void *info, channel_t *chan);
-
-    /*
-     * Various MC related info that must be provided.
-     */
-    int (*mc_alloc_unconfigured)(sys_data_t *sys, unsigned char ipmb,
-				 lmc_data_t **rmc);
-    void (*resend_atn)(channel_t *chan);
-    unsigned char (*mc_get_ipmb)(lmc_data_t *mc);
-    channel_t **(*mc_get_channelset)(lmc_data_t *mc);
-    ipmi_sol_t *(*mc_get_sol)(lmc_data_t *mc);
-    startcmd_t *(*mc_get_startcmdinfo)(lmc_data_t *mc);
-    user_t *(*mc_get_users)(lmc_data_t *mc);
-    int (*mc_users_changed)(lmc_data_t *mc);
-    pef_data_t *(*mc_get_pef)(lmc_data_t *mc);
-    int (*sol_read_config)(char **tokptr, sys_data_t *sys, const char **err);
-    void (*set_chassis_control_prog)(lmc_data_t *mc, const char *prog);
-
-    void (*register_tick_handler)(ipmi_tick_handler_t *handler);
-};
-
 static inline void
 zero_extend_ascii(uint8_t *c, unsigned int len)
 {
@@ -761,10 +636,11 @@ const char *mystrtok(char *str, const char *delim, char **next);
  * to be.
  */
 IPMI_LANSERV_DLL_PUBLIC
-int add_variable(const char *name, char *value);
+int add_variable(sys_data_t *sys, const char *name, char *value);
 
 IPMI_LANSERV_DLL_PUBLIC
-int get_delim_str(char **rtokptr, char **rval, const char **err);
+int get_delim_str(sys_data_t *sys, char **rtokptr, char **rval,
+		  const char **err);
 
 IPMI_LANSERV_DLL_PUBLIC
 int get_bool(char **tokptr, unsigned int *rval, const char **err);

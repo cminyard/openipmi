@@ -78,6 +78,7 @@ struct pitem {
 };
 
 struct persist_s {
+    struct sys_data_s *sys;
     char *name;
 
     struct pitem *items;
@@ -165,15 +166,15 @@ do_va_nameit(const char *name, va_list ap)
 }
 
 persist_t *
-alloc_vpersist(const char *iname, va_list ap)
+alloc_vpersist(struct sys_data_s *sys, const char *iname, va_list ap)
 {
-    persist_t *p = malloc(sizeof(*p));
+    persist_t *p = sys->alloc(sys, sizeof(*p));
 
     if (!p)
 	return NULL;
     p->name = do_va_nameit(iname, ap);
     if (!p->name) {
-	free(p);
+	sys->free(sys, p);
 	return NULL;
     }
     p->items = NULL;
@@ -181,13 +182,13 @@ alloc_vpersist(const char *iname, va_list ap)
 }
 
 persist_t *
-alloc_persist(const char *name, ...)
+alloc_persist(struct sys_data_s *sys, const char *name, ...)
 {
     persist_t *p;
     va_list ap;
 
     va_start(ap, name);
-    p = alloc_vpersist(name, ap);
+    p = alloc_vpersist(sys, name, ap);
     va_end(ap);
     return p;
 }
@@ -272,7 +273,7 @@ write_data(void *idata, unsigned int len, FILE *f)
 }
 
 persist_t *
-read_persist(const char *name, ...)
+read_persist(struct sys_data_s *sys, const char *name, ...)
 {
     char *fname;
     va_list ap;
@@ -286,7 +287,7 @@ read_persist(const char *name, ...)
 	return NULL;
 
     va_start(ap, name);
-    p = alloc_vpersist(name, ap);
+    p = alloc_vpersist(sys, name, ap);
     if (!p)
 	goto out_err;
     fname = get_fname(p, "");
@@ -311,13 +312,13 @@ read_persist(const char *name, ...)
 	*(type + 1) = '\0';
 	val = type + 2;
 
-	pi = malloc(sizeof(*pi));
+	pi = sys->alloc(sys, sizeof(*pi));
 	if (!pi) {
 	    free(line);
 	    goto out_err;
 	}
 
-	pi->iname = strdup(name);
+	pi->iname = sys_strdup(sys, name);
 	if (!pi->iname) {
 	    free(pi);
 	    free(line);
@@ -625,7 +626,7 @@ read_persist_str(persist_t *p, char **val, const char *name, ...)
     if (pi->type != PITEM_STR)
 	return EINVAL;
 
-    *val = strdup(pi->data);
+    *val = sys_strdup(p->sys, pi->data);
     if (!*val)
 	return ENOMEM;
     return 0;

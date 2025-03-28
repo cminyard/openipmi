@@ -50,7 +50,6 @@
 #include "bmc.h"
 
 #include <errno.h>
-#include <malloc.h>
 #include <string.h>
 
 #include <OpenIPMI/ipmi_err.h>
@@ -163,7 +162,7 @@ handle_get_watchdog_timer(lmc_data_t    *mc,
 
     if (mc->watchdog_running) {
 	struct timeval now;
-	mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &now);
+	mc->emu->sys->get_monotonic_time(mc->emu->sys, &now);
 	v = diff_timeval_dc(&mc->watchdog_expiry, &now);
 	if (v < 0)
 	    v = 0;
@@ -218,7 +217,7 @@ watchdog_timeout(void *cb_data)
 
 	mc->watchdog_preaction_ran = 1;
 	/* Issued the pretimeout, do the rest of the timeout now. */
-	mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo, &now);
+	mc->emu->sys->get_monotonic_time(mc->emu->sys, &now);
 	tv = mc->watchdog_expiry;
 	sub_timeval(&tv, &now);
 	if (tv.tv_sec == 0) {
@@ -275,8 +274,7 @@ do_watchdog_reset(lmc_data_t *mc)
     mc->watchdog_preaction_ran = 0;
 
     /* Timeout is in tenths of a second, offset is in seconds */
-    mc->emu->sysinfo->get_monotonic_time(mc->emu->sysinfo,
-					 &mc->watchdog_expiry);
+    mc->emu->sys->get_monotonic_time(mc->emu->sys, &mc->watchdog_expiry);
     add_timeval(&mc->watchdog_expiry, &mc->watchdog_time);
     tv = mc->watchdog_time;
     if (IPMI_MC_WATCHDOG_GET_PRE_ACTION(mc) != IPMI_MC_WATCHDOG_PRE_NONE) {
@@ -948,7 +946,7 @@ handle_clear_msg_flags(lmc_data_t    *mc,
     if (msg->data[0] & IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE) {
 	msg_t *qmsg = get_next_msg_q(&mc->recv_q);
 	while (qmsg) {
-	    free(qmsg);
+	    mc->sys->free(mc->sys, qmsg);
 	    qmsg = get_next_msg_q(&mc->recv_q);
 	}
     }
@@ -1062,7 +1060,7 @@ handle_get_msg(lmc_data_t    *mc,
      */
     memcpy(rdata + 2, qmsg->data, qmsg->len);
     *rdata_len = qmsg->len + 2;
-    free(qmsg);
+    mc->sys->free(mc->sys, qmsg);
 }
 
 static void

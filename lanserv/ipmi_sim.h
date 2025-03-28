@@ -98,6 +98,6 @@ void ipmi_do_kill(startcmd_t *startcmd, int noblock);
 
 int sol_init(sys_data_t *sys);
 int read_sol_config(sys_data_t *sys);
-int write_sol_config(lmc_data_t *mc);
+int write_sol_config(sys_data_t *sys, lmc_data_t *mc);
 
 #endif /* IPMI_SIM_H */

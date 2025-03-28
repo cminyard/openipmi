@@ -1652,7 +1652,7 @@ is_sol_read_config(char **tokptr, sys_data_t *sys, const char **err)
 
     sys->sol->use_rtscts = 1;
 
-    rv = get_delim_str(tokptr, &sol->device, err);
+    rv = get_delim_str(sys, tokptr, &sol->device, err);
     if (rv)
 	return rv;
 
@@ -1704,7 +1704,7 @@ is_sol_read_config(char **tokptr, sys_data_t *sys, const char **err)
 		*end = '\0';
 
 		if (strncmp(opt, "backupfile=", 11) == 0) {
-		    sol->backupfile = strdup(opt + 11);
+		    sol->backupfile = sys_strdup(sys, opt + 11);
 		} else {
 		    *err = "Unknown history option";
 		    return -1;
@@ -1778,7 +1778,7 @@ read_sol_config(sys_data_t *sys)
 	sol->solparm.enabled = 1;
 	sol->solparm.bitrate_nonv = 0;
 
-	p = read_persist("sol.mc%2.2x", sys->mc_get_ipmb(mc));
+	p = read_persist(sys, "sol.mc%2.2x", sys->mc_get_ipmb(mc));
 	if (p) {
 	    if (!read_persist_int(p, &iv, "enabled"))
 		sol->solparm.enabled = iv;
@@ -1799,14 +1799,15 @@ read_sol_config(sys_data_t *sys)
 }
 
 int
-write_sol_config(lmc_data_t *mc)
+write_sol_config(sys_data_t *sys, lmc_data_t *mc)
 {
     ipmi_sol_t *sol;
     persist_t *p;
 
     sol = is_mc_get_sol(mc);
 
-    p = alloc_persist("sol.mc%2.2x", sol->soldata->sys->mc_get_ipmb(mc));
+    p = alloc_persist(sys, "sol.mc%2.2x",
+		      sol->soldata->sys->mc_get_ipmb(mc));
     if (!p)
 	return ENOMEM;
 
