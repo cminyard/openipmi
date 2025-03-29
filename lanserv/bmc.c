@@ -126,7 +126,8 @@ static struct iana_handler_elem *find_iana(uint32_t iana)
 }
 
 int
-ipmi_emu_register_iana_handler(uint32_t iana, cmd_handler_f handler,
+ipmi_emu_register_iana_handler(emu_data_t *emu,
+			       uint32_t iana, cmd_handler_f handler,
 			       void *cb_data)
 {
     struct iana_handler_elem *p;
@@ -135,7 +136,7 @@ ipmi_emu_register_iana_handler(uint32_t iana, cmd_handler_f handler,
 	return EINVAL;
     if (find_iana(iana))
 	return EAGAIN;
-    p = malloc(sizeof(*p));
+    p = emu->sys->alloc(emu->sys, sizeof(*p));
     if (!p)
 	return ENOMEM;
     p->iana = iana;
@@ -217,7 +218,8 @@ static void handle_oi_iana_cmd(lmc_data_t    *mc,
 }
 
 int
-ipmi_emu_register_oi_iana_handler(uint8_t cmd, cmd_handler_f handler,
+ipmi_emu_register_oi_iana_handler(emu_data_t *emu,
+				  uint8_t cmd, cmd_handler_f handler,
 				  void *cb_data)
 {
     struct oi_iana_cmd_elem *p;
@@ -225,11 +227,11 @@ ipmi_emu_register_oi_iana_handler(uint8_t cmd, cmd_handler_f handler,
 
     if (find_oi_iana(cmd))
 	return EAGAIN;
-    rv = ipmi_emu_register_iana_handler(OPENIPMI_IANA, handle_oi_iana_cmd,
+    rv = ipmi_emu_register_iana_handler(emu, OPENIPMI_IANA, handle_oi_iana_cmd,
 					NULL);
     if (rv != 0 && rv != EAGAIN)
 	return rv;
-    p = malloc(sizeof(*p));
+    p = emu->sys->alloc(emu->sys, sizeof(*p));
     if (!p)
 	return ENOMEM;
     p->cmd = cmd;
@@ -267,7 +269,8 @@ static netfn_handler_t netfn_handlers[32] = {
 };
 
 int
-ipmi_emu_register_cmd_handler(unsigned char netfn, unsigned char cmd,
+ipmi_emu_register_cmd_handler(emu_data_t *emu,
+			      unsigned char netfn, unsigned char cmd,
 			      cmd_handler_f handler, void *cb_data)
 {
     unsigned int ni = netfn >> 1;
@@ -276,16 +279,16 @@ ipmi_emu_register_cmd_handler(unsigned char netfn, unsigned char cmd,
 	return EINVAL;
 
     if (!netfn_handlers[ni].handlers) {
-	netfn_handlers[ni].handlers = malloc(256 * sizeof(cmd_handler_f));
+	netfn_handlers[ni].handlers = emu->sys->alloc(emu->sys,
+						256 * sizeof(cmd_handler_f));
 	if (!netfn_handlers[ni].handlers)
 	    return ENOMEM;
-	memset(netfn_handlers[ni].handlers, 0, 256 * sizeof(cmd_handler_f));
     }
     if (!netfn_handlers[ni].cb_data) {
-	netfn_handlers[ni].cb_data = malloc(256 * sizeof(void *));
+	netfn_handlers[ni].cb_data = emu->sys->alloc(emu->sys,
+						256 * sizeof(void *));
 	if (!netfn_handlers[ni].cb_data)
 	    return ENOMEM;
-	memset(netfn_handlers[ni].cb_data, 0, 256 * sizeof(void *));
     }
 
     netfn_handlers[ni].cb_data[cmd] = cb_data;

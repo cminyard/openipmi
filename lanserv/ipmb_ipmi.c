@@ -189,9 +189,9 @@ ipmbserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
 	return -1;
     }
 
-    ipmb = malloc(sizeof(*ipmb));
+    ipmb = sys->alloc(sys, sizeof(*ipmb));
     if (!ipmb) {
-	free(ipmbdev);
+	sys->free(sys, ipmbdev);
 	*errstr = "Out of memory";
 	return -1;
     }

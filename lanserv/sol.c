@@ -1822,17 +1822,17 @@ write_sol_config(sys_data_t *sys, lmc_data_t *mc)
 }
 
 int
-sol_init(sys_data_t *sys)
+sol_init(emu_data_t *emu)
 {
     int rv;
 
-    rv = ipmi_emu_register_oi_iana_handler(
+    rv = ipmi_emu_register_oi_iana_handler(emu,
 	OPENIPMI_IANA_CMD_SET_HISTORY_RETURN_SIZE,
 	sol_set_history_return_size, NULL);
     if (rv)
 	return rv;
 
-    rv = ipmi_emu_register_oi_iana_handler(
+    rv = ipmi_emu_register_oi_iana_handler(emu,
 	OPENIPMI_IANA_CMD_GET_HISTORY_RETURN_SIZE,
 	sol_get_history_return_size, NULL);
     if (rv)

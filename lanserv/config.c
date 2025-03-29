@@ -98,12 +98,12 @@ read_persist_users(sys_data_t *sys)
 	    if (!read_persist_data(p, &data, &len, "%d.username", j)) {
 		if (len == sizeof(users[j].username))
 		    memcpy(users[j].username, data, len);
-		free_persist_data(data);
+		free_persist_data(p, data);
 	    }
 	    if (!read_persist_data(p, &data, &len, "%d.passwd", j)) {
 		if (len == sizeof(users[j].pw))
 		    memcpy(users[j].pw, data, len);
-		free_persist_data(data);
+		free_persist_data(p, data);
 	    }
 	    if (!read_persist_int(p, &iv, "%d.privilege", j))
 		users[j].privilege = iv;
@@ -315,7 +315,7 @@ get_delim_str(sys_data_t *sys, char **rtokptr, char **rval, const char **err)
 	    while (*tokptr != endc) {
 		if (*tokptr == '\0') {
 		    if (rv)
-			free(rv);
+			sys->free(sys, rv);
 		    *err = "End of line in string";
 		    return -1;
 		}
@@ -333,7 +333,7 @@ get_delim_str(sys_data_t *sys, char **rtokptr, char **rval, const char **err)
 	if (rv) {
 	    char *newrv = sys->alloc(sys, strlen(rv) + strlen(val) + 1);
 	    if (!newrv) {
-		free(rv);
+		sys->free(sys, rv);
 		*err = "Out of memory copying string";
 		return -1;
 	    }
@@ -780,7 +780,7 @@ read_config(sys_data_t *sys,
 		goto next;
 	    err = add_variable(sys, varname, value);
 	    if (err) {
-		free(value);
+		sys->free(sys, value);
 		err = ENOMEM;
 		errstr = "Out of memory";
 		goto next;

@@ -258,7 +258,7 @@ debug_log_raw_msg(sys_data_t *sys,
     slen += snprintf(&dummy, 0, " %ld.%6.6ld", tv.tv_sec, tv.tv_usec);
     va_end(ap);
     slen += len * 3 + 2;
-    str = malloc(slen);
+    str = sys->alloc(sys, slen);
     if (!str)
 	return;
     va_start(ap, format);
@@ -271,7 +271,7 @@ debug_log_raw_msg(sys_data_t *sys,
 	pos += sprintf(str + pos, " %2.2x", data[i]);
 
     sys->log(sys, DEBUG, NULL, "%s", str);
-    free(str);
+    sys->free(sys, str);
 }
 
 /* Deal with multi-byte data, IPMI (little-endian) style. */

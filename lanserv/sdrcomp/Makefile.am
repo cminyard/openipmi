@@ -19,4 +19,4 @@ BUILD_SDRCOMP_DEPS = $(top_srcdir)/lanserv/persist.c \
 	$(top_srcdir)/utils/string.c
 BUILD_SDRCOMP_SRCS = $(top_srcdir)/$(subdir)/sdrcomp.c
 sdrcomp_build$(EXEEXT): $(BUILD_SDRCOMP_SRCS) $(BUILD_SDRCOMP_DEPS)
-	$(BUILD_CC) -o $@ $(BUILD_SDRCOMP_SRCS) $(AM_CFLAGS) -lm
+	$(BUILD_CC) -o $@ $(BUILD_SDRCOMP_SRCS) $(CFLAGS) $(AM_CFLAGS) -lm

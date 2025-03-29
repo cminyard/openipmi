@@ -293,7 +293,7 @@ read_command_file(emu_out_t *out, emu_data_t *emu, const char *command_file)
 	}
  out:
 	if (buffer)
-	    free(buffer);
+	    emu->sys->free(emu->sys, buffer);
 	fclose(f);
     }
 
@@ -938,7 +938,7 @@ mc_add_fru_data(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 				  (void *) frufn);
 	if (rv)
 	    out->eprintf(out, "**Unable to add FRU file, error 0x%x\n", rv);
-	free(frufn);
+	emu->sys->free(emu->sys, frufn);
     } else if (strcmp(tok, "data") == 0) {
 	for (i=0; i<length; i++) {
 	    rv = emu_get_uchar(out, toks, &data[i], "data byte", 1);
@@ -1008,7 +1008,7 @@ mc_dump_fru_data(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 
  out:
     if (data)
-	free(data);
+	emu->sys->free(emu->sys, data);
     return rv;
 }
 
@@ -1106,7 +1106,7 @@ read_cmds(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
 	strcpy(nf, BASE_CONF_STR);
 	strcat(nf, "/");
 	strcat(nf, filename);
-	free((char *) filename);
+	emu->sys->free(emu->sys, (char *) filename);
 	filename = nf;
 	err = read_command_file(out, emu, filename);
 	if (err) {
@@ -1115,7 +1115,7 @@ read_cmds(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
     }
 
   out_err:
-    free((char *) filename);
+    emu->sys->free(emu->sys, (char *) filename);
     return err;
 }
 
@@ -1207,7 +1207,7 @@ do_define(emu_out_t *out, emu_data_t *emu, lmc_data_t *mc, char **toks)
     }
     err = add_variable(emu->sys, name, value);
     if (err) {
-	free(value);
+	emu->sys->free(emu->sys, value);
 	out->eprintf(out, "Out of memory setting variable %s\n", name);
 	return err;
     }
@@ -1269,7 +1269,7 @@ ipmi_emu_add_cmd(emu_data_t *emu, const char *name, unsigned int flags,
 	return ENOMEM;
     mcmd->name = sys_strdup(emu->sys, name);
     if (!mcmd->name) {
-	free(mcmd);
+	emu->sys->free(emu->sys, mcmd);
 	return ENOMEM;
     }
     mcmd->flags = flags;
@@ -1319,4 +1319,10 @@ ipmi_emu_cmd(emu_out_t *out, emu_data_t *emu, char *cmd_str)
 
  out:
     return rv;
+}
+
+sys_data_t *
+ipmi_emu_get_sysconfig(emu_data_t *emu)
+{
+    return emu->sys;
 }

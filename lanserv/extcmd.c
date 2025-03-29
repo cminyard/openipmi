@@ -60,7 +60,6 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
-#include <malloc.h>
 #include <stdlib.h>
 
 #include <OpenIPMI/lanserv.h>
@@ -278,7 +277,8 @@ process_extcmd_value(void *baseloc, extcmd_info_t *t, char *buf)
 }
 
 static int
-add_cmd(char **cmd, const char *name, char *value, int freevalue)
+add_cmd(sys_data_t *sys,
+	char **cmd, const char *name, char *value, int freevalue)
 {
     unsigned int size;
     char *newcmd;
@@ -294,14 +294,14 @@ add_cmd(char **cmd, const char *name, char *value, int freevalue)
 	size += strlen(value) + 3;
     size += strlen(*cmd);
 
-    newcmd = malloc(size + 1);
+    newcmd = sys->alloc(sys, size + 1);
     if (!newcmd) {
 	rv = ENOMEM;
 	goto out;
     }
 
     strcpy(newcmd, *cmd);
-    free(*cmd);
+    sys->free(sys, *cmd);
     strcat(newcmd, " ");
     strcat(newcmd, name);
     if (value) {
@@ -313,7 +313,7 @@ add_cmd(char **cmd, const char *name, char *value, int freevalue)
 	
   out:
     if (freevalue)
-	free(value);
+	sys->free(sys, value);
     return rv;
 }
 
@@ -332,14 +332,14 @@ extcmd_getvals(sys_data_t *sys,
     if (!incmd)
 	return 0;
 
-    cmd = malloc(strlen(incmd) + 5);
+    cmd = sys->alloc(sys, strlen(incmd) + 5);
     if (!cmd)
 	return ENOMEM;
     strcpy(cmd, incmd);
     strcat(cmd, " get");
 
     for (i = 0; i < count; i++) {
-	rv = add_cmd(&cmd, ts[i].name, NULL, 0);
+	rv = add_cmd(sys, &cmd, ts[i].name, NULL, 0);
 	if (rv) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "Out of memory in extcmd read command\n");
@@ -385,7 +385,7 @@ extcmd_getvals(sys_data_t *sys,
   out:
     if (f)
 	pclose(f);
-    free(cmd);
+    sys->free(sys, cmd);
     return rv;
 }
 
@@ -405,7 +405,7 @@ extcmd_setvals(sys_data_t *sys,
     if (!incmd)
 	return 0;
 
-    cmd = malloc(strlen(incmd) + 5);
+    cmd = sys->alloc(sys, strlen(incmd) + 5);
     if (!cmd)
 	return ENOMEM;
     strcpy(cmd, incmd);
@@ -415,7 +415,8 @@ extcmd_setvals(sys_data_t *sys,
 	if (setit && !setit[i])
 	    continue;
 	oneset = 1;
-	rv = add_cmd(&cmd, ts[i].name, extcmd_setval(sys, baseloc, ts + i), 1);
+	rv = add_cmd(sys, &cmd, ts[i].name,
+		     extcmd_setval(sys, baseloc, ts + i), 1);
 	if (rv) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "Out of memory in extcmd write command (%d) %s\n",
@@ -455,7 +456,7 @@ extcmd_setvals(sys_data_t *sys,
   out:
     if (f)
 	pclose(f);
-    free(cmd);
+    sys->free(sys, cmd);
     return rv;
 }
 
@@ -474,14 +475,15 @@ extcmd_checkvals(sys_data_t *sys,
     if (!incmd)
 	return 0;
 
-    cmd = malloc(strlen(incmd) + 7);
+    cmd = sys->alloc(sys, strlen(incmd) + 7);
     if (!cmd)
 	return ENOMEM;
     strcpy(cmd, incmd);
     strcat(cmd, " check");
 
     for (i = 0; i < count; i++) {
-	rv = add_cmd(&cmd, ts[i].name, extcmd_setval(sys, baseloc, ts + i), 1);
+	rv = add_cmd(sys, &cmd, ts[i].name,
+		     extcmd_setval(sys, baseloc, ts + i), 1);
 	if (rv == ENOMEM) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "Out of memory in extcmd check command\n");
@@ -519,6 +521,6 @@ extcmd_checkvals(sys_data_t *sys,
   out:
     if (f)
 	pclose(f);
-    free(cmd);
+    sys->free(sys, cmd);
     return rv;
 }

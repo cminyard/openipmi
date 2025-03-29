@@ -62,7 +62,8 @@
 typedef struct persist_s persist_t;
 
 IPMI_LANSERV_DLL_PUBLIC
-int persist_init(const char *app, const char *instance, const char *basedir);
+int persist_init(struct sys_data_s *sys,
+		 const char *app, const char *instance, const char *basedir);
 
 IPMI_LANSERV_DLL_PUBLIC
 persist_t *alloc_persist(struct sys_data_s *sys, const char *name, ...);
@@ -108,9 +109,7 @@ int iterate_persist(persist_t *p,
 
 /* Free the values return by read_persist_data() and read_persist_str() */
 IPMI_LANSERV_DLL_PUBLIC
-void free_persist_data(void *data);
-IPMI_LANSERV_DLL_PUBLIC
-void free_persist_str(char *str);
+void free_persist_data(persist_t *p, void *data);
 
 /* Can be set to zero to disable persistence. */
 IPMI_LANSERV_DLL_PUBLIC

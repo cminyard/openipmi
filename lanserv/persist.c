@@ -90,7 +90,8 @@ static char *app = NULL;
 static const char *basedir;
 
 int
-persist_init(const char *papp, const char *instance, const char *ibasedir)
+persist_init(struct sys_data_s *sys,
+	     const char *papp, const char *instance, const char *ibasedir)
 {
     unsigned int len;
     char *dname;
@@ -107,7 +108,7 @@ persist_init(const char *papp, const char *instance, const char *ibasedir)
     basedir = ibasedir;
 
     len = strlen(papp) + strlen(instance) + 2;
-    app = malloc(len);
+    app = sys->alloc(sys, len);
     if (!app)
 	return ENOMEM;
     strcpy(app, papp);
@@ -115,9 +116,9 @@ persist_init(const char *papp, const char *instance, const char *ibasedir)
     strcat(app, instance);
 
     len = strlen(basedir) + strlen(app) + 3;
-    dname = malloc(len);
+    dname = sys->alloc(sys, len);
     if (!dname) {
-	free(app);
+	sys->free(sys, app);
 	return ENOMEM;
     }
     strcpy(dname, basedir);
@@ -143,12 +144,12 @@ persist_init(const char *papp, const char *instance, const char *ibasedir)
 	n = strchr(n, '/');
     }
  out:
-    free(dname);
+    sys->free(sys, dname);
     return rv;
 }
 
 static char *
-do_va_nameit(const char *name, va_list ap)
+do_va_nameit(struct sys_data_s *sys, const char *name, va_list ap)
 {
     unsigned int len;
     va_list aq;
@@ -158,7 +159,7 @@ do_va_nameit(const char *name, va_list ap)
     va_copy(aq, ap);
     len = vsnprintf(&dummy, 1, name, aq);
     va_end(aq);
-    rv = malloc(len + 1);
+    rv = sys->alloc(sys, len + 1);
     if (!rv)
 	return NULL;
     vsprintf(rv, name, ap);
@@ -172,7 +173,8 @@ alloc_vpersist(struct sys_data_s *sys, const char *iname, va_list ap)
 
     if (!p)
 	return NULL;
-    p->name = do_va_nameit(iname, ap);
+    p->sys = sys;
+    p->name = do_va_nameit(sys, iname, ap);
     if (!p->name) {
 	sys->free(sys, p);
 	return NULL;
@@ -198,7 +200,7 @@ get_fname(persist_t *p, char *sfx)
 {
     int len = (strlen(basedir) + strlen(app) + strlen(p->name)
 	       + strlen(sfx) + 3);
-    char *fname = malloc(len);
+    char *fname = p->sys->alloc(p->sys, len);
 
     if (!fname)
 	return NULL;
@@ -223,7 +225,7 @@ fromhex(char c)
 }
 
 static void *
-read_data(char *l, long *rsize, int isstr)
+read_data(struct sys_data_s *sys, char *l, long *rsize, int isstr)
 {
     int size = 0;
     char *c;
@@ -240,7 +242,7 @@ read_data(char *l, long *rsize, int isstr)
 	}
 	size++;
     }
-    r = malloc(size + isstr);
+    r = sys->alloc(sys, size + isstr);
     if (!r)
 	return NULL;
     *rsize = size;
@@ -294,11 +296,12 @@ read_persist(struct sys_data_s *sys, const char *name, ...)
     if (!fname)
 	goto out_err;
     f = fopen(fname, "r");
-    free(fname);
+    sys->free(sys, fname);
     if (!f)
 	goto out_err;
 
-    for (line = NULL; getline(&line, &n, f) != -1; free(line), line = NULL) {
+    for (line = NULL; getline(&line, &n, f) != -1;
+	 sys->free(sys, line), line = NULL) {
 	char *name = line;
 	char *type = strchr(name, ':');
 	char *val;
@@ -314,21 +317,21 @@ read_persist(struct sys_data_s *sys, const char *name, ...)
 
 	pi = sys->alloc(sys, sizeof(*pi));
 	if (!pi) {
-	    free(line);
+	    sys->free(sys, line);
 	    goto out_err;
 	}
 
 	pi->iname = sys_strdup(sys, name);
 	if (!pi->iname) {
-	    free(pi);
-	    free(line);
+	    sys->free(sys, pi);
+	    sys->free(sys, line);
 	    goto out_err;
 	}
 	pi->type = type[0];
 
 	switch (type[0]) {
 	case PITEM_DATA:
-	    pi->data = read_data(val, &pi->dval, 0);
+	    pi->data = read_data(sys, val, &pi->dval, 0);
 	    if (!pi->data)
 		goto bad_data;
 	    break;
@@ -339,14 +342,14 @@ read_persist(struct sys_data_s *sys, const char *name, ...)
 		goto bad_data;
 	    break;
 	case PITEM_STR:
-	    pi->data = read_data(val, &pi->dval, 1);
+	    pi->data = read_data(sys, val, &pi->dval, 1);
 	    if (!pi->data)
 		goto bad_data;
 	    break;
 	bad_data:
 	default:
-	    free(pi->iname);
-	    free(pi);
+	    sys->free(sys, pi->iname);
+	    sys->free(sys, pi);
 	    continue;
 	}
 
@@ -400,14 +403,14 @@ write_persist(persist_t *p)
 
     fname2 = get_fname(p, "");
     if (!fname2) {
-	free(fname);
+	p->sys->free(p->sys, fname);
 	return ENOMEM;
     }
 
     f = fopen(fname, "w");
     if (!f) {
-	free(fname);
-	free(fname2);
+	p->sys->free(p->sys, fname);
+	p->sys->free(p->sys, fname2);
 	return ENOMEM;
     }
 
@@ -417,8 +420,8 @@ write_persist(persist_t *p)
     if (rename(fname, fname2) != 0)
 	rv = errno;
 
-    free(fname);
-    free(fname2);
+    p->sys->free(p->sys, fname);
+    p->sys->free(p->sys, fname2);
 
     return rv;
 }
@@ -467,11 +470,11 @@ free_persist(persist_t *p)
 	p->items = pi->next;
 
 	if (pi->data)
-	    free(pi->data);
-	free(pi->iname);
-	free(pi);
+	    p->sys->free(p->sys, pi->data);
+	p->sys->free(p->sys, pi->iname);
+	p->sys->free(p->sys, pi);
     }
-    free(p);
+    p->sys->free(p->sys, p);
 }
 
 static int
@@ -480,22 +483,22 @@ alloc_pi(persist_t *p, enum pitem_type type, const void *data, long len,
 {
     struct pitem *pi;
 
-    pi = malloc(sizeof(*pi));
+    pi = p->sys->alloc(p->sys, sizeof(*pi));
     if (!pi)
 	return ENOMEM;
 
     pi->type = type;
-    pi->iname = do_va_nameit(iname, ap);
+    pi->iname = do_va_nameit(p->sys, iname, ap);
     if (!pi->iname) {
-	free(pi);
+	p->sys->free(p->sys, pi);
 	return ENOMEM;
     }
 
     if (data) {
-	pi->data = malloc(len);
+	pi->data = p->sys->alloc(p->sys, len);
 	if (!pi->data) {
-	    free(pi->iname);
-	    free(pi);
+	    p->sys->free(p->sys, pi->iname);
+	    p->sys->free(p->sys, pi);
 	    return ENOMEM;
 	}
 	memcpy(pi->data, data, len);
@@ -514,7 +517,7 @@ static struct pitem *
 find_pi(persist_t *p, const char *iname, va_list ap)
 {
     struct pitem *pi = p->items;
-    char *name = do_va_nameit(iname, ap);
+    char *name = do_va_nameit(p->sys, iname, ap);
 
     if (!name)
 	return NULL;
@@ -524,7 +527,7 @@ find_pi(persist_t *p, const char *iname, va_list ap)
 	    break;
 	pi = pi->next;
     }
-    free(name);
+    p->sys->free(p->sys, name);
     return pi;
 }
 
@@ -558,7 +561,7 @@ read_persist_data(persist_t *p, void **data, unsigned int *len,
     if (pi->type != PITEM_DATA)
 	return EINVAL;
 
-    *data = malloc(pi->dval);
+    *data = p->sys->alloc(p->sys, pi->dval);
     if (!*data)
 	return ENOMEM;
     memcpy(*data, pi->data, pi->dval);
@@ -633,12 +636,7 @@ read_persist_str(persist_t *p, char **val, const char *name, ...)
 }
 
 void
-free_persist_data(void *data)
+free_persist_data(persist_t *p, void *data)
 {
-    free(data);
-}
-
-void free_persist_str(char *str)
-{
-    free(str);
+    p->sys->free(p->sys, data);
 }

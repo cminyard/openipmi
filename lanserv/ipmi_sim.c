@@ -132,11 +132,13 @@ static void isim_add_fd(int fd)
 
 static void isim_close_fds(void)
 {
-    isim_fd_t *n = isim_fds;
+    isim_fd_t *n;
 
-    while(n) {
+    while(isim_fds) {
+	n = isim_fds;
+	isim_fds = n->next;
 	close(n->fd);
-	n = n->next;
+	free(n);
     }
 }
 
@@ -1665,7 +1667,7 @@ main(int argc, const char *argv[])
 	exit(1);
     }
 
-    err = persist_init("ipmi_sim", sysinfo.name, statedir);
+    err = persist_init(&sysinfo, "ipmi_sim", sysinfo.name, statedir);
     if (err) {
 	fprintf(stderr, "Unable to initialize persistence: %s\n",
 		strerror(err));
@@ -1674,7 +1676,7 @@ main(int argc, const char *argv[])
 
     read_persist_users(&sysinfo);
 
-    err = sol_init(&sysinfo);
+    err = sol_init(data.emu);
     if (err) {
 	fprintf(stderr, "Unable to initialize SOL: %s\n",
 		strerror(err));
