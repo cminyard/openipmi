@@ -72,8 +72,8 @@
 static void
 raw_send(serserv_data_t *si, unsigned char *data, unsigned int len)
 {
-    if (si->sysinfo->debug & DEBUG_RAW_MSG)
-	debug_log_raw_msg(si->sysinfo, data, len, "Raw serial send:");
+    if (si->sys->debug & DEBUG_RAW_MSG)
+	debug_log_raw_msg(si->sys, data, len, "Raw serial send:");
     si->send_out(si, data, len);
 }
 
@@ -188,7 +188,7 @@ ra_ipmb_handler(channel_t *chan, msg_t *msg)
     serserv_data_t *si = chan->chan_info;
 
     ra_format_msg(msg->data, msg->len, si);
-    free(msg);
+    si->sys->free(si->sys, msg);
     return 1;
 }
 
@@ -205,8 +205,8 @@ static int ra_unformat_msg(unsigned char *r, unsigned int len,
     unsigned int i = 0;
     int          rv;
 
-    if (si->sysinfo->debug & DEBUG_RAW_MSG)
-	debug_log_raw_msg(si->sysinfo, r, len, "Raw serial receive:");
+    if (si->sys->debug & DEBUG_RAW_MSG)
+	debug_log_raw_msg(si->sys, r, len, "Raw serial receive:");
 
     while (p < len) {
 	rv = fromhex(r[p]);
@@ -228,7 +228,7 @@ static int ra_unformat_msg(unsigned char *r, unsigned int len,
 	return -1;
 
     memset(&msg, 0, sizeof(msg));
-    if ((o[0] == si->sysinfo->bmc_ipmb) || (o[0] == 1)) {
+    if ((o[0] == si->sys->bmc_ipmb) || (o[0] == 1)) {
 	rv = unformat_ipmb_msg(&msg, o, i, si);
 	if (rv)
 	    return rv;
@@ -310,7 +310,7 @@ int
 ra_setup(serserv_data_t *si)
 {
     struct ra_data *info;
-    info = malloc(sizeof(*info));
+    info = si->sys->alloc(si->sys, sizeof(*info));
     if (!info)
 	return -1;
 
@@ -346,8 +346,8 @@ dm_handle_msg(unsigned char *imsg, unsigned int len, serserv_data_t *si)
     int rv;
     msg_t msg;
 
-    if (si->sysinfo->debug & DEBUG_RAW_MSG)
-	debug_log_raw_msg(si->sysinfo, imsg, len, "Raw serial receive:");
+    if (si->sys->debug & DEBUG_RAW_MSG)
+	debug_log_raw_msg(si->sys, imsg, len, "Raw serial receive:");
 
     memset(&msg, 0, sizeof(msg));
     rv = unformat_ipmb_msg(&msg, imsg, len, si);
@@ -488,10 +488,9 @@ dm_setup(serserv_data_t *si)
 {
     struct dm_data *info;
 
-    info = malloc(sizeof(*info));
+    info = si->sys->alloc(si->sys, sizeof(*info));
     if (!info)
 	return -1;
-    memset(info, 0, sizeof(*info));
     si->channel.set_atn = handle_attn;
     si->codec_info = info;
     return 0;
@@ -579,8 +578,8 @@ static int tm_unformat_msg(unsigned char *r, unsigned int len,
     unsigned int  i = 0;
     int           rv;
 
-    if (si->sysinfo->debug & DEBUG_RAW_MSG)
-	debug_log_raw_msg(si->sysinfo, r, len, "Raw serial receive:");
+    if (si->sys->debug & DEBUG_RAW_MSG)
+	debug_log_raw_msg(si->sys, r, len, "Raw serial receive:");
 
 #define SKIP_SPACE if (isspace(r[p])) p++
 #define ENSURE_MORE if (p >= len) return -1
@@ -691,7 +690,7 @@ tm_setup(serserv_data_t *si)
 {
     struct tm_data *info;
 
-    info = malloc(sizeof(*info));
+    info = si->sys->alloc(si->sys, sizeof(*info));
     if (!info)
 	return -1;
 
@@ -761,8 +760,8 @@ vm_handle_msg(unsigned char *imsg, unsigned int len, serserv_data_t *si)
 {
     msg_t msg;
     
-    if (si->sysinfo->debug & DEBUG_RAW_MSG)
-	debug_log_raw_msg(si->sysinfo, imsg, len, "Raw serial receive:");
+    if (si->sys->debug & DEBUG_RAW_MSG)
+	debug_log_raw_msg(si->sys, imsg, len, "Raw serial receive:");
 
     if (len < 4) {
 	fprintf(stderr, "Message too short\n");
@@ -791,8 +790,8 @@ vm_handle_cmd(unsigned char *imsg, unsigned int len, serserv_data_t *si)
 {
     struct vm_data *info = si->codec_info;
 
-    if (si->sysinfo->debug & DEBUG_RAW_MSG)
-	debug_log_raw_msg(si->sysinfo, imsg, len, "Raw serial cmd:");
+    if (si->sys->debug & DEBUG_RAW_MSG)
+	debug_log_raw_msg(si->sys, imsg, len, "Raw serial cmd:");
 
     if (len < 1)
 	return;
@@ -821,8 +820,8 @@ vm_handle_cmd(unsigned char *imsg, unsigned int len, serserv_data_t *si)
 
     case VM_CMD_RESET:
 	/* The remote end reset, report it. */
-	if (si->sysinfo->target_reset)
-	    si->sysinfo->target_reset(si->sysinfo);
+	if (si->sys->target_reset)
+	    si->sys->target_reset(si->sys);
 	break;
     }
 }
@@ -1006,8 +1005,8 @@ vm_connected(serserv_data_t *si)
     c[len++] = VM_CMD_CHAR;
     raw_send(si, c, len);
     si->connected = 1;
-    if (si->sysinfo->resend_atn)
-	si->sysinfo->resend_atn(&si->channel);
+    if (si->sys->resend_atn)
+	si->sys->resend_atn(&si->channel);
 }
 
 static void
@@ -1021,10 +1020,9 @@ vm_setup(serserv_data_t *si)
 {
     struct vm_data *info;
 
-    info = malloc(sizeof(*info));
+    info = si->sys->alloc(si->sys, sizeof(*info));
     if (!info)
 	return -1;
-    memset(info, 0, sizeof(*info));
     si->codec_info = info;
     si->channel.hw_op = vm_hw_op;
     si->channel.set_atn = vm_set_attn;
@@ -1214,12 +1212,11 @@ serserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
     int err;
     unsigned int chan_num;
 
-    ser = malloc(sizeof(*ser));
+    ser = sys->alloc(sys, sizeof(*ser));
     if (!ser) {
 	*errstr = "Out of memory";
 	return -1;
     }
-    memset(ser, 0, sizeof(*ser));
 
     tok = mystrtok(NULL, " \t\n", tokptr);
     if (!tok) {
@@ -1333,13 +1330,13 @@ serserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
 	goto out_err;
     }
 
-    ser->sysinfo = sys;
+    ser->sys = sys;
     ser->channel.chan_info = ser;
 
     sys->chan_set[chan_num] = &ser->channel;
     return 0;
 
  out_err:
-    free(ser);
+    sys->free(sys, ser);
     return -1;
 }

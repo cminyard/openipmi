@@ -260,7 +260,7 @@ raw_send(lanserv_data_t *lan,
 	    len += vec[i].iov_len;
 	slen = snprintf(&dummy, 0, format);
 	slen += len * 3 + 3;
-	str = malloc(slen);
+	str = lan->sys->alloc(lan->sys, slen);
 	if (!str)
 	    goto send;
 	pos = sprintf(str, format);
@@ -274,7 +274,7 @@ raw_send(lanserv_data_t *lan,
 	str[pos++] = '\0';
 
 	lan->sys->log(lan->sys, DEBUG, NULL, "%s", str);
-	free(str);
+	lan->sys->free(lan->sys, str);
     }
  send:
     lan->send_out(lan, vec, vecs, addr, addr_len);
@@ -2192,13 +2192,17 @@ hmac_check(lanserv_data_t *lan, session_t *session, msg_t *msg)
 static void *
 auth_alloc(void *info, int size)
 {
-    return malloc(size);
+    lanserv_data_t *lan = info;
+
+    return lan->sys->alloc(lan->sys, size);
 }
 
 static void
 auth_free(void *info, void *data)
 {
-    free(data);
+    lanserv_data_t *lan = info;
+
+    lan->sys->free(lan->sys, data);
 }
 
 static int
@@ -2208,7 +2212,7 @@ md5_init(lanserv_data_t *lan, session_t *session)
     int             rv;
     ipmi_authdata_t idata;
 
-    rv = ipmi_md5_authcode_initl(user->pw, 20, &idata, NULL,
+    rv = ipmi_md5_authcode_initl(user->pw, 20, &idata, lan,
 				 auth_alloc, auth_free);
     if (rv)
 	return rv;
@@ -2319,7 +2323,7 @@ aes_cbc_encrypt(lanserv_data_t *lan, session_t *session,
 
     /* We store the unencrypted data here, then crypt into the real
        data. */
-    d = malloc(l);
+    d = lan->sys->alloc(lan->sys, l);
     if (!d)
 	return ENOMEM;
 
@@ -2336,7 +2340,7 @@ aes_cbc_encrypt(lanserv_data_t *lan, session_t *session,
     iv = (*pos) - 16;
     rv = lan->gen_rand(lan, iv, 16);
     if (rv) {
-	free(d);
+	lan->sys->free(lan->sys, d);
 	return rv;
     }
     *hdr_left -= 16;
@@ -2365,7 +2369,7 @@ aes_cbc_encrypt(lanserv_data_t *lan, session_t *session,
 
  out_cleanup:
     EVP_CIPHER_CTX_free(ctx);
-    free(d);
+    lan->sys->free(lan->sys, d);
     return rv;
 }
 
@@ -2388,7 +2392,7 @@ aes_cbc_decrypt(lanserv_data_t *lan, session_t *session, msg_t *msg)
 
     /* We store the encrypted data here, then decrypt into the real
        data. */
-    d = malloc(l);
+    d = lan->sys->alloc(lan->sys, l);
     if (!d)
 	return ENOMEM;
 
@@ -2436,7 +2440,7 @@ aes_cbc_decrypt(lanserv_data_t *lan, session_t *session, msg_t *msg)
 
  out_cleanup:
     EVP_CIPHER_CTX_free(ctx);
-    free(d);
+    lan->sys->free(lan->sys, d);
     return rv;
 }
 
@@ -3228,7 +3232,7 @@ read_lan_config(lanserv_data_t *lan)
 	if (len > 9)
 	    len = 9;
 	memcpy(lan->lanparm.max_priv_for_cipher_suite, data, len);
-	free_persist_data(data);
+	free_persist_data(p, data);
     } else {
 	for (i = 0; i < 9; i++)
 	    lan->lanparm.max_priv_for_cipher_suite[i]

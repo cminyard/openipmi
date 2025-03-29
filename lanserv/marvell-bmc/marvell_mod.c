@@ -71,6 +71,7 @@
 #include <OpenIPMI/ipmi_bits.h>
 #include <OpenIPMI/lanserv.h>
 #include <OpenIPMI/mcserv.h>
+#include <OpenIPMI/serv.h>
 
 #include "wiw.h"
 
@@ -2631,7 +2632,7 @@ fru_write_thread(void *cb_data)
 
     pthread_detach(pthread_self());
 
-    free(info);
+    sys->free(sys, info);
 
     fd = open(BOARD_FRU_FILE, O_RDONLY);
     if (fd == -1) {
@@ -2738,7 +2739,7 @@ handle_marvell_cmd(lmc_data_t    *mc,
 	    goto out_err;
 	}
 
-	info = malloc(sizeof(*info));
+	info = sys->alloc(sys, sizeof(*info));
 	if (!info)
 	    goto out_err;
 	info->sys = sys;
@@ -2749,7 +2750,7 @@ handle_marvell_cmd(lmc_data_t    *mc,
 	    sys->log(sys, OS_ERROR, NULL,
 		     "MVMOD: Unable to create fru write thread: %s",
 		     strerror(rv));
-	    free(info);
+	    sys->free(sys, info);
 	    goto out_err;
 	}
     }
@@ -2897,8 +2898,9 @@ wdt_test_timeout(void *cb_data)
  *************************************************************************/
 
 int
-ipmi_sim_module_init(sys_data_t *sys, const char *initstr_i)
+ipmi_sim_module_init(emu_data_t *emu, const char *initstr_i)
 {
+    sys_data_t *sys = ipmi_emu_get_sysconfig(emu);
     unsigned int num;
     int rv;
     const char *c;
@@ -2906,7 +2908,7 @@ ipmi_sim_module_init(sys_data_t *sys, const char *initstr_i)
     int use_events = 1;
     struct timeval tv;
     int power_up_force = 0;
-    char *initstr = strdup(initstr_i);
+    char *initstr = sys_strdup(sys, initstr_i);
     int val;
 
     printf("IPMI Simulator Marvell AXP module version %s\n", PVERSION);
@@ -2940,7 +2942,7 @@ ipmi_sim_module_init(sys_data_t *sys, const char *initstr_i)
 	c = mystrtok(NULL, " \t\n", &next);
     }
 
-    free(initstr);
+    sys->free(sys, initstr);
 
     check_chassis_state(sys);
 
@@ -3124,21 +3126,21 @@ ipmi_sim_module_init(sys_data_t *sys, const char *initstr_i)
 				     bmc_get_chassis_control, sys);
 
 
-    rv = ipmi_emu_register_iana_handler(MARVELL_SEMI_ISREAL_IANA,
+    rv = ipmi_emu_register_iana_handler(emu, MARVELL_SEMI_ISREAL_IANA,
 					handle_marvell_cmd, sys);
     if (rv) {
 	sys->log(sys, OS_ERROR, NULL,
 		 "Unable to register Marvell IANA handler: %s", strerror(rv));
     }
 
-    rv = ipmi_emu_register_cmd_handler(IPMI_APP_NETFN, IPMI_COLD_RESET_CMD,
+    rv = ipmi_emu_register_cmd_handler(emu, IPMI_APP_NETFN, IPMI_COLD_RESET_CMD,
 				       handle_cold_reset, sys);
     if (rv) {
 	sys->log(sys, OS_ERROR, NULL,
 		 "Unable to register cold reset handler: %s", strerror(rv));
     }
 
-    rv = ipmi_emu_register_cmd_handler(IPMI_APP_NETFN, IPMI_WARM_RESET_CMD,
+    rv = ipmi_emu_register_cmd_handler(emu, IPMI_APP_NETFN, IPMI_WARM_RESET_CMD,
 				       handle_warm_reset, sys);
     if (rv) {
 	sys->log(sys, OS_ERROR, NULL,
@@ -3167,14 +3169,16 @@ ipmi_sim_module_init(sys_data_t *sys, const char *initstr_i)
     if (!cold_power_up)
 	init_complete = 1;
 
-    ipmi_emu_add_cmd("simulate_board_presence", NOMC, simulate_board_presence);
+    ipmi_emu_add_cmd(emu, "simulate_board_presence",
+		     NOMC, simulate_board_presence);
 
     return 0;
 }
 
 int
-ipmi_sim_module_post_init(sys_data_t *sys)
+ipmi_sim_module_post_init(emu_data_t *emu)
 {
+    sys_data_t *sys = ipmi_emu_get_sysconfig(emu);
     int rv;
     const char *ver = get_lanserv_version();
     unsigned char lver[4];
@@ -3200,7 +3204,7 @@ ipmi_sim_module_post_init(sys_data_t *sys)
     for (i = 0; i < NUM_BOARDS; i++) {
 	struct eesense_rearm *info;
 
-	info = malloc(sizeof(*info));
+	info = sys->alloc(sys, sizeof(*info));
 	if (!info) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "MVMOD: Unable to allocate eesense handler for board %d: "
@@ -3219,7 +3223,7 @@ ipmi_sim_module_post_init(sys_data_t *sys)
 	    continue;
 	}
 
-	info = malloc(sizeof(*info));
+	info = sys->alloc(sys, sizeof(*info));
 	if (!info) {
 	    sys->log(sys, OS_ERROR, NULL,
 		     "MVMOD: Unable to allocate eesense handler for board %d: "

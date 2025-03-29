@@ -84,7 +84,7 @@ struct serserv_data_s {
 
     os_handler_t *os_hnd;
 
-    sys_data_t *sysinfo;
+    sys_data_t *sys;
 
     void *user_info;
 

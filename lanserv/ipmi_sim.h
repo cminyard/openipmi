@@ -96,7 +96,7 @@ void ipmi_register_shutdown_handler(ipmi_shutdown_t *handler);
 void ipmi_do_start_cmd(startcmd_t *startcmd);
 void ipmi_do_kill(startcmd_t *startcmd, int noblock);
 
-int sol_init(sys_data_t *sys);
+int sol_init(emu_data_t *emu);
 int read_sol_config(sys_data_t *sys);
 int write_sol_config(sys_data_t *sys, lmc_data_t *mc);
 

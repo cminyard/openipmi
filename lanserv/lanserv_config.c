@@ -158,7 +158,7 @@ lanserv_read_config(sys_data_t    *sys,
 	    }
 	} else if (strcmp(tok, "guid") == 0) {
 	    if (!lan->guid)
-		lan->guid = malloc(16);
+		lan->guid = sys->alloc(sys, 16);
 	    if (!lan->guid)
 		return -1;
 	    err = read_bytes(&tokptr, lan->guid, &errstr, 16);
@@ -166,7 +166,7 @@ lanserv_read_config(sys_data_t    *sys,
 		goto out_err;
 	} else if (strcmp(tok, "bmc_key") == 0) {
 	    if (!lan->bmc_key)
-		lan->bmc_key = malloc(20);
+		lan->bmc_key = sys->alloc(sys, 20);
 	    if (!lan->bmc_key)
 		return -1;
 	    err = read_bytes(&tokptr, lan->bmc_key, &errstr, 20);

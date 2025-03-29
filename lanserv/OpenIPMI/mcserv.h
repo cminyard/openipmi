@@ -176,7 +176,8 @@ typedef void (*cmd_handler_f)(lmc_data_t    *mc,
 			      unsigned char *rdata,
 			      unsigned int  *rdata_len,
 			      void          *cb_data);
-int ipmi_emu_register_cmd_handler(unsigned char netfn, unsigned char cmd,
+int ipmi_emu_register_cmd_handler(emu_data_t *emu,
+				  unsigned char netfn, unsigned char cmd,
 				  cmd_handler_f handler, void *cb_data);
 
 /*
@@ -187,9 +188,11 @@ int ipmi_emu_register_cmd_handler(unsigned char netfn, unsigned char cmd,
  * not there.  This way standard handling functions will work properly,
  * and it simplifies the handling of IANA messages.
  */
-int ipmi_emu_register_iana_handler(uint32_t iana, cmd_handler_f handler,
+int ipmi_emu_register_iana_handler(emu_data_t *emu,
+				   uint32_t iana, cmd_handler_f handler,
 				   void *cb_data);
-int ipmi_emu_register_oi_iana_handler(uint8_t cmd, cmd_handler_f handler,
+int ipmi_emu_register_oi_iana_handler(emu_data_t *emu,
+				      uint8_t cmd, cmd_handler_f handler,
 				      void *cb_data);
 
 #define OPENIPMI_IANA_CMD_SET_HISTORY_RETURN_SIZE	1
