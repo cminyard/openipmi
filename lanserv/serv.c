@@ -400,7 +400,7 @@ ipmi_msg_dup(sys_data_t *sys, msg_t *omsg,
     *msg = *omsg;
 
     msg->data = ((unsigned char *) msg) + sizeof(*msg);
-    msg->len = omsg->len;
+    msg->len = omsg->len + extra_size;
     memcpy(msg->data + data_offset, omsg->data, msg->len);
 
     return msg;
