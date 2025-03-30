@@ -1886,7 +1886,6 @@ sol_init_mc(sys_data_t *sys, lmc_data_t *mc)
     sd = sys->alloc(sys, sizeof(*sd));
     if (!sd)
 	return ENOMEM;
-    memset(sd, 0, sizeof(*sd));
     sd->sys = sys;
     sol->soldata = sd;
 

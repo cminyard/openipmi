@@ -195,7 +195,6 @@ ipmbserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
 	*errstr = "Out of memory";
 	return -1;
     }
-    memset(ipmb, 0, sizeof(*ipmb));
     ipmb->ipmbdev = ipmbdev;
 
     ipmb->channel.session_support = IPMI_CHANNEL_SESSION_LESS;

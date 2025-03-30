@@ -1578,7 +1578,6 @@ handle_get_fru_inventory_area_info(lmc_data_t    *mc,
 		*rdata_len = 1;
 		return;
 	    }
-	    memset(ses, 0, sizeof(*ses));
 	    ses->sid = msg->sid;
 	    ses->fru = fru;
 	    link_in = 1;
@@ -1907,7 +1906,10 @@ ipmi_mc_add_fru_data(lmc_data_t    *mc,
     if (!fru) {
 	int rv;
 	fru = mc->sys->alloc(mc->sys, sizeof(*fru));
-	memset(fru, 0, sizeof(*fru));
+	if (!fru) {
+	    rv = ENOMEM;
+	    return rv;
+	}
 	rv = sem_init(&fru->sem, 0, 1);
 	if (rv) {
 	    rv = errno;

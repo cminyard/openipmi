@@ -84,8 +84,6 @@ ipmi_oem_send_msg(channel_t     *chan,
 	sys->log(sys, OS_ERROR, NULL, "SMI message: out of memory");
 	return ENOMEM;
     }
-
-    memset(nmsg, 0, sizeof(*nmsg));
     nmsg->orig_channel = chan;
     nmsg->oem_data = oem_data;
     nmsg->netfn = netfn;
