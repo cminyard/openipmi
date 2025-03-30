@@ -367,3 +367,43 @@ sys_strdup(sys_data_t *sys, const char *s)
 	strcpy(r, s);
     return r;
 }
+
+msg_t *
+ipmi_msg_alloc(sys_data_t *sys, unsigned int datalen)
+{
+    msg_t *msg;
+
+    msg = sys->alloc(sys, sizeof(*msg) + datalen);
+    if (msg) {
+	msg->data = ((unsigned char *) msg) + sizeof(*msg);
+	msg->len = datalen;
+    }
+    return msg;
+}
+
+void
+ipmi_msg_free(sys_data_t *sys, msg_t *msg)
+{
+    if (msg->src_allocated)
+	sys->free(sys, msg->src_addr);
+    sys->free(sys, msg);
+}
+
+msg_t *
+ipmi_msg_dup(sys_data_t *sys, msg_t *omsg,
+	     unsigned int extra_size, unsigned int data_offset)
+{
+    msg_t *msg;
+
+    msg = sys->alloc(sys, sizeof(*msg) + omsg->len) + extra_size;
+    if (!msg)
+	return NULL;
+
+    *msg = *omsg;
+
+    msg->data = ((unsigned char *) msg) + sizeof(*msg);
+    msg->len = omsg->len;
+    memcpy(msg->data + data_offset, omsg->data, msg->len);
+
+    return msg;
+}

@@ -494,19 +494,14 @@ handle_lun_2_msg(lmc_data_t    *mc,
 	return 1;
     }
 
-    qmsg = mc->sys->alloc(mc->sys,
-			  sizeof(*qmsg) + omsg->len + ochan->get_msg_overhead);
+    qmsg = ipmi_msg_dup(mc->sys, omsg, ochan->get_msg_overhead,
+			ochan->get_msg_header_size);
     if (!qmsg) {
 	rdata[0] = IPMI_OUT_OF_SPACE_CC;
 	*rdata_len = 1;
 	return 1;
     }
 
-    *qmsg = *omsg;
-
-    qmsg->data = ((unsigned char *) qmsg) + sizeof(*qmsg);
-    qmsg->len = omsg->len + ochan->get_msg_overhead;
-    memcpy(qmsg->data + ochan->get_msg_header_size, omsg->data, omsg->len);
     qmsg->orig_channel = ochan;
     qmsg->channel = ochan->channel_num;
 
@@ -539,7 +534,21 @@ reserve_mc_seq(lmc_data_t *mc, msg_t *msg,
 	if (!mc->seq_entries[j].inuse) {
 	    struct seq_entry *e = &mc->seq_entries[j];
 
+	    if (msg->src_addr) {
+		e->src_addr = mc->sys->alloc(mc->sys, msg->src_len);
+		if (!e->src_addr) {
+		    *rdata = IPMI_OUT_OF_SPACE_CC;
+		    *rdata_len = 1;
+		    return 1;
+		}
+		memcpy(e->src_addr, msg->src_addr, msg->src_len);
+		e->src_len = msg->src_len;
+	    }
 	    e->inuse = 1;
+	    e->daddr = msg->daddr;
+	    e->dlun = msg->dlun;
+	    e->saddr = msg->saddr;
+	    e->slun = msg->slun;
 	    e->orig_seq = msg->rq_seq;
 	    e->chan_num = msg->channel;
 	    e->sid = msg->sid;
@@ -561,11 +570,17 @@ find_mc_seq(lmc_data_t *mc, msg_t *msg,
 {
     struct seq_entry *e = &mc->seq_entries[msg->rq_seq];
 
-    if (!e->inuse) {
+    /* Make sure all the message information matches. */
+    if (!e->inuse || e->daddr != msg->saddr || e->dlun != msg->slun ||
+		e->saddr != msg->daddr || e->slun != msg->dlun) {
 	rdata[0] = IPMI_NOT_PRESENT_CC;
 	*rdata_len = 1;
 	return 1;
     }
+    msg->src_addr = e->src_addr;
+    msg->src_len = e->src_len;
+    msg->src_allocated = 1;
+    e->src_addr = NULL;
     msg->channel = e->chan_num;
     msg->rq_seq = e->orig_seq;
     msg->orig_channel = mc->channels[msg->channel];
@@ -582,21 +597,15 @@ handle_response(lmc_data_t    *mc,
 {
     msg_t *qmsg;
 
-    qmsg = mc->sys->alloc(mc->sys, sizeof(*qmsg) + msg->len);
+    qmsg = ipmi_msg_dup(mc->sys, msg, 0, 0);
     if (!qmsg) {
 	rdata[0] = IPMI_OUT_OF_SPACE_CC;
 	*rdata_len = 1;
 	return 1;
     }
 
-    *qmsg = *msg;
-
-    qmsg->data = ((unsigned char *) qmsg) + sizeof(*qmsg);
-    qmsg->len = msg->len;
-    memcpy(qmsg->data, msg->data, msg->len);
-
     if (find_mc_seq(mc, qmsg, rdata, rdata_len)) {
-	mc->sys->free(mc->sys, qmsg);
+	ipmi_msg_free(mc->sys, qmsg);
 	return 1;
     }
 
