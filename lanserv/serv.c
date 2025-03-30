@@ -123,7 +123,6 @@ ipmi_handle_smi_rsp(channel_t *chan, msg_t *msg, uint8_t *rspd, int rsp_len)
 	return;
 
     chan->return_rsp(chan, msg, &rsp);
-    chan->sys->free(chan->sys, msg);
 }
 
 static oem_handler_t *oem_handlers = NULL;
@@ -155,40 +154,21 @@ check_oem_handlers(channel_t *chan)
 int
 channel_smi_send(channel_t *chan, msg_t *msg)
 {
-    int rv;
-    msg_t *nmsg;
-
     msg->orig_channel = chan;
     msg->channel = chan->channel_num;
-    nmsg = chan->sys->alloc(chan->sys, sizeof(*nmsg)+msg->src_len+msg->len);
-    if (!nmsg) {
-	chan->sys->log(chan->sys, OS_ERROR, msg, "SMI message: out of memory");
-	return ENOMEM;
-    }
-
-    memcpy(nmsg, msg, sizeof(*nmsg));
-    if (msg->src_addr) {
-	nmsg->src_addr = ((char *) nmsg) + sizeof(*nmsg);
-	memcpy(nmsg->src_addr, msg->src_addr, msg->src_len);
-    }
-    nmsg->data  = ((uint8_t *) nmsg) + sizeof(*nmsg) + msg->src_len;
-    memcpy(nmsg->data, msg->data, msg->len);
 
     /* Let the low-level interface intercept. */
     if (chan->oem_intf_recv_handler) {
 	unsigned char    msgd[36];
 	unsigned int     msgd_len = sizeof(msgd);
 
-	if (chan->oem_intf_recv_handler(chan, nmsg, msgd, &msgd_len)) {
-	    ipmi_handle_smi_rsp(chan, nmsg, msgd, msgd_len);
+	if (chan->oem_intf_recv_handler(chan, msg, msgd, &msgd_len)) {
+	    ipmi_handle_smi_rsp(chan, msg, msgd, msgd_len);
 	    return 0;
 	}
     }
     
-    rv = chan->smi_send(chan, nmsg);
-    if (rv)
-	chan->sys->free(chan->sys, nmsg);
-    return rv;
+    return chan->smi_send(chan, msg);
 }
 
 static int
