@@ -89,7 +89,6 @@ lanserv_read_config(sys_data_t    *sys,
 	errstr = "Out of memory allocating lan data";
 	goto out_err;
     }
-    memset(lan, 0, sizeof(*lan));
 
     lan->sys = sys;
     lan->channel.chan_info = lan;
