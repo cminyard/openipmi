@@ -314,8 +314,8 @@ ipmi_emu_tick(emu_data_t *emu, unsigned int seconds)
     }
 }
 
-static void
-deliver_msg_to_mc(lmc_data_t *mc, msg_t *msg,
+static int
+deliver_cmd_to_mc(lmc_data_t *mc, msg_t *msg,
 		  unsigned char *rdata, unsigned int *rdata_len)
 {
     /* Now handle the message on the destination mc. */
@@ -338,6 +338,8 @@ deliver_msg_to_mc(lmc_data_t *mc, msg_t *msg,
     if (mc->emu->sys->debug & DEBUG_MSG)
 	debug_log_raw_msg(mc->emu->sys, rdata, *rdata_len,
 			  "Response message:");
+
+    return 1;
 }
 
 
@@ -356,8 +358,8 @@ ipmb_handle_send_msg(channel_t *chan,
     uint8_t qmsg_data[IPMI_SIM_MAX_MSG_LENGTH];
     unsigned char slave;
     unsigned char *data = NULL;
-    unsigned char *rdata, tmp_rdata[1];
-    unsigned int  *rdata_len, tmp_rdata_len = 1;
+    unsigned char *rdata;
+    unsigned int  *rdata_len;
 
     if (check_msg_length(omsg, 8, ordata, ordata_len))
 	return;
@@ -424,7 +426,7 @@ ipmb_handle_send_msg(channel_t *chan,
     if (mc->emu->sys->debug & DEBUG_MSG)
 	mc->sys->log(mc->sys, DEBUG, &smsg, "IPMB deliver to MC:");
 
-    deliver_msg_to_mc(mc, &smsg, rdata, rdata_len);
+    deliver_cmd_to_mc(mc, &smsg, rdata, rdata_len);
 
     /*
      * The actual send message succeeded.  The response from the MC is
@@ -450,7 +452,7 @@ ipmb_handle_send_msg(channel_t *chan,
     }
 
     /* Act as though we received a message over IPMB. */
-    ipmi_mc_handle_msg(chan->mc, &qmsg, tmp_rdata, &tmp_rdata_len);
+    ipmi_mc_handle_msg(chan->mc, &qmsg);
 }
 
 static int
@@ -470,7 +472,7 @@ ipmb_format_lun_2(channel_t *chan, msg_t *qmsg,
  * Route a send message command.
  */
 static int
-handle_lun_2_cmd(lmc_data_t    *mc,
+handle_lun_2_msg(lmc_data_t    *mc,
 		 msg_t         *omsg,
 		 unsigned char *rdata,
 		 unsigned int  *rdata_len)
@@ -667,31 +669,33 @@ handle_response(lmc_data_t    *mc,
  * Note that rdata_len holds the length of rdata, and it must be at
  * least 1.
  */
-int
-ipmi_mc_handle_msg(lmc_data_t    *mc,
-		   msg_t         *omsg,
-		   unsigned char *rdata,
-		   unsigned int  *rdata_len)
+void
+ipmi_mc_handle_msg(lmc_data_t *mc, msg_t *omsg)
 {
+    unsigned char rdata[36];
+    unsigned int rdata_len = sizeof(rdata);
+    int rv = 1;
+
     if (mc->sys->debug & DEBUG_MSG)
 	mc->sys->log(mc->sys, DEBUG, omsg, "Receive message:");
 
     if (!mc->enabled) {
 	rdata[0] = 0xff;
-	*rdata_len = 1;
-	return 1;
+	rdata_len = 1;
+	goto out;
     }
 
     /* Figure out where the message goes. */
     if (omsg->dlun == 2)
-	return handle_lun_2_cmd(mc, omsg, rdata, rdata_len);
-
-    if (omsg->netfn & 1)
-	handle_response(mc, omsg, rdata, rdata_len);
+	rv = handle_lun_2_msg(mc, omsg, rdata, &rdata_len);
+    else if (omsg->netfn & 1)
+	rv = handle_response(mc, omsg, rdata, &rdata_len);
     else
-	deliver_msg_to_mc(mc, omsg, rdata, rdata_len);
+	rv = deliver_cmd_to_mc(mc, omsg, rdata, &rdata_len);
 
-    return 1; /* Return a response. */
+ out:
+    if (rv)
+	ipmi_handle_smi_rsp(omsg->orig_channel, omsg, rdata, rdata_len);
 }
 
 void

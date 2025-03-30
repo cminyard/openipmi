@@ -396,10 +396,7 @@ extern cmd_handler_f oem0_netfn_handlers[256];
 #define set_bit(m, b, v) (m) = (v) ? ((m) | (1 << (b))) : ((m) & ~(1 << (b)))
 #define bit_set(m, b) (!!((m) & (1 << (b))))
 
-int ipmi_mc_handle_msg(lmc_data_t    *srcmc,
-		       msg_t         *msg,
-		       unsigned char *rdata,
-		       unsigned int  *rdata_len);
+void ipmi_mc_handle_msg(lmc_data_t *srcmc, msg_t *msg);
 
 int ipmi_mc_is_power_on(lmc_data_t *mc);
 
