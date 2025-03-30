@@ -574,18 +574,28 @@ lan_handle_send_msg(channel_t *chan, msg_t *imsg,
     }
     session = &lan->sessions[handle];
 
-    /* Set this up like it was the received command, return_rsp will swap it. */
-    msg.saddr = imsg->data[2];
-    msg.slun = imsg->data[3] & 0x3;
-    msg.daddr = imsg->data[5];
-    msg.dlun = imsg->data[6] & 0x3;
+    msg.daddr = imsg->data[2];
+    msg.dlun = imsg->data[3] & 0x3;
+    msg.saddr = imsg->data[5];
+    msg.slun = imsg->data[6] & 0x3;
     msg.rq_seq = imsg->data[6] >> 2;
+    msg.cmd = imsg->data[7];
 
     if (fixup(fixup_data, chan, &msg, rdata, rdata_len))
 	return;
 
+    /*
+     * fixup requires a proper message to find it, but return_rsp
+     * expects that msg is the original message header.  Set this up
+     * like it was the received command, return_rsp will swap it.
+     */
+    msg.saddr = imsg->data[2];
+    msg.slun = imsg->data[3] & 0x3;
+    msg.daddr = imsg->data[5];
+    msg.dlun = imsg->data[6] & 0x3;
+
     rmsg.netfn = msg.netfn;
-    rmsg.cmd = imsg->data[7];
+    rmsg.cmd = msg.cmd;
     rmsg.data = imsg->data + 8;
     rmsg.data_len = imsg->len - 9;
 
