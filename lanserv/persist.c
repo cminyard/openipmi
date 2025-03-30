@@ -474,6 +474,7 @@ free_persist(persist_t *p)
 	p->sys->free(p->sys, pi->iname);
 	p->sys->free(p->sys, pi);
     }
+    p->sys->free(p->sys, p->name);
     p->sys->free(p->sys, p);
 }
 
