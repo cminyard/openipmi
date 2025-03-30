@@ -535,7 +535,7 @@ lan_return_rsp(channel_t *chan, msg_t *msg, rsp_msg_t *rsp)
 
 	return_rsp(lan, msg, NULL, &rrsp);
 
-	chan->sys->free(chan->sys, msg);
+	ipmi_msg_free(chan->sys, msg);
 	msg = get_next_msg_q(&chan->xmit_q);
     }
 }

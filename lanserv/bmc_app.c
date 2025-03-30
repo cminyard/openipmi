@@ -1060,7 +1060,7 @@ handle_get_msg(lmc_data_t    *mc,
      */
     memcpy(rdata + 2, qmsg->data, qmsg->len);
     *rdata_len = qmsg->len + 2;
-    mc->sys->free(mc->sys, qmsg);
+    ipmi_msg_free(mc->sys, qmsg);
 }
 
 static void

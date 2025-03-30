@@ -200,7 +200,13 @@ typedef struct led_data_s
 } led_data_t;
 
 struct seq_entry {
-    uint8_t inuse;
+    int inuse;
+    void *src_addr;
+    unsigned int src_len;
+    uint8_t daddr;
+    uint8_t dlun;
+    uint8_t saddr;
+    uint8_t slun;
     uint8_t chan_num;
     uint8_t orig_seq;
     uint32_t sid;

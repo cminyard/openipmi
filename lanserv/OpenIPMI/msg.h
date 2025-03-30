@@ -63,7 +63,8 @@ typedef struct channel_s channel_t;
 typedef struct msg_s
 {
     void *src_addr;
-    int  src_len;
+    unsigned int src_len;
+    int src_allocated;
 
     long oem_data; /* For use by OEM handlers.  This will be set to
                       zero by the calling code. */
@@ -134,6 +135,11 @@ typedef struct sys_data_s sys_data_t;
 typedef struct startcmd_s startcmd_t;
 typedef struct user_s user_t;
 typedef struct pef_data_s pef_data_t;
+
+msg_t *ipmi_msg_alloc(sys_data_t *sys, unsigned int datalen);
+void ipmi_msg_free(sys_data_t *sys, msg_t *msg);
+msg_t *ipmi_msg_dup(sys_data_t *sys, msg_t *omsg,
+		    unsigned int extra_size, unsigned int data_offset);
 
 struct msg_q;
 
