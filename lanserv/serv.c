@@ -393,7 +393,7 @@ ipmi_msg_dup(sys_data_t *sys, msg_t *omsg,
 {
     msg_t *msg;
 
-    msg = sys->alloc(sys, sizeof(*msg) + omsg->len) + extra_size;
+    msg = sys->alloc(sys, sizeof(*msg) + omsg->len + extra_size);
     if (!msg)
 	return NULL;
 
@@ -401,7 +401,7 @@ ipmi_msg_dup(sys_data_t *sys, msg_t *omsg,
 
     msg->data = ((unsigned char *) msg) + sizeof(*msg);
     msg->len = omsg->len + extra_size;
-    memcpy(msg->data + data_offset, omsg->data, msg->len);
+    memcpy(msg->data + data_offset, omsg->data, omsg->len);
 
     return msg;
 }
