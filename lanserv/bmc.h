@@ -211,6 +211,9 @@ struct seq_entry {
     uint8_t orig_seq;
     uint8_t cmd;
     uint32_t sid;
+
+    /* Number of ticks (seconds) before we give up on this message. */
+    unsigned int time_to_live;
 };
 
 struct lmc_data_s

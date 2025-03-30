@@ -296,9 +296,59 @@ ipmi_emu_register_cmd_handler(emu_data_t *emu,
     return 0;
 }
 
+static void
+mc_tick(lmc_data_t *mc)
+{
+    unsigned int i;
+    struct seq_entry *e;
+    msg_t *msg, *prev, *next;
+
+    /* Check the sequence table for things to time out. */
+    for (i = 0; i < 64; i++) {
+	if (!mc->seq_entries[i].inuse)
+	    continue;
+	e = &mc->seq_entries[i];
+	if (e->time_to_live == 0) {
+	    e->inuse = 0;
+	    if (e->src_addr) {
+		mc->sys->free(mc->sys, e->src_addr);
+		e->src_addr = NULL;
+	    }
+	} else {
+	    e->time_to_live--;
+	}
+    }
+
+    /* Now check the receive queue for things to time out. */
+    msg = msg_q_first(&mc->recv_q);
+    prev = NULL;
+    while (msg) {
+	next = msg->next;
+	if (msg->time_to_live == 0) {
+	    if (prev)
+		prev->next = msg->next;
+	    else
+		mc->recv_q.head = msg->next;
+	    ipmi_msg_free(mc->sys, msg);
+	} else {
+	    msg->time_to_live--;
+	    prev = msg;
+	}
+	msg = next;
+    }
+}
+
 void
 ipmi_emu_tick(emu_data_t *emu, unsigned int seconds)
 {
+    sys_data_t *sys = emu->sys;
+    unsigned int i;
+
+    for (i = 0; i < IPMI_MAX_MCS; i++) {
+	if (sys->ipmb_addrs[i])
+	    mc_tick(sys->ipmb_addrs[i]);
+    }
+
     if (emu->atca_fru_inv_locked) {
 	emu->atca_fru_inv_lock_timeout -= seconds;
 	if (emu->atca_fru_inv_lock_timeout < 0) {
@@ -518,6 +568,7 @@ handle_lun_2_msg(lmc_data_t    *mc,
 	return 1;
     }
 
+    qmsg->time_to_live = 5;  /* Delete if it's not picked up in 5 seconds. */
     add_to_msg_q(&mc->recv_q, qmsg);
 
     return 0; /* Don't return a response. */
@@ -553,6 +604,7 @@ reserve_mc_seq(lmc_data_t *mc, msg_t *msg,
 	    e->chan_num = msg->channel;
 	    e->cmd = msg->cmd;
 	    e->sid = msg->sid;
+	    e->time_to_live = 5; /* Wait at lesat 5 seconds. */
 	    msg->rq_seq = j;
 	    mc->next_seq = (j + 1) % 64;
 	    return 0;
