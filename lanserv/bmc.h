@@ -249,6 +249,7 @@ struct lmc_data_s
     startcmd_t startcmd;
 
     struct msg_q recv_q;
+    unsigned int recv_q_len; /* How many items in the receive queue? */
 
     unsigned char evq[16];
     char  ev_in_q;

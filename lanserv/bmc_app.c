@@ -946,9 +946,10 @@ handle_clear_msg_flags(lmc_data_t    *mc,
     if (msg->data[0] & IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE) {
 	msg_t *qmsg = get_next_msg_q(&mc->recv_q);
 	while (qmsg) {
-	    mc->sys->free(mc->sys, qmsg);
+	    ipmi_msg_free(mc->sys, qmsg);
 	    qmsg = get_next_msg_q(&mc->recv_q);
 	}
+	mc->recv_q_len = 0;
     }
 
     if (chan->set_atn)
@@ -1045,8 +1046,10 @@ handle_get_msg(lmc_data_t    *mc,
 	*rdata_len = 1;
 	return;
     }
+    mc->recv_q_len--;
 
     if (qmsg->len + 2 > *rdata_len) {
+	ipmi_msg_free(mc->sys, qmsg);
 	rdata[0] = IPMI_REQUESTED_DATA_LENGTH_EXCEEDED_CC;
 	*rdata_len = 1;
 	return;

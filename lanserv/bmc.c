@@ -330,6 +330,9 @@ mc_tick(lmc_data_t *mc)
 	    else
 		mc->recv_q.head = msg->next;
 	    ipmi_msg_free(mc->sys, msg);
+	    mc->recv_q_len--;
+	    if (mc->recv_q.head == NULL)
+		mc->recv_q.now_empty(&mc->recv_q);
 	} else {
 	    msg->time_to_live--;
 	    prev = msg;
@@ -544,6 +547,12 @@ handle_lun_2_msg(lmc_data_t    *mc,
 	return 1;
     }
 
+    if (mc->recv_q_len > 20) {
+	rdata[0] = IPMI_OUT_OF_SPACE_CC;
+	*rdata_len = 1;
+	return 1;
+    }
+
     qmsg = ipmi_msg_dup(mc->sys, omsg, ochan->get_msg_overhead,
 			ochan->get_msg_header_size);
     if (!qmsg) {
@@ -568,6 +577,7 @@ handle_lun_2_msg(lmc_data_t    *mc,
 	return 1;
     }
 
+    mc->recv_q_len++;
     qmsg->time_to_live = 5;  /* Delete if it's not picked up in 5 seconds. */
     add_to_msg_q(&mc->recv_q, qmsg);
 
