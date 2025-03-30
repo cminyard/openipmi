@@ -209,6 +209,7 @@ struct seq_entry {
     uint8_t slun;
     uint8_t chan_num;
     uint8_t orig_seq;
+    uint8_t cmd;
     uint32_t sid;
 };
 

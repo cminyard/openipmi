@@ -551,6 +551,7 @@ reserve_mc_seq(lmc_data_t *mc, msg_t *msg,
 	    e->slun = msg->slun;
 	    e->orig_seq = msg->rq_seq;
 	    e->chan_num = msg->channel;
+	    e->cmd = msg->cmd;
 	    e->sid = msg->sid;
 	    msg->rq_seq = j;
 	    mc->next_seq = (j + 1) % 64;
@@ -572,7 +573,8 @@ find_mc_seq(lmc_data_t *mc, msg_t *msg,
 
     /* Make sure all the message information matches. */
     if (!e->inuse || e->daddr != msg->saddr || e->dlun != msg->slun ||
-		e->saddr != msg->daddr || e->slun != msg->dlun) {
+		e->saddr != msg->daddr || e->slun != msg->dlun ||
+		e->cmd != msg->cmd) {
 	rdata[0] = IPMI_NOT_PRESENT_CC;
 	*rdata_len = 1;
 	return 1;
