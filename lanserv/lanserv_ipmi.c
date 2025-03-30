@@ -146,7 +146,7 @@ close_session(lanserv_data_t *lan, session_t *session)
 	if (session->authtype <= 4)
 	    ipmi_auths[session->authtype].authcode_cleanup(session->authdata);
 	else
-	    memset(&(session->auth_data), 0, sizeof(auth_data_t));
+	    memset(&session->auth_data, 0, sizeof(auth_data_t));
     }
     if (session->integh)
 	session->integh->cleanup(lan, session);
