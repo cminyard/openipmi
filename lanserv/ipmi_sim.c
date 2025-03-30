@@ -200,11 +200,7 @@ typedef struct sim_addr_s
 static int
 smi_send(channel_t *chan, msg_t *msg)
 {
-    unsigned char    msgd[36];
-    unsigned int     msgd_len = sizeof(msgd);
-
-    if (ipmi_mc_handle_msg(chan->mc, msg, msgd, &msgd_len))
-	ipmi_handle_smi_rsp(chan, msg, msgd, msgd_len);
+    ipmi_mc_handle_msg(chan->mc, msg);
     return 0;
 }
 

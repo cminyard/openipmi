@@ -86,6 +86,7 @@ ipmi_oem_send_msg(channel_t     *chan,
     }
 
     memset(nmsg, 0, sizeof(*nmsg));
+    nmsg->orig_channel = chan;
     nmsg->oem_data = oem_data;
     nmsg->netfn = netfn;
     nmsg->cmd = cmd;
@@ -107,6 +108,9 @@ void
 ipmi_handle_smi_rsp(channel_t *chan, msg_t *msg, uint8_t *rspd, int rsp_len)
 {
     rsp_msg_t rsp;
+
+    if (!chan->return_rsp)
+	return;
 
     rsp.netfn = msg->netfn | 1;
     rsp.cmd = msg->cmd;
