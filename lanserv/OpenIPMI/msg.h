@@ -118,6 +118,8 @@ typedef struct msg_s
 
     uint32_t iana; /* Set for IANA commands */
 
+    unsigned int time_to_live;
+
     struct msg_s *next;
 } msg_t;
 
@@ -163,5 +165,6 @@ int init_msg_q(struct msg_q *q, msg_q_op add_to_empty, msg_q_op now_empty,
 void add_to_msg_q(struct msg_q *q, msg_t *msg);
 msg_t *get_next_msg_q(struct msg_q *q);
 #define msg_q_empty(q) ((q)->head == NULL)
+#define msg_q_first(q) ((q)->head)
 
 #endif /* __MSG_H_ */
