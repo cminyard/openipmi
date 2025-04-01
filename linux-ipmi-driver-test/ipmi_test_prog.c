@@ -51,8 +51,10 @@
  *     was an error.
  *   Command <dev> <addr> <netfn> <cmd> <data>
  *   Event <dev> <data>
- *   Response <dev> <id> <addr> <netfn> <cmd> <data>
- *   ResponseResponse <dev> <id> <addr> <netfn> <cmd> <data>
+ *   Response <id> <dev> <addr> <netfn> <cmd> <data>
+ *   ResponseResponse <id> <dev> <addr> <netfn> <cmd> <data>
+ *   Closed <dev>
+ *     An error occurred and <dev> was closed.
  *   Shutdown <id>
  *     The program was shut down
  *
@@ -69,6 +71,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <stdarg.h>
 #include <linux/ipmi.h>
 #include <gensio/gensio.h>
 #include <gensio/gensio_list.h>
@@ -96,6 +99,7 @@ struct ipmiinfo {
     bool closing;
     struct accinfo *ai;
     struct gensio_waiter *close_waiter;
+    unsigned int devnum;
 };
 #define NUM_IPMI_INFO 5
 
@@ -159,31 +163,239 @@ close_done(struct gensio *io, void *close_data)
     check_shutdown(ai);
 }
 
+static struct sendbuf *
+sendbuf_dup(struct gensio_os_funcs *o, const struct sendbuf *s)
+{
+    struct sendbuf *s2 =
+	gensio_os_funcs_zalloc(o, sizeof(struct sendbuf) + s->len + 1);
+
+    if (s2) {
+	s2->len = s->len;
+	s2->data = ((unsigned char *) s2) + sizeof(*s2);
+	memcpy(s2->data, s->data, s2->len);
+    }
+    return s2;
+}
+
+static struct sendbuf *
+al_vsprintf(struct gensio_os_funcs *o, char *str, va_list ap)
+{
+    struct sendbuf *s;
+    va_list ap2;
+    size_t len;
+    char dummy;
+
+    va_copy(ap2, ap);
+    len = vsnprintf(&dummy, 1, str, ap);
+    s = gensio_os_funcs_zalloc(o, sizeof(struct sendbuf) + len + 2);
+    if (!s)
+	return NULL;
+    s->len = len + 1;
+    s->pos = 0;
+    s->data = ((unsigned char *) s) + sizeof(*s);
+    vsnprintf((char *) s->data, len + 1, str, ap2);
+    va_end(ap2);
+    s->data[len] = '\n';
+    s->data[len + 1] = '\0';
+
+    return s;
+}
+
+struct data_sg {
+    const char *header;
+    unsigned int len;
+    unsigned char *data;
+};
+
+static struct sendbuf *
+al_vsprintf_data(struct gensio_os_funcs *o,
+		 const struct data_sg *data, unsigned int dlen,
+		 const char *str, va_list ap)
+{
+    struct sendbuf *s;
+    va_list ap2;
+    size_t len;
+    char dummy;
+    unsigned int i, j;
+
+    va_copy(ap2, ap);
+    len = vsnprintf(&dummy, 1, str, ap);
+    for (i = 0; i < dlen; i++) {
+	if (data->header)
+	    len += 1 + strlen(data->header);
+	len += 3 * data->len;
+    }
+    s = gensio_os_funcs_zalloc(o, sizeof(struct sendbuf) + len + 2);
+    if (!s)
+	return NULL;
+    s->len = len + 1;
+    s->pos = 0;
+    s->data = ((unsigned char *) s) + sizeof(*s);
+    len = vsnprintf((char *) s->data, len + 1, str, ap2);
+    va_end(ap2);
+    for (i = 0; i < dlen; i++) {
+	if (data->header)
+	    len += sprintf((char *) s->data + len, " %s", data->header);
+	for (j = 0; j < data->len; j++)
+	    len += sprintf((char *) s->data + len, " %2.2x", data->data[j]);
+    }
+    s->data[len] = '\n';
+    s->data[len + 1] = '\0';
+
+    return s;
+}
+
+static struct sendbuf *
+al_sprintf_data(struct gensio_os_funcs *o,
+		const struct data_sg *data, unsigned int dlen,
+		const char *str, ...)
+{
+    va_list ap;
+    struct sendbuf *s;
+
+    va_start(ap, str);
+    s = al_vsprintf_data(o, data, dlen, str, ap);
+    va_end(ap);
+    return s;
+}
+
 __attribute__ ((__format__ (__printf__, 2, 3)))
 static void
 add_output_buf(struct ioinfo *ii, char *str, ...)
 {
     va_list ap;
-    ssize_t len;
-    char dummy;
     struct sendbuf *s;
 
     va_start(ap, str);
-    len = vsnprintf(&dummy, 1, str, ap);
-    s = gensio_os_funcs_zalloc(ii->ai->o, sizeof(struct sendbuf) + len + 2);
+    s = al_vsprintf(ii->ai->o, str, ap);
+    va_end(ap);
+
+    gensio_list_add_tail(&ii->writelist, &s->link);
+    gensio_set_write_callback_enable(ii->io, true);
+}
+
+static void
+append_output_list_all(struct accinfo *ai, struct sendbuf *s)
+{
+    struct gensio_link *l;
+    struct sendbuf *s2;
+
+    gensio_list_for_each(&ai->ios, l) {
+	struct ioinfo *ii = gensio_container_of(l, struct ioinfo, link);
+
+	if (l == gensio_list_last(&ai->ios))
+	    s2 = s;
+	else
+	    s2 = sendbuf_dup(ai->o, s);
+	if (s2) {
+	    gensio_list_add_tail(&ii->writelist, &s2->link);
+	    gensio_set_write_callback_enable(ii->io, true);
+	}
+    }
+}
+
+__attribute__ ((__format__ (__printf__, 2, 3)))
+static void
+add_output_buf_all(struct accinfo *ai, char *str, ...)
+{
+    va_list ap;
+    struct sendbuf *s;
+
+    if (gensio_list_empty(&ai->ios))
+	return;
+
+    va_start(ap, str);
+    s = al_vsprintf(ai->o, str, ap);
     va_end(ap);
     if (!s)
 	return;
-    s->len = len + 1;
-    s->pos = 0;
-    s->data = ((unsigned char *) s) + sizeof(*s);
+
+    append_output_list_all(ai, s);
+}
+
+static void
+add_output_buf_event_all(struct accinfo *ai, unsigned int devnum,
+			 struct ipmi_msg *msg)
+{
+    struct sendbuf *s;
+    struct data_sg sg = { .header = NULL,
+			  .len = msg->data_len, .data = msg->data };
+
+    if (gensio_list_empty(&ai->ios))
+	return;
+
+    s = al_sprintf_data(ai->o, &sg, 1, "Event %d", devnum);
+    if (s)
+	append_output_list_all(ai, s);
+}
+
+static void
+add_output_buf_msg_all(struct accinfo *ai,
+		       unsigned char *addr, struct ipmi_msg *msg,
+		       const char *str, ...)
+{
+    struct sendbuf *s;
+    struct data_sg sg[2];
+    unsigned char addr_bytes[IPMI_MAX_ADDR_SIZE];
+    struct ipmi_addr *iaddr = (struct ipmi_addr *) addr;
+    va_list ap;
+
+    sg[0].data = addr_bytes;
+    switch (iaddr->addr_type) {
+    case IPMI_SYSTEM_INTERFACE_ADDR_TYPE: {
+	struct ipmi_system_interface_addr *a =
+	    (struct ipmi_system_interface_addr *) iaddr;
+
+	sg[0].header = "si";
+	sg[0].len = 2;
+	sg[0].data[0] = a->channel;
+	sg[0].data[1] = a->lun;
+	break;
+    }
+
+    case IPMI_IPMB_ADDR_TYPE: {
+	struct ipmi_ipmb_addr *a = (struct ipmi_ipmb_addr *) iaddr;
+
+	sg[0].header = "ipmb";
+	sg[0].len = 3;
+	sg[0].data[0] = a->channel;
+	sg[0].data[1] = a->slave_addr;
+	sg[0].data[2] = a->lun;
+	break;
+    }
+
+    case IPMI_LAN_ADDR_TYPE: {
+	struct ipmi_lan_addr *a = (struct ipmi_lan_addr *) iaddr;
+
+	sg[0].header = "lan";
+	sg[0].len = 6;
+	sg[0].data[0] = a->channel;
+	sg[0].data[1] = a->privilege;
+	sg[0].data[2] = a->session_handle;
+	sg[0].data[3] = a->remote_SWID;
+	sg[0].data[4] = a->local_SWID;
+	sg[0].data[5] = a->lun;
+	break;
+    }
+
+    default:
+	return;
+    }
+
+    sg[0].data[sg[0].len++] = msg->netfn;
+    sg[0].data[sg[0].len++] = msg->cmd;
+    sg[1].header = NULL;
+    sg[1].len = msg->data_len;
+    sg[2].data = msg->data;
+
+    if (gensio_list_empty(&ai->ios))
+	return;
+
     va_start(ap, str);
-    vsnprintf((char *) s->data, len + 1, str, ap);
+    s = al_vsprintf_data(ai->o, sg, 2, str, ap);
     va_end(ap);
-    s->data[len] = '\n';
-    s->data[len + 1] = '\0';
-    gensio_list_add_tail(&ii->writelist, &s->link);
-    gensio_set_write_callback_enable(ii->io, true);
+    if (s)
+	append_output_list_all(ai, s);
 }
 
 static void
@@ -288,8 +500,60 @@ run_cmd(struct ioinfo *ii, unsigned long long id, const char *loadcmdstr)
 }
 
 static void
+do_close(struct ipmiinfo *ipi)
+{
+    struct gensio_os_funcs *o = ipi->ai->o;
+
+    ipi->closing = true;
+    o->clear_fd_handlers(ipi->iod);
+
+    gensio_os_funcs_wait(o, ipi->close_waiter, 1, NULL);
+    o->close(&ipi->iod);
+    ipi->fd = -1;
+    ipi->closing = false;
+}
+
+static void
 ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 {
+    struct ipmiinfo *ipi = cb_data;
+    struct ipmi_addr addr;
+    struct ipmi_recv recv = { .addr = (unsigned char *) &addr,
+			      .addr_len = sizeof(addr) };
+    ssize_t rv;
+
+ retry:
+    rv = read(ipi->fd, &recv, sizeof(recv));
+    if (rv == -1) {
+	if (errno == EINTR)
+	    goto retry;
+	if (errno == EAGAIN)
+	    return;
+	/* Driver has issues, close it. */
+	do_close(ipi);
+	add_output_buf_all(ipi->ai, "Closed %d", ipi->devnum);
+	return;
+    }
+
+    switch (recv.recv_type) {
+    case IPMI_RESPONSE_RECV_TYPE:
+	break;
+
+    case IPMI_RESPONSE_RESPONSE_TYPE:
+	break;
+
+    case IPMI_ASYNC_EVENT_RECV_TYPE:
+	add_output_buf_event_all(ipi->ai, ipi->devnum, &recv.msg);
+	break;
+
+    case IPMI_CMD_RECV_TYPE:
+	add_output_buf_msg_all(ipi->ai, recv.addr, &recv.msg,
+			       "Command %d\n", ipi->devnum);
+	break;
+
+    default:
+	return;
+    }
 }
 
 static void
@@ -321,7 +585,7 @@ handle_open(struct ioinfo *ii, unsigned long long id, const char **tokens)
 
     snprintf(devstr, sizeof(devstr), "/dev/ipmi%u", dev);
 
-    ipi[dev].fd = open(devstr, O_RDWR);
+    ipi[dev].fd = open(devstr, O_RDWR | O_NONBLOCK);
     if (ipi[dev].fd == -1) {
 	add_output_buf(ii, "Done %llu Unable to open dev %s: %s", id,
 		       devstr, strerror(errno));
@@ -354,7 +618,6 @@ static void
 handle_close(struct ioinfo *ii, unsigned long long id, const char **tokens)
 {
     struct ipmiinfo *ipi = ii->ai->ipi;
-    struct gensio_os_funcs *o = ii->ai->o;
     unsigned int dev;
 
     if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
@@ -367,13 +630,7 @@ handle_close(struct ioinfo *ii, unsigned long long id, const char **tokens)
 	return;
     }
 
-    ipi[dev].closing = true;
-    o->clear_fd_handlers(ipi[dev].iod);
-    
-    gensio_os_funcs_wait(o, ipi[dev].close_waiter, 1, NULL);
-    o->close(&ipi[dev].iod);
-    ipi[dev].fd = -1;
-    ipi[dev].closing = false;
+    do_close(&ipi[dev]);
     add_output_buf(ii, "Done %llu", id);
 }
 
@@ -648,6 +905,7 @@ main(int argc, char *argv[])
     for (i = 0; i < NUM_IPMI_INFO; i++) {
 	ipi[i].fd = -1;
 	ipi[i].ai = &ai;
+	ipi[i].devnum = i;
 	ipi[i].close_waiter = gensio_os_funcs_alloc_waiter(ai.o);
 	if (!ipi[i].close_waiter) {
 	    fprintf(stderr, "Could not allocate close waiter, out of memory\n");
