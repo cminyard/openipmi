@@ -19,7 +19,7 @@
  *     Cycle loading/unloading the given driver as fast as possible
  *   Command <id> <dev> <addr> <netfn> <cmd> <data>
  *     Send a command
- *   Response <id> <cid> <dev> <addr> <netfn> <cmd> <data>
+ **  Response <id> <cid> <dev> <addr> <netfn> <cmd> <data>
  *     Send a response.  The <cid> should be the id that came in with the
  *     Command this is a response to.
  **   Broadcast <id> <dev> <addr> <netfn> <cmd> <data>
@@ -50,11 +50,11 @@
  *   Done <id> [<err>]
  *     Command with the given id has completed.  If <err> is present, there
  *     was an error.
- *   Command <id> <dev> <addr> <netfn> <cmd> <data>
+ *   Command <id> <dev> err <errstr> | <addr> <netfn> <cmd> <data>
  *     A command from the BMC to handle.  Return the <id> as <cid> in
  *     the Response.
  *   Event <dev> <data>
- *   Response <id> <dev> <addr> <netfn> <cmd> <data>
+ *   Response <id> <dev> err <errstr> |  <addr> <netfn> <cmd> <data>
  *     Response to a sent command
  *   ResponseResponse <id> <dev> <addr> <netfn> <cmd> <data>
  *     Response to a sent response
@@ -446,10 +446,29 @@ add_output_buf_msg(struct ioinfo *ii,
 }
 
 static void
-start_close(struct ioinfo *ii)
+start_ioinfo_close(struct ioinfo *ii)
 {
     int rv;
+    struct accinfo *ai = ii->ai;
+    unsigned int i;
 
+    /* Nuke any responses that we are waiting for. */
+    for (i = 0; i < NUM_IPMI_INFO; i++) {
+	struct gensio_link *l, *l2;
+
+	if (ai->ipi[i].fd == -1)
+	    continue;
+	gensio_list_for_each_safe(&ai->ipi[i].cmd_rsps, l, l2) {
+	    struct cmd_rsp_wait *crw =
+		gensio_container_of(l, struct cmd_rsp_wait, link);
+
+	    if (crw->ii == ii) {
+		gensio_list_rm(&ai->ipi[i].cmd_rsps, &crw->link);
+		gensio_os_funcs_zfree(ai->o, crw);
+	    }
+	}
+    }
+	 
     ii->closing = true;
     rv = gensio_close(ii->io, close_done, ii);
     if (rv) {
@@ -572,6 +591,7 @@ static void
 do_close(struct ipmiinfo *ipi)
 {
     struct gensio_os_funcs *o = ipi->ai->o;
+    struct gensio_link *l, *l2;
 
     ipi->closing = true;
     o->clear_fd_handlers(ipi->iod);
@@ -580,6 +600,22 @@ do_close(struct ipmiinfo *ipi)
     o->close(&ipi->iod);
     ipi->fd = -1;
     ipi->closing = false;
+
+    /* Return error responses for any pending operations. */
+    gensio_list_for_each_safe(&ipi->cmd_rsps, l, l2) {
+	struct cmd_rsp_wait *crw =
+	    gensio_container_of(l, struct cmd_rsp_wait, link);
+
+	gensio_list_rm(&ipi->cmd_rsps, &crw->link);
+	if (crw->expected_type == IPMI_RESPONSE_RECV_TYPE)
+	    add_output_buf(crw->ii, "Response %llu %d err IPMI device closed",
+			   crw->id, ipi->devnum);
+	else
+	    add_output_buf(crw->ii,
+			   "ResponseResponse %llu %d err IPMI device closed",
+			   crw->id, ipi->devnum);
+	gensio_os_funcs_zfree(o, crw);
+    }
 }
 
 struct cmd_rsp_wait *
@@ -941,6 +977,7 @@ handle_command(struct ioinfo *ii, unsigned long long id, const char **tokens)
     crw->expected_type = IPMI_RESPONSE_RECV_TYPE;
     crw->msgid = req.msgid;
     crw->id = id;
+    crw->ii = ii;
 
     gensio_list_add_tail(&ipi->cmd_rsps, &crw->link);
     rv = ioctl(ipi->fd, IPMICTL_SEND_COMMAND, &req);
@@ -968,7 +1005,7 @@ handle_quit(struct ioinfo *ii, unsigned long long id, const char **tokens)
 	if (wii == ii) /* Close on the final write. */
 	    ii->close_on_write = true;
 	else
-	    start_close(wii);
+	    start_ioinfo_close(wii);
     }
     check_shutdown(ai);
 }
@@ -1046,7 +1083,7 @@ io_event(struct gensio *io, void *user_data, int event, int err,
 	if (err) {
 	    if (err != GE_REMCLOSE)
 		fprintf(stderr, "Error from io: %s\n", gensio_err_to_str(err));
-	    start_close(ii);
+	    start_ioinfo_close(ii);
 	    return 0;
 	}
 
@@ -1092,7 +1129,7 @@ io_event(struct gensio *io, void *user_data, int event, int err,
 		    fprintf(stderr, "Error writing to io: %s\n",
 			    gensio_err_to_str(rv));
 		gensio_set_write_callback_enable(ii->io, false);
-		start_close(ii);
+		start_ioinfo_close(ii);
 		return 0;
 	    }
 	    sb->pos += i;
@@ -1106,7 +1143,7 @@ io_event(struct gensio *io, void *user_data, int event, int err,
 	if (gensio_list_empty(&ii->writelist)) {
 	    gensio_set_write_callback_enable(ii->io, false);
 	    if (ii->close_on_write && !ii->closing)
-		start_close(ii);
+		start_ioinfo_close(ii);
 	}
 	return 0;
 
