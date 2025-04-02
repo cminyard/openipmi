@@ -15,25 +15,26 @@
  *     Load a driver
  *   Unload <id> msghandler|si|smbus|devintf
  *     Unoad a driver
- *   Cycle <id> msghandler|si|smbus|devintf <count>
+ **   Cycle <id> msghandler|si|smbus|devintf <count>
  *     Cycle loading/unloading the given driver as fast as possible
  *   Command <id> <dev> <addr> <netfn> <cmd> <data>
  *     Send a command
- *   Response <id> <dev> <addr> <netfn> <cmd> <data>
- *     Send a response
- *   Broadcast <id> <dev> <addr> <netfn> <cmd> <data>
+ *   Response <id> <cid> <dev> <addr> <netfn> <cmd> <data>
+ *     Send a response.  The <cid> should be the id that came in with the
+ *     Command this is a response to.
+ **   Broadcast <id> <dev> <addr> <netfn> <cmd> <data>
  *     Send a broadcast
- *   Register <id> <dev> <netfn> <cmd> [<channels>]
+ **   Register <id> <dev> <netfn> <cmd> [<channels>]
  *     Register for command
- *   Unregister <id> <dev> <netfn> <cmd> [<channels>]
+ **   Unregister <id> <dev> <netfn> <cmd> [<channels>]
  *     Unregister for command
- *   EvEnable <id> <dev> <enable>
+ **   EvEnable <id> <dev> <enable>
  *     Set event enable (1 or 0 for enable or disable)
  *   Open <id> <dev>
  *     Open IPMI device
  *   Close <id> <dev>
  *     Close IPMI device
- *   Panic <id>
+ **   Panic <id>
  *     Panic the system to test the panic logs
  *   Quit <id>
  *     Shut down the program
@@ -49,10 +50,14 @@
  *   Done <id> [<err>]
  *     Command with the given id has completed.  If <err> is present, there
  *     was an error.
- *   Command <dev> <addr> <netfn> <cmd> <data>
+ *   Command <id> <dev> <addr> <netfn> <cmd> <data>
+ *     A command from the BMC to handle.  Return the <id> as <cid> in
+ *     the Response.
  *   Event <dev> <data>
  *   Response <id> <dev> <addr> <netfn> <cmd> <data>
+ *     Response to a sent command
  *   ResponseResponse <id> <dev> <addr> <netfn> <cmd> <data>
+ *     Response to a sent response
  *   Closed <dev>
  *     An error occurred and <dev> was closed.
  *   Shutdown <id>
@@ -72,6 +77,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <sys/ioctl.h>
 #include <linux/ipmi.h>
 #include <gensio/gensio.h>
 #include <gensio/gensio_list.h>
@@ -100,6 +106,8 @@ struct ipmiinfo {
     struct accinfo *ai;
     struct gensio_waiter *close_waiter;
     unsigned int devnum;
+    long next_iid;
+    struct gensio_list cmd_rsps;
 };
 #define NUM_IPMI_INFO 5
 
@@ -125,6 +133,19 @@ struct accinfo {
     struct gensio_list ios; /* List of ioinfo */
     struct ipmiinfo *ipi; /* Array of IPMI devices. */
     bool shutting_down;
+};
+
+struct cmd_rsp_wait {
+    struct gensio_link link;
+
+    /* IPMI_RESPONSE_RECV_TYPE or IPMI_RESPONSE_RESPONSE_TYPE. */
+    int expected_type;
+
+    long msgid;
+
+    unsigned long long id;
+
+    struct ioinfo *ii;
 };
 
 static void
@@ -329,16 +350,14 @@ add_output_buf_event_all(struct accinfo *ai, unsigned int devnum,
 	append_output_list_all(ai, s);
 }
 
-static void
-add_output_buf_msg_all(struct accinfo *ai,
-		       unsigned char *addr, struct ipmi_msg *msg,
-		       const char *str, ...)
+static struct sendbuf *
+format_output_buf_msg(struct gensio_os_funcs *o,
+		      unsigned char *addr, struct ipmi_msg *msg,
+		      const char *str, va_list ap)
 {
-    struct sendbuf *s;
     struct data_sg sg[2];
     unsigned char addr_bytes[IPMI_MAX_ADDR_SIZE];
     struct ipmi_addr *iaddr = (struct ipmi_addr *) addr;
-    va_list ap;
 
     sg[0].data = addr_bytes;
     switch (iaddr->addr_type) {
@@ -379,7 +398,7 @@ add_output_buf_msg_all(struct accinfo *ai,
     }
 
     default:
-	return;
+	return NULL;
     }
 
     sg[0].data[sg[0].len++] = msg->netfn;
@@ -388,14 +407,42 @@ add_output_buf_msg_all(struct accinfo *ai,
     sg[1].len = msg->data_len;
     sg[2].data = msg->data;
 
+    return al_vsprintf_data(o, sg, 2, str, ap);
+}
+
+static void
+add_output_buf_msg_all(struct accinfo *ai,
+		       unsigned char *addr, struct ipmi_msg *msg,
+		       const char *str, ...)
+{
+    struct sendbuf *s;
+    va_list ap;
+
     if (gensio_list_empty(&ai->ios))
 	return;
 
     va_start(ap, str);
-    s = al_vsprintf_data(ai->o, sg, 2, str, ap);
+    s = format_output_buf_msg(ai->o, addr, msg, str, ap);
     va_end(ap);
     if (s)
 	append_output_list_all(ai, s);
+}
+
+static void
+add_output_buf_msg(struct ioinfo *ii,
+		   unsigned char *addr, struct ipmi_msg *msg,
+		   const char *str, ...)
+{
+    struct sendbuf *s;
+    va_list ap;
+
+    va_start(ap, str);
+    s = format_output_buf_msg(ii->ai->o, addr, msg, str, ap);
+    va_end(ap);
+    if (s) {
+	gensio_list_add_tail(&ii->writelist, &s->link);
+	gensio_set_write_callback_enable(ii->io, true);
+    }
 }
 
 static void
@@ -420,7 +467,26 @@ get_num(const char *v, unsigned int *onum)
     unsigned int num;
     char *end;
 
+    if (!v)
+	return false;
+
     num = strtoul(v, &end, 0);
+    if (v[0] == '\0' || *end != '\0')
+	return false;
+    *onum = num;
+    return true;
+}
+
+static bool
+get_hnum(const char *v, unsigned int *onum)
+{
+    unsigned int num;
+    char *end;
+
+    if (!v)
+	return false;
+
+    num = strtoul(v, &end, 16);
     if (v[0] == '\0' || *end != '\0')
 	return false;
     *onum = num;
@@ -460,15 +526,18 @@ run_cmd(struct ioinfo *ii, unsigned long long id, const char *loadcmdstr)
     rv = 0;
     pos = 0;
     while (rv == 0) {
-	if (pos < sizeof(buf) - 1)
+	if (pos < sizeof(buf) - 1) {
 	    rv = gensio_read_s(io, &count, buf + pos, sizeof(buf) - pos, NULL);
-	else
+	    if (!rv)
+		pos += count;
+	} else {
 	    /* Throw away data after the buf size. */
 	    rv = gensio_read_s(io, NULL, dummy, sizeof(dummy), NULL);
+	}
     }
 
-    rv = GE_NOTREADY;
-    while (rv == GE_NOTREADY) {
+    rv = GE_INPROGRESS;
+    while (rv == GE_INPROGRESS) {
 	count = sizeof(ibuf);
 	rv = gensio_control(io, 0, GENSIO_CONTROL_GET, GENSIO_CONTROL_WAIT_TASK,
 			    ibuf, &count);
@@ -485,7 +554,7 @@ run_cmd(struct ioinfo *ii, unsigned long long id, const char *loadcmdstr)
 	add_output_buf(ii, "Done %llu Unable to close gensio %s: %s", id,
 		       loadcmdstr, gensio_err_to_str(rv));
 	goto out;
-   }
+    }
 
     if (rc) {
 	buf[pos - 1] = '\0';
@@ -513,17 +582,39 @@ do_close(struct ipmiinfo *ipi)
     ipi->closing = false;
 }
 
+struct cmd_rsp_wait *
+find_cmd_rsp(struct ipmiinfo *ipi, struct ipmi_recv *recv)
+{
+    struct gensio_link *l;
+
+    gensio_list_for_each(&ipi->cmd_rsps, l) {
+	struct cmd_rsp_wait *crw = gensio_container_of(l, struct cmd_rsp_wait,
+						       link);
+
+	if (crw->msgid == recv->msgid &&
+		crw->expected_type == recv->recv_type) {
+	    gensio_list_rm(&ipi->cmd_rsps, &crw->link);
+	    return crw;
+	}
+    }
+    return NULL;
+}
+
 static void
 ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 {
     struct ipmiinfo *ipi = cb_data;
     struct ipmi_addr addr;
+    unsigned char data[256];
     struct ipmi_recv recv = { .addr = (unsigned char *) &addr,
-			      .addr_len = sizeof(addr) };
+			      .addr_len = sizeof(addr),
+			      .msg.data = data,
+			      .msg.data_len = sizeof(data) };
+    struct cmd_rsp_wait *crw;
     ssize_t rv;
 
  retry:
-    rv = read(ipi->fd, &recv, sizeof(recv));
+    rv = ioctl(ipi->fd, IPMICTL_RECEIVE_MSG, &recv);
     if (rv == -1) {
 	if (errno == EINTR)
 	    goto retry;
@@ -537,9 +628,21 @@ ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 
     switch (recv.recv_type) {
     case IPMI_RESPONSE_RECV_TYPE:
+	crw = find_cmd_rsp(ipi, &recv);
+	if (!crw)
+	    return;
+	gensio_os_funcs_zfree(ipi->ai->o, crw);
+	add_output_buf_msg(crw->ii, recv.addr, &recv.msg,
+			   "Response %lld %d", crw->id, ipi->devnum);
 	break;
 
     case IPMI_RESPONSE_RESPONSE_TYPE:
+	crw = find_cmd_rsp(ipi, &recv);
+	if (!crw)
+	    return;
+	gensio_os_funcs_zfree(ipi->ai->o, crw);
+	add_output_buf_msg(crw->ii, recv.addr, &recv.msg,
+			   "ResponseRespnse %lld %d", crw->id, ipi->devnum);
 	break;
 
     case IPMI_ASYNC_EVENT_RECV_TYPE:
@@ -548,7 +651,8 @@ ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 
     case IPMI_CMD_RECV_TYPE:
 	add_output_buf_msg_all(ipi->ai, recv.addr, &recv.msg,
-			       "Command %d\n", ipi->devnum);
+			       "Command %lld %d\n",
+			       (unsigned long long) recv.msgid, ipi->devnum);
 	break;
 
     default:
@@ -574,7 +678,7 @@ handle_open(struct ioinfo *ii, unsigned long long id, const char **tokens)
     int rv;
 
     if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
-	add_output_buf(ii, "Done %llu invalid id: %s", id, tokens[0]);
+	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
 	return;
     }
 
@@ -621,7 +725,7 @@ handle_close(struct ioinfo *ii, unsigned long long id, const char **tokens)
     unsigned int dev;
 
     if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
-	add_output_buf(ii, "Done %llu invalid id: %s", id, tokens[0]);
+	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
 	return;
     }
 
@@ -664,6 +768,191 @@ handle_unload(struct ioinfo *ii, unsigned long long id, const char **tokens)
     run_cmd(ii, id, loadcmdstr);
 }
 
+static bool
+parse_addrs(struct ioinfo *ii, unsigned long long id, const char **tokens,
+	    struct ipmi_addr *addr, unsigned int *addr_len, unsigned int *pos)
+{
+    unsigned int num;
+
+    tokens += *pos;
+
+    if (!tokens[0])
+	add_output_buf(ii, "Done %llu No address given", id);
+	
+    if (strcmp(tokens[0], "si") == 0) {
+	struct ipmi_system_interface_addr *a =
+	    (struct ipmi_system_interface_addr *) addr;
+
+	a->addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
+	if (!get_hnum(tokens[1], &num) || num > 15) {
+	    add_output_buf(ii, "Done %llu Invalid channel for si address", id);
+	    return false;
+	}
+	a->channel = num;
+	if (!get_hnum(tokens[2], &num) || num > 3) {
+	    add_output_buf(ii, "Done %llu Invalid LUN for si address", id);
+	    return false;
+	}
+	a->lun = num;
+	*addr_len = sizeof(*a);
+	*pos += 3;
+    } else if (strcmp(tokens[0], "ipmb") == 0) {
+	struct ipmi_ipmb_addr *a = (struct ipmi_ipmb_addr *) addr;
+
+	a->addr_type = IPMI_IPMB_ADDR_TYPE;
+	if (!get_hnum(tokens[1], &num) || num > 15) {
+	    add_output_buf(ii, "Done %llu Invalid channel for ipmb address",
+			   id);
+	    return false;
+	}
+	a->channel = num;
+	if (!get_hnum(tokens[2], &num) || num > 255) {
+	    add_output_buf(ii, "Done %llu Invalid ipmb for ipmb address", id);
+	    return false;
+	}
+	a->slave_addr = num;
+	if (!get_hnum(tokens[3], &num) || num > 3) {
+	    add_output_buf(ii, "Done %llu Invalid LUN for ipmb address", id);
+	    return false;
+	}
+	a->lun = num;
+	*addr_len = sizeof(*a);
+	*pos += 4;
+    } else if (strcmp(tokens[0], "lan") == 0) {
+	struct ipmi_lan_addr *a = (struct ipmi_lan_addr *) addr;
+
+	a->addr_type = IPMI_LAN_ADDR_TYPE;
+	if (!get_hnum(tokens[1], &num) || num > 15) {
+	    add_output_buf(ii, "Done %llu Invalid channel for lan address",
+			   id);
+	    return false;
+	}
+	a->channel = num;
+	if (!get_hnum(tokens[2], &num) || num > 5) {
+	    add_output_buf(ii, "Done %llu Invalid privilege for lan address",
+			   id);
+	    return false;
+	}
+	a->privilege = num;
+	if (!get_hnum(tokens[3], &num) || num > 255) {
+	    add_output_buf(ii, "Done %llu Invalid rSWID for lan address",
+			   id);
+	    return false;
+	}
+	a->remote_SWID = num;
+	if (!get_hnum(tokens[4], &num) || num > 255) {
+	    add_output_buf(ii, "Done %llu Invalid lSWID for lan address",
+			   id);
+	    return false;
+	}
+	a->local_SWID = num;
+	if (!get_hnum(tokens[5], &num) || num > 3) {
+	    add_output_buf(ii, "Done %llu Invalid LUN for lan address", id);
+	    return false;
+	}
+	a->lun = num;
+	*addr_len = sizeof(*a);
+	*pos += 6;
+    } else {
+	add_output_buf(ii, "Done %llu Unknown address type: %s", id, tokens[0]);
+	return false;
+    }
+    return true;
+}
+
+static bool
+parse_data(struct ioinfo *ii, unsigned long long id, const char **tokens,
+	   unsigned char *data, unsigned short *data_len,
+	   unsigned short max_data_len, unsigned int *pos)
+{
+    unsigned int i = 0;
+    unsigned int num;
+
+    tokens += *pos;
+
+    for(i = 0; tokens[i]; i++) {
+	if (i >= max_data_len) {
+	    add_output_buf(ii, "Done %llu Message too long", id);
+	    return false;
+	}
+	if (!get_hnum(tokens[i], &num) || num > 255) {
+	    add_output_buf(ii, "Done %llu Invalid data item %d: %s", id, i,
+			   tokens[i]);
+	    return false;
+	}
+	data[i] = num;
+    }
+    *pos += i;
+    return true;
+}
+
+static void
+handle_command(struct ioinfo *ii, unsigned long long id, const char **tokens)
+{
+    unsigned int dev;
+    struct ipmi_addr addr;
+    unsigned char data[256];
+    unsigned int i, num;
+    struct ipmi_req req;
+    struct cmd_rsp_wait *crw;
+    struct ipmiinfo *ipi;
+    int rv;
+
+    memset(&addr, 0, sizeof(addr));
+    memset(&req, 0, sizeof(req));
+    req.addr = (unsigned char *) &addr;
+    req.msg.data = data;
+
+    if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
+	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
+	return;
+    }
+    ipi = &ii->ai->ipi[dev];
+    if (ipi->fd == -1) {
+	add_output_buf(ii, "Done %llu dev not open", id);
+	return;
+    }
+
+    i = 1;
+    if (!parse_addrs(ii, id, tokens, &addr, &req.addr_len, &i))
+	return;
+    if (!get_hnum(tokens[i], &num) || num >= 255) {
+	add_output_buf(ii, "Done %llu invalid netfn: %s", id, tokens[i]);
+	return;
+    }
+    i++;
+    req.msg.netfn = num;
+    if (!get_hnum(tokens[i], &num) || num >= 255) {
+	add_output_buf(ii, "Done %llu invalid cmd: %s", id, tokens[i]);
+	return;
+    }
+    req.msg.cmd = num;
+    i++;
+    if (!parse_data(ii, id, tokens,
+		    req.msg.data, &req.msg.data_len, sizeof(data), &i))
+	return;
+
+    req.msgid = ipi->next_iid++;
+    crw = gensio_os_funcs_zalloc(ii->ai->o, sizeof(*crw));
+    if (!crw) {
+	add_output_buf(ii, "Done %llu Out of memory", id);
+	return;
+    }
+    crw->expected_type = IPMI_RESPONSE_RECV_TYPE;
+    crw->msgid = req.msgid;
+    crw->id = id;
+
+    gensio_list_add_tail(&ipi->cmd_rsps, &crw->link);
+    rv = ioctl(ipi->fd, IPMICTL_SEND_COMMAND, &req);
+    if (rv) {
+	gensio_list_rm(&ipi->cmd_rsps, &crw->link);
+	add_output_buf(ii, "Done %llu Send error: %s", id, strerror(errno));
+	gensio_os_funcs_zfree(ii->ai->o, crw);
+    } else {
+	add_output_buf(ii, "Done %llu", id);
+    }
+}
+
 static void
 handle_quit(struct ioinfo *ii, unsigned long long id, const char **tokens)
 {
@@ -694,6 +983,7 @@ static struct {
     { "Close", handle_close },
     { "Load", handle_load },
     { "Unload", handle_unload },
+    { "Command", handle_command },
     {}
 };
 
@@ -906,6 +1196,7 @@ main(int argc, char *argv[])
 	ipi[i].fd = -1;
 	ipi[i].ai = &ai;
 	ipi[i].devnum = i;
+	gensio_list_init(&ipi[i].cmd_rsps);
 	ipi[i].close_waiter = gensio_os_funcs_alloc_waiter(ai.o);
 	if (!ipi[i].close_waiter) {
 	    fprintf(stderr, "Could not allocate close waiter, out of memory\n");
