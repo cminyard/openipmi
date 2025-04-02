@@ -131,7 +131,7 @@ struct accinfo {
     struct gensio_waiter *waiter;
     struct gensio_accepter *acc;
     struct gensio_list ios; /* List of ioinfo */
-    struct ipmiinfo *ipi; /* Array of IPMI devices. */
+    struct ipmiinfo *ipis; /* Array of IPMI devices. */
     bool shutting_down;
 };
 
@@ -456,14 +456,14 @@ start_ioinfo_close(struct ioinfo *ii)
     for (i = 0; i < NUM_IPMI_INFO; i++) {
 	struct gensio_link *l, *l2;
 
-	if (ai->ipi[i].fd == -1)
+	if (ai->ipis[i].fd == -1)
 	    continue;
-	gensio_list_for_each_safe(&ai->ipi[i].cmd_rsps, l, l2) {
+	gensio_list_for_each_safe(&ai->ipis[i].cmd_rsps, l, l2) {
 	    struct cmd_rsp_wait *crw =
 		gensio_container_of(l, struct cmd_rsp_wait, link);
 
 	    if (crw->ii == ii) {
-		gensio_list_rm(&ai->ipi[i].cmd_rsps, &crw->link);
+		gensio_list_rm(&ai->ipis[i].cmd_rsps, &crw->link);
 		gensio_os_funcs_zfree(ai->o, crw);
 	    }
 	}
@@ -707,7 +707,7 @@ ipmi_dev_cleared(struct gensio_iod *iod, void *cb_data)
 static void
 handle_open(struct ioinfo *ii, unsigned long long id, const char **tokens)
 {
-    struct ipmiinfo *ipi = ii->ai->ipi;
+    struct ipmiinfo *ipi = ii->ai->ipis;
     struct gensio_os_funcs *o = ii->ai->o;
     unsigned int dev;
     char devstr[128];
@@ -757,7 +757,7 @@ handle_open(struct ioinfo *ii, unsigned long long id, const char **tokens)
 static void
 handle_close(struct ioinfo *ii, unsigned long long id, const char **tokens)
 {
-    struct ipmiinfo *ipi = ii->ai->ipi;
+    struct ipmiinfo *ipi = ii->ai->ipis;
     unsigned int dev;
 
     if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
@@ -943,7 +943,7 @@ handle_command(struct ioinfo *ii, unsigned long long id, const char **tokens)
 	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
 	return;
     }
-    ipi = &ii->ai->ipi[dev];
+    ipi = &ii->ai->ipis[dev];
     if (ipi->fd == -1) {
 	add_output_buf(ii, "Done %llu dev not open", id);
 	return;
@@ -1198,7 +1198,7 @@ io_acc_event(struct gensio_accepter *accepter, void *user_data,
 int
 main(int argc, char *argv[])
 {
-    struct ipmiinfo ipi[NUM_IPMI_INFO];
+    struct ipmiinfo ipis[NUM_IPMI_INFO];
     struct accinfo ai;
     int rv;
     struct gensio_os_proc_data *proc_data = NULL;
@@ -1211,8 +1211,8 @@ main(int argc, char *argv[])
 
     memset(&ai, 0, sizeof(ai));
     gensio_list_init(&ai.ios);
-    memset(ipi, 0, sizeof(ipi));
-    ai.ipi = ipi;
+    memset(ipis, 0, sizeof(ipis));
+    ai.ipis = ipis;
 
     rv = gensio_alloc_os_funcs(GENSIO_DEF_WAKE_SIG, &ai.o, 0);
     if (rv) {
@@ -1230,12 +1230,12 @@ main(int argc, char *argv[])
     }
 
     for (i = 0; i < NUM_IPMI_INFO; i++) {
-	ipi[i].fd = -1;
-	ipi[i].ai = &ai;
-	ipi[i].devnum = i;
-	gensio_list_init(&ipi[i].cmd_rsps);
-	ipi[i].close_waiter = gensio_os_funcs_alloc_waiter(ai.o);
-	if (!ipi[i].close_waiter) {
+	ipis[i].fd = -1;
+	ipis[i].ai = &ai;
+	ipis[i].devnum = i;
+	gensio_list_init(&ipis[i].cmd_rsps);
+	ipis[i].close_waiter = gensio_os_funcs_alloc_waiter(ai.o);
+	if (!ipis[i].close_waiter) {
 	    fprintf(stderr, "Could not allocate close waiter, out of memory\n");
 	    goto out_err;
 	}
