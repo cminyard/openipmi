@@ -230,7 +230,7 @@ struct data_sg {
 
 static struct sendbuf *
 al_vsprintf_data(struct gensio_os_funcs *o,
-		 const struct data_sg *data, unsigned int dlen,
+		 const struct data_sg data[], unsigned int dlen,
 		 const char *str, va_list ap)
 {
     struct sendbuf *s;
@@ -242,9 +242,9 @@ al_vsprintf_data(struct gensio_os_funcs *o,
     va_copy(ap2, ap);
     len = vsnprintf(&dummy, 1, str, ap);
     for (i = 0; i < dlen; i++) {
-	if (data->header)
-	    len += 1 + strlen(data->header);
-	len += 3 * data->len;
+	if (data[i].header)
+	    len += 1 + strlen(data[i].header);
+	len += 3 * data[i].len;
     }
     s = gensio_os_funcs_zalloc(o, sizeof(struct sendbuf) + len + 2);
     if (!s)
@@ -255,10 +255,10 @@ al_vsprintf_data(struct gensio_os_funcs *o,
     len = vsnprintf((char *) s->data, len + 1, str, ap2);
     va_end(ap2);
     for (i = 0; i < dlen; i++) {
-	if (data->header)
-	    len += sprintf((char *) s->data + len, " %s", data->header);
-	for (j = 0; j < data->len; j++)
-	    len += sprintf((char *) s->data + len, " %2.2x", data->data[j]);
+	if (data[i].header)
+	    len += sprintf((char *) s->data + len, " %s", data[i].header);
+	for (j = 0; j < data[i].len; j++)
+	    len += sprintf((char *) s->data + len, " %2.2x", data[i].data[j]);
     }
     s->data[len] = '\n';
     s->data[len + 1] = '\0';
@@ -405,7 +405,7 @@ format_output_buf_msg(struct gensio_os_funcs *o,
     sg[0].data[sg[0].len++] = msg->cmd;
     sg[1].header = NULL;
     sg[1].len = msg->data_len;
-    sg[2].data = msg->data;
+    sg[1].data = msg->data;
 
     return al_vsprintf_data(o, sg, 2, str, ap);
 }
@@ -667,18 +667,18 @@ ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 	crw = find_cmd_rsp(ipi, &recv);
 	if (!crw)
 	    return;
-	gensio_os_funcs_zfree(ipi->ai->o, crw);
 	add_output_buf_msg(crw->ii, recv.addr, &recv.msg,
 			   "Response %lld %d", crw->id, ipi->devnum);
+	gensio_os_funcs_zfree(ipi->ai->o, crw);
 	break;
 
     case IPMI_RESPONSE_RESPONSE_TYPE:
 	crw = find_cmd_rsp(ipi, &recv);
 	if (!crw)
 	    return;
-	gensio_os_funcs_zfree(ipi->ai->o, crw);
 	add_output_buf_msg(crw->ii, recv.addr, &recv.msg,
 			   "ResponseRespnse %lld %d", crw->id, ipi->devnum);
+	gensio_os_funcs_zfree(ipi->ai->o, crw);
 	break;
 
     case IPMI_ASYNC_EVENT_RECV_TYPE:
@@ -752,6 +752,8 @@ handle_open(struct ioinfo *ii, unsigned long long id, const char **tokens)
     }
 
     add_output_buf(ii, "Done %llu", id);
+
+    o->set_read_handler(ipi[dev].iod, true);
 }
 
 static void
