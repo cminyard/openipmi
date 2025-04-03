@@ -15,8 +15,8 @@
  *     Load a driver
  *   Unload <id> msghandler|si|smbus|devintf
  *     Unoad a driver
- **   Cycle <id> msghandler|si|smbus|devintf <count>
- *     Cycle loading/unloading the given driver as fast as possible
+ **   Cycle <id> <count> <module> [<module> [<module> [...]]]
+ *     Cycle loading/unloading the given module(s) as fast as possible
  *   Command <id> <dev> <addr> <netfn> <cmd> <data>
  *     Send a command
  *   Response <id> <dev> <cid> <addr> <netfn> <cmd> <data>
@@ -512,7 +512,7 @@ get_hnum(const char *v, unsigned int *onum)
     return true;
 }
 
-static void
+static int
 run_cmd(struct ioinfo *ii, unsigned long long id, const char *loadcmdstr)
 {
     struct gensio_os_funcs *o = ii->ai->o;
@@ -525,7 +525,7 @@ run_cmd(struct ioinfo *ii, unsigned long long id, const char *loadcmdstr)
     if (rv) {
 	add_output_buf(ii, "Done %llu Unable to create gensio %s: %s", id,
 		       loadcmdstr, gensio_err_to_str(rv));
-	return;
+	return 0;
     }
 
     rv = gensio_open_s(io);
@@ -579,12 +579,14 @@ run_cmd(struct ioinfo *ii, unsigned long long id, const char *loadcmdstr)
 	buf[pos - 1] = '\0';
 	add_output_buf(ii, "Done %llu Error executing command %s: %s %s", id,
 		       loadcmdstr, ibuf, buf);
+	rv = 1;
     } else {
-	add_output_buf(ii, "Done %llu", id);
+	rv = 0;
     }
 
  out:
     gensio_free(io);
+    return rv;
 }
 
 static void
@@ -792,7 +794,8 @@ handle_load(struct ioinfo *ii, unsigned long long id, const char **tokens)
 
     snprintf(loadcmdstr, sizeof(loadcmdstr),
 	     "stdio(stderr-to-stdout),insmod ipmi_%s.ko", tokens[0]);
-    run_cmd(ii, id, loadcmdstr);
+    if (!run_cmd(ii, id, loadcmdstr))
+	add_output_buf(ii, "Done %llu", id);
 }
 
 static void
@@ -807,7 +810,44 @@ handle_unload(struct ioinfo *ii, unsigned long long id, const char **tokens)
 
     snprintf(loadcmdstr, sizeof(loadcmdstr),
 	     "stdio(stderr-to-stdout),rmmod ipmi_%s", tokens[0]);
-    run_cmd(ii, id, loadcmdstr);
+    if (!run_cmd(ii, id, loadcmdstr))
+	add_output_buf(ii, "Done %llu", id);
+}
+
+static void
+handle_cycle(struct ioinfo *ii, unsigned long long id, const char **tokens)
+{
+    char loadcmdstr[128];
+    unsigned int i, j, count;
+
+    if (!tokens[0]) {
+	add_output_buf(ii, "Done %llu No count given", id);
+	return;
+    }
+    if (!tokens[1]) {
+	add_output_buf(ii, "Done %llu No module given", id);
+	return;
+    }
+    if (!get_num(tokens[0], &count)) {
+	add_output_buf(ii, "Done %llu invalid count: %s", id, tokens[0]);
+	return;
+    }
+
+    for (i = 0; i < count; i++) {
+	for (j = 1; tokens[j]; j++) {
+	    snprintf(loadcmdstr, sizeof(loadcmdstr),
+		     "stdio(stderr-to-stdout),insmod ipmi_%s.ko", tokens[j]);
+	    if (run_cmd(ii, id, loadcmdstr))
+		return;
+	}
+	for (j--; j > 0; j--) {
+	    snprintf(loadcmdstr, sizeof(loadcmdstr),
+		     "stdio(stderr-to-stdout),rmmod ipmi_%s", tokens[j]);
+	    if (run_cmd(ii, id, loadcmdstr))
+		return;
+	}
+    }
+    add_output_buf(ii, "Done %llu", id);
 }
 
 static bool
@@ -1234,6 +1274,7 @@ static struct {
     { "Close", handle_close },
     { "Load", handle_load },
     { "Unload", handle_unload },
+    { "Cycle", handle_cycle },
     { "Command", handle_command },
     { "Response", handle_response },
     { "Register", handle_register },
