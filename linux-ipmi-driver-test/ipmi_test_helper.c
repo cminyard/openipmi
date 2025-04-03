@@ -12,32 +12,32 @@
  * built by yocto/distro, as we are testing a new kernel.
  *
  *   Load <id> msghandler|si|smbus|devintf
- *     Load a driver
+ *     Load a driver.
  *   Unload <id> msghandler|si|smbus|devintf
- *     Unoad a driver
- **   Cycle <id> <count> <module> [<module> [<module> [...]]]
- *     Cycle loading/unloading the given module(s) as fast as possible
+ *     Unoad a driver.
+ *   Cycle <id> <count> <module> [<module> [<module> [...]]]
+ *     Cycle loading/unloading the given module(s) as fast as possible.
  *   Command <id> <dev> <addr> <netfn> <cmd> <data>
- *     Send a command
+ *     Send a command.
  *   Response <id> <dev> <cid> <addr> <netfn> <cmd> <data>
  *     Send a response.  The <cid> should be the id that came in with the
  *     Command this is a response to.
  *   Broadcast <id> <dev> <addr> <netfn> <cmd> <data>
- *     Send a broadcast
+ *     Send a broadcast.
  *   Register <id> <dev> <netfn> <cmd> [<channels>]
- *     Register for command
+ *     Register for command.
  *   Unregister <id> <dev> <netfn> <cmd> [<channels>]
- *     Unregister for command
+ *     Unregister for command.
  *   EvEnable <id> <dev> <enable>
- *     Set event enable (1 or 0 for enable or disable)
+ *     Set event enable (1 or 0 for enable or disable).
  *   Open <id> <dev>
- *     Open IPMI device
+ *     Open IPMI device.
  *   Close <id> <dev>
- *     Close IPMI device
- **   Panic <id>
- *     Panic the system to test the panic logs
+ *     Close IPMI device.
+ *   Panic <id>
+ *     Panic the system to test the panic logs.
  *   Quit <id>
- *     Shut down the program
+ *     Shut down the program.
  *
  * <dev> is the particular IPMI device, 0-9.
  *
@@ -54,14 +54,17 @@
  *     A command from the BMC to handle.  Return the <cid> as <cid> in
  *     the Response.
  *   Event <dev> <data>
+ *     An event was received.
  *   Response <id> <dev> err <errstr> |  <addr> <netfn> <cmd> <data>
- *     Response to a sent command
+ *     Response to a sent command.
  *   ResponseResponse <id> <dev> [<err>]
- *     Response to a sent response
+ *     Response to a sent response.
  *   Closed <dev>
  *     An error occurred and <dev> was closed.
  *   Shutdown <id>
- *     The program was shut down
+ *     The program was shut down.
+ *   Panic <id>
+ *     The system is about to panic.
  *
  * Note that if the <id> is "-", it means the id couldn't be obtained from
  * the command.
@@ -783,6 +786,33 @@ handle_close(struct ioinfo *ii, unsigned long long id, const char **tokens)
 }
 
 static void
+handle_panic(struct ioinfo *iic, unsigned long long id, const char **tokens)
+{
+    struct accinfo *ai = iic->ai;
+    gensio_time timeout = {1, 0};
+    struct gensio_link *l;
+    int fd;
+
+    add_output_buf_all(ai, "Panic %lld\n", id);
+    gensio_acc_shutdown(ai->acc, shutdown_done, ai);
+    gensio_list_for_each(&ai->ios, l) {
+	struct ioinfo *ii = gensio_container_of(l, struct ioinfo, link);
+
+	gensio_close(ii->io, close_done, ii);
+    }
+    gensio_os_funcs_wait(ai->o, ai->waiter, 1, &timeout);
+    fd = open("/proc/sysrq-trigger", O_WRONLY);
+    if (fd == -1) {
+	fprintf(stderr, "Done %lld Unable to open /proc/sysrq-trigger: %s\n",
+		id, strerror(errno));
+	exit(1);
+    }
+    write(fd, "c\n", 2);
+    close(fd);
+    exit(0);
+}
+
+static void
 handle_load(struct ioinfo *ii, unsigned long long id, const char **tokens)
 {
     char loadcmdstr[128];
@@ -1273,6 +1303,7 @@ static struct {
     { "Open", handle_open },
     { "Close", handle_close },
     { "Load", handle_load },
+    { "Panic", handle_panic },
     { "Unload", handle_unload },
     { "Cycle", handle_cycle },
     { "Command", handle_command },
