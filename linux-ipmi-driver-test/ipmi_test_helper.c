@@ -19,16 +19,16 @@
  *     Cycle loading/unloading the given driver as fast as possible
  *   Command <id> <dev> <addr> <netfn> <cmd> <data>
  *     Send a command
- **  Response <id> <cid> <dev> <addr> <netfn> <cmd> <data>
+ *   Response <id> <dev> <cid> <addr> <netfn> <cmd> <data>
  *     Send a response.  The <cid> should be the id that came in with the
  *     Command this is a response to.
- **   Broadcast <id> <dev> <addr> <netfn> <cmd> <data>
+ *   Broadcast <id> <dev> <addr> <netfn> <cmd> <data>
  *     Send a broadcast
- **   Register <id> <dev> <netfn> <cmd> [<channels>]
+ *   Register <id> <dev> <netfn> <cmd> [<channels>]
  *     Register for command
- **   Unregister <id> <dev> <netfn> <cmd> [<channels>]
+ *   Unregister <id> <dev> <netfn> <cmd> [<channels>]
  *     Unregister for command
- **   EvEnable <id> <dev> <enable>
+ *   EvEnable <id> <dev> <enable>
  *     Set event enable (1 or 0 for enable or disable)
  *   Open <id> <dev>
  *     Open IPMI device
@@ -50,13 +50,13 @@
  *   Done <id> [<err>]
  *     Command with the given id has completed.  If <err> is present, there
  *     was an error.
- *   Command <id> <dev> err <errstr> | <addr> <netfn> <cmd> <data>
- *     A command from the BMC to handle.  Return the <id> as <cid> in
+ *   Command <cid> <dev> err <errstr> | <addr> <netfn> <cmd> <data>
+ *     A command from the BMC to handle.  Return the <cid> as <cid> in
  *     the Response.
  *   Event <dev> <data>
  *   Response <id> <dev> err <errstr> |  <addr> <netfn> <cmd> <data>
  *     Response to a sent command
- *   ResponseResponse <id> <dev> <addr> <netfn> <cmd> <data>
+ *   ResponseResponse <id> <dev> [<err>]
  *     Response to a sent response
  *   Closed <dev>
  *     An error occurred and <dev> was closed.
@@ -668,7 +668,7 @@ ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 	if (!crw)
 	    return;
 	add_output_buf_msg(crw->ii, recv.addr, &recv.msg,
-			   "Response %lld %d", crw->id, ipi->devnum);
+			   "Response %llu %d", crw->id, ipi->devnum);
 	gensio_os_funcs_zfree(ipi->ai->o, crw);
 	break;
 
@@ -676,8 +676,12 @@ ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 	crw = find_cmd_rsp(ipi, &recv);
 	if (!crw)
 	    return;
-	add_output_buf_msg(crw->ii, recv.addr, &recv.msg,
-			   "ResponseRespnse %lld %d", crw->id, ipi->devnum);
+	if (recv.msg.data[0])
+	    add_output_buf(crw->ii, "ResponseResponse %llu %d %2.2x",
+			   crw->id, ipi->devnum, recv.msg.data[0]);
+	else
+	    add_output_buf(crw->ii, "ResponseResponse %llu %d",
+			   crw->id, ipi->devnum);
 	gensio_os_funcs_zfree(ipi->ai->o, crw);
 	break;
 
@@ -687,8 +691,8 @@ ipmi_dev_read_ready(struct gensio_iod *iod, void *cb_data)
 
     case IPMI_CMD_RECV_TYPE:
 	add_output_buf_msg_all(ipi->ai, recv.addr, &recv.msg,
-			       "Command %lld %d\n",
-			       (unsigned long long) recv.msgid, ipi->devnum);
+			       "Command %lld %d",
+			       (long long) recv.msgid, ipi->devnum);
 	break;
 
     default:
@@ -822,7 +826,7 @@ parse_addrs(struct ioinfo *ii, unsigned long long id, const char **tokens,
 	    (struct ipmi_system_interface_addr *) addr;
 
 	a->addr_type = IPMI_SYSTEM_INTERFACE_ADDR_TYPE;
-	if (!get_hnum(tokens[1], &num) || num > 15) {
+	if (!get_hnum(tokens[1], &num) || num >= IPMI_NUM_CHANNELS) {
 	    add_output_buf(ii, "Done %llu Invalid channel for si address", id);
 	    return false;
 	}
@@ -838,7 +842,7 @@ parse_addrs(struct ioinfo *ii, unsigned long long id, const char **tokens,
 	struct ipmi_ipmb_addr *a = (struct ipmi_ipmb_addr *) addr;
 
 	a->addr_type = IPMI_IPMB_ADDR_TYPE;
-	if (!get_hnum(tokens[1], &num) || num > 15) {
+	if (!get_hnum(tokens[1], &num) || num >= IPMI_NUM_CHANNELS) {
 	    add_output_buf(ii, "Done %llu Invalid channel for ipmb address",
 			   id);
 	    return false;
@@ -860,7 +864,7 @@ parse_addrs(struct ioinfo *ii, unsigned long long id, const char **tokens,
 	struct ipmi_lan_addr *a = (struct ipmi_lan_addr *) addr;
 
 	a->addr_type = IPMI_LAN_ADDR_TYPE;
-	if (!get_hnum(tokens[1], &num) || num > 15) {
+	if (!get_hnum(tokens[1], &num) || num >= IPMI_NUM_CHANNELS) {
 	    add_output_buf(ii, "Done %llu Invalid channel for lan address",
 			   id);
 	    return false;
@@ -873,24 +877,30 @@ parse_addrs(struct ioinfo *ii, unsigned long long id, const char **tokens,
 	}
 	a->privilege = num;
 	if (!get_hnum(tokens[3], &num) || num > 255) {
+	    add_output_buf(ii, "Done %llu Invalid privilege for lan address",
+			   id);
+	    return false;
+	}
+	a->session_handle = num;
+	if (!get_hnum(tokens[4], &num) || num > 255) {
 	    add_output_buf(ii, "Done %llu Invalid rSWID for lan address",
 			   id);
 	    return false;
 	}
 	a->remote_SWID = num;
-	if (!get_hnum(tokens[4], &num) || num > 255) {
+	if (!get_hnum(tokens[5], &num) || num > 255) {
 	    add_output_buf(ii, "Done %llu Invalid lSWID for lan address",
 			   id);
 	    return false;
 	}
 	a->local_SWID = num;
-	if (!get_hnum(tokens[5], &num) || num > 3) {
+	if (!get_hnum(tokens[6], &num) || num > 3) {
 	    add_output_buf(ii, "Done %llu Invalid LUN for lan address", id);
 	    return false;
 	}
 	a->lun = num;
 	*addr_len = sizeof(*a);
-	*pos += 6;
+	*pos += 7;
     } else {
 	add_output_buf(ii, "Done %llu Unknown address type: %s", id, tokens[0]);
 	return false;
@@ -921,6 +931,7 @@ parse_data(struct ioinfo *ii, unsigned long long id, const char **tokens,
 	data[i] = num;
     }
     *pos += i;
+    *data_len = i;
     return true;
 }
 
@@ -993,6 +1004,207 @@ handle_command(struct ioinfo *ii, unsigned long long id, const char **tokens)
 }
 
 static void
+handle_response(struct ioinfo *ii, unsigned long long id, const char **tokens)
+{
+    unsigned int dev;
+    struct ipmi_addr addr;
+    unsigned char data[256];
+    unsigned int i, num;
+    long long cid;
+    struct ipmi_req req;
+    struct cmd_rsp_wait *crw;
+    struct ipmiinfo *ipi;
+    char *end;
+    int rv;
+
+    memset(&addr, 0, sizeof(addr));
+    memset(&req, 0, sizeof(req));
+    req.addr = (unsigned char *) &addr;
+    req.msg.data = data;
+
+    if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
+	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
+	return;
+    }
+    ipi = &ii->ai->ipis[dev];
+    if (ipi->fd == -1) {
+	add_output_buf(ii, "Done %llu dev not open", id);
+	return;
+    }
+
+    cid = strtoll(tokens[1], &end, 0);
+    if (tokens[1][0] == '\0' || *end != '\0') {
+	/* Not a valid number. */
+	add_output_buf(ii, "Done - Invalid cid");
+	return;
+    }
+
+    i = 2;
+    if (!parse_addrs(ii, id, tokens, &addr, &req.addr_len, &i))
+	return;
+    if (!get_hnum(tokens[i], &num) || num >= 255) {
+	add_output_buf(ii, "Done %llu invalid netfn: %s", id, tokens[i]);
+	return;
+    }
+    i++;
+    req.msg.netfn = num;
+    if (!get_hnum(tokens[i], &num) || num >= 255) {
+	add_output_buf(ii, "Done %llu invalid cmd: %s", id, tokens[i]);
+	return;
+    }
+    req.msg.cmd = num;
+    i++;
+    if (!parse_data(ii, id, tokens,
+		    req.msg.data, &req.msg.data_len, sizeof(data), &i))
+	return;
+
+    req.msgid = cid;
+    crw = gensio_os_funcs_zalloc(ii->ai->o, sizeof(*crw));
+    if (!crw) {
+	add_output_buf(ii, "Done %llu Out of memory", id);
+	return;
+    }
+    crw->expected_type = IPMI_RESPONSE_RESPONSE_TYPE;
+    crw->msgid = req.msgid;
+    crw->id = id;
+    crw->ii = ii;
+
+    gensio_list_add_tail(&ipi->cmd_rsps, &crw->link);
+    rv = ioctl(ipi->fd, IPMICTL_SEND_COMMAND, &req);
+    if (rv) {
+	gensio_list_rm(&ipi->cmd_rsps, &crw->link);
+	add_output_buf(ii, "Done %llu Send error: %s", id, strerror(errno));
+	gensio_os_funcs_zfree(ii->ai->o, crw);
+    } else {
+	add_output_buf(ii, "Done %llu", id);
+    }
+}
+
+static void
+handle_register(struct ioinfo *ii, unsigned long long id, const char **tokens)
+{
+    struct ipmiinfo *ipi;
+    unsigned int dev, num;
+    struct ipmi_cmdspec_chans cs;
+    int rv;
+
+    if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
+	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
+	return;
+    }
+    ipi = &ii->ai->ipis[dev];
+    if (ipi->fd == -1) {
+	add_output_buf(ii, "Done %llu dev not open", id);
+	return;
+    }
+
+    if (!get_num(tokens[1], &num) || num > 255) {
+	add_output_buf(ii, "Done %llu invalid netfn: %s", id, tokens[1]);
+	return;
+    }
+    cs.netfn = num;
+
+    if (!get_num(tokens[2], &num) || num > 255) {
+	add_output_buf(ii, "Done %llu invalid cmd: %s", id, tokens[2]);
+	return;
+    }
+    cs.cmd = num;
+
+    cs.chans = IPMI_CHAN_ALL;
+    if (tokens[3]) {
+	if (!get_hnum(tokens[2], &num)) {
+	    add_output_buf(ii, "Done %llu invalid channels: %s", id, tokens[3]);
+	    return;
+	}
+	cs.chans = num;
+    }
+
+    rv = ioctl(ipi->fd, IPMICTL_REGISTER_FOR_CMD_CHANS, &cs);
+    if (rv == -1) {
+	add_output_buf(ii, "Done %llu Error: %s", id, strerror(errno));
+	return;
+    }
+    add_output_buf(ii, "Done %llu", id);
+}
+
+static void
+handle_unregister(struct ioinfo *ii, unsigned long long id, const char **tokens)
+{
+    struct ipmiinfo *ipi;
+    unsigned int dev, num;
+    struct ipmi_cmdspec_chans cs;
+    int rv;
+
+    if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
+	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
+	return;
+    }
+    ipi = &ii->ai->ipis[dev];
+    if (ipi->fd == -1) {
+	add_output_buf(ii, "Done %llu dev not open", id);
+	return;
+    }
+
+    if (!get_num(tokens[1], &num) || num > 255) {
+	add_output_buf(ii, "Done %llu invalid netfn: %s", id, tokens[1]);
+	return;
+    }
+    cs.netfn = num;
+
+    if (!get_num(tokens[2], &num) || num > 255) {
+	add_output_buf(ii, "Done %llu invalid cmd: %s", id, tokens[2]);
+	return;
+    }
+    cs.cmd = num;
+
+    cs.chans = IPMI_CHAN_ALL;
+    if (tokens[3]) {
+	if (!get_hnum(tokens[2], &num)) {
+	    add_output_buf(ii, "Done %llu invalid channels: %s", id, tokens[3]);
+	    return;
+	}
+	cs.chans = num;
+    }
+
+    rv = ioctl(ipi->fd, IPMICTL_UNREGISTER_FOR_CMD_CHANS, &cs);
+    if (rv == -1) {
+	add_output_buf(ii, "Done %llu Error: %s", id, strerror(errno));
+	return;
+    }
+    add_output_buf(ii, "Done %llu", id);
+}
+
+static void
+handle_evenable(struct ioinfo *ii, unsigned long long id, const char **tokens)
+{
+    struct ipmiinfo *ipi;
+    unsigned int dev, enable;
+    int rv;
+
+    if (!get_num(tokens[0], &dev) || dev >= NUM_IPMI_INFO) {
+	add_output_buf(ii, "Done %llu invalid dev: %s", id, tokens[0]);
+	return;
+    }
+    ipi = &ii->ai->ipis[dev];
+    if (ipi->fd == -1) {
+	add_output_buf(ii, "Done %llu dev not open", id);
+	return;
+    }
+
+    if (!get_num(tokens[1], &enable)) {
+	add_output_buf(ii, "Done %llu invalid enable: %s", id, tokens[1]);
+	return;
+    }
+
+    rv = ioctl(ipi->fd, IPMICTL_SET_GETS_EVENTS_CMD, &enable);
+    if (rv == -1) {
+	add_output_buf(ii, "Done %llu Error: %s", id, strerror(errno));
+	return;
+    }
+    add_output_buf(ii, "Done %llu", id);
+}
+
+static void
 handle_quit(struct ioinfo *ii, unsigned long long id, const char **tokens)
 {
     struct accinfo *ai = ii->ai;
@@ -1023,6 +1235,10 @@ static struct {
     { "Load", handle_load },
     { "Unload", handle_unload },
     { "Command", handle_command },
+    { "Response", handle_response },
+    { "Register", handle_register },
+    { "Unregister", handle_unregister },
+    { "EvEnable", handle_evenable },
     {}
 };
 
@@ -1062,7 +1278,7 @@ handle_buf(struct ioinfo *ii)
 	    goto out;
 	}
     }
-    add_output_buf(ii, "Done %lld Unknown command: %s", id, argv[0]);
+    add_output_buf(ii, "Done %llu Unknown command: %s", id, argv[0]);
  out:
     gensio_argv_free(ii->ai->o, argv);
 }
