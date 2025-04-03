@@ -1,0 +1,14 @@
+
+git clone git://git.yoctoproject.org/poky
+cd poky
+git checkout scarthgap
+cd ..
+
+cd poky
+source oe-init-build-env
+
+cp ../../local.conf conf
+
+bitbake-layers add-layer ../../meta-ipmi-driver-test
+
+bitbake core-image-minimal
