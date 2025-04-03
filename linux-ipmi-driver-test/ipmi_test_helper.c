@@ -1,4 +1,10 @@
 /*
+ * Copyright 2020 Corey Minyard
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/*
  * A program to test the IPMI driver on Linux.
  *
  * This program will create a socket that will allow a user to execute

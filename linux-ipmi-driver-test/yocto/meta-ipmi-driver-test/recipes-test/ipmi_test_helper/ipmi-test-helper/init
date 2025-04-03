@@ -1,0 +1,52 @@
+#! /bin/sh
+set -e
+
+PIDFILE=/var/run/ipmi_test_helper.pid
+
+. /etc/init.d/functions
+
+# /etc/init.d/ipmi_test_helper.sh: start and stop the ipmi test helper daemon
+
+test -x /usr/bin/ipmi_test_helper || exit 0
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+case "$1" in
+  start)
+	echo "Starting ipmi test helper"
+	start-stop-daemon -b -S -p $PIDFILE -x /usr/bin/ipmi_test_helper tcp,2000
+	echo "done."
+	;;
+  stop)
+	echo -n "Stopping OpenBSD Secure Shell server: ipmi_test_helper"
+	start-stop-daemon -K -p $PIDFILE -x /usr/bin/ipmi_test_helper
+	echo "."
+	;;
+
+  reload|force-reload)
+	echo -n "Reloading OpenBSD Secure Shell server's configuration"
+	start-stop-daemon -K -p $PIDFILE -s 1 -x /usr/bin/ipmi_test_helper
+	echo "."
+	;;
+
+  restart)
+	echo -n "Restarting OpenBSD Secure Shell server: ipmi_test_helper"
+	start-stop-daemon -K -p $PIDFILE --oknodo -x /usr/bin/ipmi_test_helper
+	check_for_no_start
+	check_privsep_dir
+	sleep 2
+	start-stop-daemon -b -S -p $PIDFILE -x /usr/bin/ipmi_test_helper -- $SSHD_OPTS
+	echo "."
+	;;
+
+  status)
+	status /usr/bin/ipmi_test_helper
+	exit $?
+  ;;
+
+  *)
+	echo "Usage: /etc/init.d/ipmi_test_helper {start|stop|status|reload|force-reload|restart}"
+	exit 1
+esac
+
+exit 0
