@@ -2412,6 +2412,7 @@ static void ipmid_changed(ipmi_con_t   *ipmid,
     ipmi_sol_conn_t *sol = cb_data;
 
     ipmi_lock(sol->lock);
+    sol_get_connection(sol);
     if (err) {
 	ipmi_log(IPMI_LOG_SEVERE,
 		 "ipmi_sol.c(handle_active_payload_response): "
@@ -2420,12 +2421,12 @@ static void ipmid_changed(ipmi_con_t   *ipmid,
     }
 
     finish_activate_payload(sol);
-    ipmi_unlock(sol->lock);
+    sol_put_connection_unlock(sol);
     return;
 
  out_err:
     ipmi_sol_set_connection_state(sol, ipmi_sol_state_closed, err);
-    ipmi_unlock(sol->lock);
+    sol_put_connection_unlock(sol);
 }
 
 /*
