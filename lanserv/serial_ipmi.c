@@ -1211,6 +1211,7 @@ serserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
     char *endp;
     int err;
     unsigned int chan_num;
+    unsigned int offset = 0;
 
     ser = sys->alloc(sys, sizeof(*ser));
     if (!ser) {
@@ -1224,23 +1225,46 @@ serserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
 	goto out_err;
     }
     ser->channel.session_support = IPMI_CHANNEL_SESSION_LESS;
+    ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_TMODE;
     ser->channel.medium_type = IPMI_CHANNEL_MEDIUM_RS232;
-    if (strcmp(tok, "kcs") == 0) {
+    if (strncmp(tok, "kcs", 3) == 0) {
 	chan_num = 15;
 	ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_KCS;
-    } else if (strcmp(tok, "bt") == 0) {
+	ser->channel.medium_type = IPMI_CHANNEL_MEDIUM_SYS_INTF;
+	offset = 3;
+    } else if (strncmp(tok, "bt", 2) == 0) {
 	chan_num = 15;
 	ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_BT_v15;
-    } else if (strcmp(tok, "smic") == 0) {
+	ser->channel.medium_type = IPMI_CHANNEL_MEDIUM_SYS_INTF;
+	offset = 2;
+    } else if (strncmp(tok, "smic", 4) == 0) {
 	chan_num = 15;
 	ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_SMIC;
+	ser->channel.medium_type = IPMI_CHANNEL_MEDIUM_SYS_INTF;
+	offset = 4;
+    } else if (strncmp(tok, "ssif", 4) == 0) {
+	chan_num = 15;
+	ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_SMBus;
+	ser->channel.medium_type = IPMI_CHANNEL_MEDIUM_SMBUS_v2;
+	offset = 4;
     } else {
 	chan_num = strtoul(tok, &endp, 0);
 	if (*endp != '\0') {
 	    *errstr = "Channel not a valid number";
 	    goto out_err;
 	}
-	ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_TMODE;
+    }
+    if (offset && tok[offset] != '\0') {
+	if (tok[offset] == '-') {
+	    chan_num = strtoul(tok + offset + 1, &endp, 0);
+	    if (*endp != '\0') {
+		*errstr = "Channel not a valid number";
+		goto out_err;
+	    }
+	} else {
+	    *errstr = "Invalid channel number";
+	    goto out_err;
+	}
     }
 
     if (sys->chan_set[chan_num]) {
