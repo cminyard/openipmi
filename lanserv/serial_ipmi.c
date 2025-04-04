@@ -1242,11 +1242,6 @@ serserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
 	}
 	ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_TMODE;
     }
-    if (chan_num != 15) {
-	*errstr = "Only BMC channel (channel 15, or kcs/bt/smic) is"
-	    " supported for serial";
-	goto out_err;
-    }
 
     if (sys->chan_set[chan_num]) {
 	*errstr = "System channel already defined";
