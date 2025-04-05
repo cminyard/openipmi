@@ -892,12 +892,10 @@ ipmi_mc_enable(lmc_data_t *mc)
 	chan->oem.user_data = sys->info;
 	chan->mc = mc;
 
-	if (chan->medium_type == IPMI_CHANNEL_MEDIUM_8023_LAN)
-	    err = sys->lan_channel_init(sys->info, chan);
-	else if (chan->medium_type == IPMI_CHANNEL_MEDIUM_RS232 ||
-		 chan->medium_type == IPMI_CHANNEL_MEDIUM_SYS_INTF ||
-		 chan->medium_type == IPMI_CHANNEL_MEDIUM_SMBUS_v2)
+	if (chan->is_serial)
 	    err = sys->ser_channel_init(sys->info, chan);
+	else if (chan->medium_type == IPMI_CHANNEL_MEDIUM_8023_LAN)
+	    err = sys->lan_channel_init(sys->info, chan);
 	else if ((chan->medium_type == IPMI_CHANNEL_MEDIUM_IPMB) &&
 		((chan->channel_num != 0) || (chan->prim_ipmb_in_cfg_file)))
 	    err = sys->ipmb_channel_init(sys->info, chan);

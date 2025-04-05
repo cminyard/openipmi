@@ -1227,6 +1227,7 @@ serserv_read_config(char **tokptr, sys_data_t *sys, const char **errstr)
     ser->channel.session_support = IPMI_CHANNEL_SESSION_LESS;
     ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_TMODE;
     ser->channel.medium_type = IPMI_CHANNEL_MEDIUM_RS232;
+    ser->channel.is_serial = 1;
     if (strncmp(tok, "kcs", 3) == 0) {
 	chan_num = 15;
 	ser->channel.protocol_type = IPMI_CHANNEL_PROTOCOL_KCS;

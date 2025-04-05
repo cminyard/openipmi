@@ -292,6 +292,7 @@ struct channel_s
     unsigned int PEF_alerting : 1;
     unsigned int PEF_alerting_nonv : 1;
     unsigned int per_msg_auth : 1;
+    unsigned int is_serial : 1;
 
     /* We don't support user-level authentication disable, and access
        mode is always available and cannot be set. */
