@@ -106,6 +106,34 @@ handle_set_event_receiver(lmc_data_t    *mc,
 }
 
 static void
+handle_platform_event(lmc_data_t    *mc,
+		      msg_t         *msg,
+		      unsigned char *rdata,
+		      unsigned int  *rdata_len,
+		      void          *cb_data)
+{
+    unsigned char sel_data[13];
+
+    if (check_msg_length(msg, 8, rdata, rdata_len))
+	return;
+
+    sel_data[0] = 0;
+    sel_data[1] = 0;
+    sel_data[2] = 0;
+    sel_data[3] = 0;
+    sel_data[4] = msg->data[0];
+    sel_data[5] = msg->orig_channel->channel_num << 4;
+    sel_data[6] = msg->data[1];
+    sel_data[7] = msg->data[2];
+    sel_data[8] = msg->data[3];
+    sel_data[9] = msg->data[4];
+    sel_data[10] = msg->data[5];
+    sel_data[11] = msg->data[6];
+    sel_data[12] = msg->data[7];
+    mc_new_event(mc, 2, sel_data);
+}
+
+static void
 handle_get_device_sdr_info(lmc_data_t    *mc,
 			   msg_t         *msg,
 			   unsigned char *rdata,
@@ -1940,6 +1968,7 @@ handle_ipmi_get_pef_config_parms(lmc_data_t    *mc,
 cmd_handler_f sensor_event_netfn_handlers[256] = {
     [IPMI_GET_EVENT_RECEIVER_CMD] = handle_get_event_receiver,
     [IPMI_SET_EVENT_RECEIVER_CMD] = handle_set_event_receiver,
+    [IPMI_PLATFORM_EVENT_CMD] = handle_platform_event,
     [IPMI_GET_DEVICE_SDR_INFO_CMD] = handle_get_device_sdr_info,
     [IPMI_RESERVE_DEVICE_SDR_REPOSITORY_CMD] = handle_reserve_device_sdr_repository,
     [IPMI_GET_DEVICE_SDR_CMD] = handle_get_device_sdr,
