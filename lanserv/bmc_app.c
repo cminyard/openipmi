@@ -285,6 +285,7 @@ do_watchdog_reset(lmc_data_t *mc)
 	}
     }
     mc->watchdog_running = 1;
+    mc->sys->stop_timer(mc->watchdog_timer);
     mc->sys->start_timer(mc->watchdog_timer, &tv);
 }
 
