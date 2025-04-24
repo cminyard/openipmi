@@ -148,6 +148,7 @@ handle_get_chassis_capabilities(lmc_data_t    *mc,
     rdata[3] = mc->sys->bmc_ipmb;
     rdata[4] = mc->sys->bmc_ipmb;
     rdata[5] = mc->sys->bmc_ipmb;
+    *rdata_len = 6;
 }
 
 int
