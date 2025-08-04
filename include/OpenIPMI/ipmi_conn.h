@@ -432,6 +432,9 @@ struct ipmi_con_s
        in any event loop (before the fork) and there are no calls into
        the library.  After calling this you should call close. */
     void (*disable)(ipmi_con_t *ipmi);
+
+    /* Some broken BMCs use an invalid padding length of 16.  Warn once */
+    unsigned char paddingWarned;
 };
 
 #define IPMI_CONN_NAME(c) (c->name ? c->name : "")

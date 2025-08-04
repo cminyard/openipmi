@@ -219,9 +219,19 @@ aes_cbc_decrypt(ipmi_con_t    *ipmi,
     /* Now remove the padding */
     pad = p + outlen - 1;
     padlen = *pad;
-    if (padlen >= 16) {
+    /*
+     * This should be >= 16, but some broken BMCs use 16 bytes, handle
+     * by warning once but allowing.
+     */
+    if (padlen > 16) {
 	rv = EINVAL;
 	goto out_cleanup;
+    }
+    if (padlen == 16 && !ipmi->paddingWarned) {
+	ipmi_log(IPMI_LOG_DEBUG,
+		 "%sWarning: aes_cbs_decrypt found invalid padlen=16, continuing anyway",
+		 IPMI_CONN_NAME(ipmi));
+	ipmi->paddingWarned = 1;
     }
     outlen--;
     pad--;

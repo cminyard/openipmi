@@ -1008,6 +1008,7 @@ setup_domain(const char         *name,
     for (i=0; i<num_con; i++) {
 	int len1 = strlen(domain->name);
 	domain->conn[i] = ipmi[i];
+	domain->conn[i]->paddingWarned = 0;
 	for (j=0; j<MAX_IPMI_USED_CHANNELS; j++)
 	    domain->con_ipmb_addr[i][j] = 0x20;
 	domain->con_active[i] = 1;
