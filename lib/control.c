@@ -321,7 +321,7 @@ control_search_cmp(ipmi_entity_t  *entity,
     int                rv;
 
     rv = ipmi_control_get_id(control, id, 33);
-    if (rv) 
+    if (rv == 0)
 	return;
     if (strcmp(info->id_name, id) == 0) {
 	info->id = ipmi_control_convert_to_id(control);

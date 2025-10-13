@@ -433,7 +433,7 @@ sensor_search_cmp(ipmi_entity_t *entity, ipmi_sensor_t *sensor, void *cb_data)
     int                rv;
 
     rv = ipmi_sensor_get_id(sensor, id, 33);
-    if (rv) 
+    if (rv == 0)
 	return;
     if (strcmp(info->id_name, id) == 0) {
 	info->id = ipmi_sensor_convert_to_id(sensor);
