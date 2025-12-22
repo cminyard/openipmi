@@ -131,6 +131,9 @@ handle_platform_event(lmc_data_t    *mc,
     sel_data[11] = msg->data[6];
     sel_data[12] = msg->data[7];
     mc_new_event(mc, 2, sel_data);
+
+    rdata[0] = 0;
+    *rdata_len = 1;
 }
 
 static void
