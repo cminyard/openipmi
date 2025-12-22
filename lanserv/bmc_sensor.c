@@ -958,6 +958,7 @@ set_sensor_value(lmc_data_t    *mc,
     if (sensor->sensor_update_handler)
 	sensor->sensor_update_handler(mc, sensor);
 
+    sensor->data_ready = 1;
     check_thresholds(mc, sensor, gen_event);
 }
 
