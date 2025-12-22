@@ -69,11 +69,26 @@ Stop ipmi_sim, install the compiled SDRs:
 
   cp ipmisim1.bsdr my_statedir/ipmi_sim/ipmisim1/sdr.20.main
 
+then put a value into MBTemp.val:
+
+  cat 30 >MBTemp.val
+
 then restart ipmi_sim as above.  Now you have SDRs matching the sensors:
 
   cminyard@t430:~$ ipmitool -I lanplus -U ipmiusr -P test -p 9001 -H localhost sdr list
-  MBTemp           | 96 degrees C      | ok
-  SubTemp          | 0 degrees C       | ok
+  MBTemp           | 30 degrees C      | ok
+  SubTemp          | no reading        | ns
+
+Notice that SubTemp says "no reading" which means it doesn't have a
+value set.  You can add a poll to the sensor in ipmisim1.emu to get
+the value from a file.  Or you can set it directly in ipmi_sim:
+
+  sensor_set_value 0x30 0 1 50 0
+
+Then you will get:
+  cminyard@t430:~$ ipmitool -I lanplus -U ipmiusr -P test -p 9001 -H localhost sdr list
+  MBTemp           | 30 degrees C      | ok
+  SubTemp          | 50 degrees C      | ok
 
 Note that if you use IPMI commands to make any changes to the users,
 the users in the lan.conf file will no longer work, as the persistent
