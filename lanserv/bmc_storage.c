@@ -1284,7 +1284,7 @@ handle_delete_sdr(lmc_data_t    *mc,
 	}
     }
 
-    record_id = ipmi_get_uint16(rdata+2);
+    record_id = ipmi_get_uint16(msg->data+2);
 
     if (record_id == 0) {
 	entry = mc->main_sdrs.sdrs;
