@@ -127,7 +127,7 @@ handle_platform_event(lmc_data_t    *mc,
     if (is_from_sys_interface(msg))
 	msg_length = 8;
     else
-	msg_length = 7; /* Assume from IPMB. */
+	msg_length = 7; /* Assume from IPMB or LAN channel. */
 
     if (check_msg_length(msg, msg_length, rdata, rdata_len))
 	return;
@@ -152,12 +152,21 @@ handle_platform_event(lmc_data_t    *mc,
      * Rest of data is verbatim from the messages.
      */
     if (is_from_sys_interface(msg)) {
-	sel_data[4] = (1 << 8) | msg->data[0];
+	/*
+	 * Messages from the system interface must always be a SWID,
+	 * but we don't check that.
+	 */
+	sel_data[4] = msg->data[0];
 	sel_data[5] = 0;
 	for (i = 1; i < msg_length; i++)
 	    sel_data[i + 5] = msg->data[i];
     } else {
-	sel_data[4] = msg->saddr & 0x7f;
+	/*
+	 * IPMB messages should always have the low bit of saddr clear.
+	 * LAN messages can set a SWID or address in their source address,
+	 * so don't clear the low bit here.
+	 */
+	sel_data[4] = msg->saddr;
 	sel_data[5] = (msg->orig_channel->channel_num << 4) | (msg->slun & 0x3);
 	for (i = 0; i < msg_length; i++)
 	    sel_data[i + 6] = msg->data[i];
