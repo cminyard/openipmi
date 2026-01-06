@@ -388,6 +388,8 @@ void iterate_sdrs(lmc_data_t *mc,
 #define IPMI_SDR_PARTIAL_ADD_SDR_SUPPORTED		(1 << 2)
 #define IPMI_SDR_RESERVE_SDR_SUPPORTED			(1 << 1)
 #define IPMI_SDR_GET_SDR_ALLOC_INFO_SDR_SUPPORTED	(1 << 0)
+/* Includes update support bits (modal, non-modal) */
+#define IPMI_SDR_ALL_OPERATIONS_SUPPORTED		0x6f
 
 void picmg_led_set(lmc_data_t *mc, sensor_t *sensor);
 void set_sensor_bit(lmc_data_t *mc, sensor_t *sensor, unsigned char bit,

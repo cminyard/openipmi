@@ -1215,7 +1215,7 @@ ipmi_emu_add_mc(emu_data_t    *emu,
     mc->sel.time_offset = 0;
     mc->main_sdrs.time_offset = 0;
     mc->main_sdrs.next_entry = 1;
-    mc->main_sdrs.flags |= IPMI_SDR_RESERVE_SDR_SUPPORTED;
+    mc->main_sdrs.flags |= IPMI_SDR_ALL_OPERATIONS_SUPPORTED;
     for (i=0; i<4; i++) {
 	mc->device_sdrs[i].time_offset = 0;
 	mc->device_sdrs[i].next_entry = 1;
