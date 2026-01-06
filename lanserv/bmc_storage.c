@@ -134,6 +134,8 @@ handle_sel_time(const char *name, long val, void *cb_data)
 	mc->sel.last_add_time = val;
     else if (strcmp(name, "last_erase_time") == 0)
 	mc->sel.last_erase_time = val;
+    else if (strcmp(name, "time_offset") == 0)
+	mc->sel.time_offset = val;
     return ITER_PERSIST_CONTINUE;
 }
 
@@ -180,6 +182,10 @@ rewrite_sels(lmc_data_t *mc)
 	goto out_err;
 
     err = add_persist_int(p, mc->sel.last_erase_time, "last_erase_time");
+    if (err)
+	goto out_err;
+
+    err = add_persist_int(p, mc->sel.time_offset, "time_offset");
     if (err)
 	goto out_err;
 
@@ -663,6 +669,8 @@ handle_set_sel_time(lmc_data_t    *mc,
 
     rdata[0] = 0;
     *rdata_len = 1;
+
+    rewrite_sels(mc);
 }
 
 /*
