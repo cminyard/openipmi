@@ -5592,6 +5592,7 @@ ipmi_entity_find_id(ipmi_domain_id_t domain_id,
 		    ipmi_entity_id_t *id)
 {
     int rv;
+    ipmi_entity_id_t temp_id;
 
     id->domain_id = domain_id;
     id->entity_id = entity_id;
@@ -5599,7 +5600,12 @@ ipmi_entity_find_id(ipmi_domain_id_t domain_id,
     id->channel = channel;
     id->address = slave_address;
 
-    rv = ipmi_entity_pointer_cb_noseq(*id, get_seq, id);
+    rv = ipmi_entity_pointer_cb_noseq(temp_id, get_seq, id);
+
+    if (!rv) {
+	*id = temp_id;
+    }
+
     return rv;
 }
 
