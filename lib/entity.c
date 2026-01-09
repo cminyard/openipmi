@@ -5592,14 +5592,15 @@ ipmi_entity_find_id(ipmi_domain_id_t domain_id,
 		    ipmi_entity_id_t *id)
 {
     int rv;
+    ipmi_entity_id_t tmp_id;
 
-    id->domain_id = domain_id;
-    id->entity_id = entity_id;
-    id->entity_instance = entity_instance;
-    id->channel = channel;
-    id->address = slave_address;
+    tmp_id.domain_id = domain_id;
+    tmp_id.entity_id = entity_id;
+    tmp_id.entity_instance = entity_instance;
+    tmp_id.channel = channel;
+    tmp_id.address = slave_address;
 
-    rv = ipmi_entity_pointer_cb_noseq(*id, get_seq, id);
+    rv = ipmi_entity_pointer_cb_noseq(tmp_id, get_seq, id);
     return rv;
 }
 
