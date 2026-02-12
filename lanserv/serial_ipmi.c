@@ -745,7 +745,10 @@ tm_setup(serserv_data_t *si)
 #define   VM_CAPABILITIES_NMI	0x08
 #define   VM_CAPABILITIES_ATTN	0x10
 #define   VM_CAPABILITIES_GRACEFUL_SHUTDOWN 0x20
+#define   VM_CAPABILITIES_ENABLE 0x40
 #define VM_CMD_GRACEFUL_SHUTDOWN 0x09
+#define VM_CMD_DISABLE           0x0a
+#define VM_CMD_ENABLE            0x0b
 
 struct vm_data {
     unsigned char recv_msg[IPMI_SIM_MAX_MSG_LENGTH + 4];
@@ -982,6 +985,14 @@ vm_hw_op(channel_t *chan, unsigned int op)
 
     case HW_OP_CHECK_POWER:
 	return si->connected;
+	break;
+
+    case HW_OP_DISABLE:
+	vm_add_char(VM_CMD_DISABLE, c, &len);
+	break;
+
+    case HW_OP_ENABLE:
+	vm_add_char(VM_CMD_ENABLE, c, &len);
 	break;
 
     default:

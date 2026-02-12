@@ -316,6 +316,14 @@ handle_chassis_control(lmc_data_t    *mc,
 	rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
 	*rdata_len = 1;
 	return;
+
+    case 14: /* hack for disabling the BMC interface */
+	mc->channels[15]->hw_op(mc->channels[15], HW_OP_DISABLE);
+	return;
+
+    case 15: /* hack for enabling the BMC interface */
+	mc->channels[15]->hw_op(mc->channels[15], HW_OP_ENABLE);
+	return;
     }
 }
 
