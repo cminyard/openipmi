@@ -1150,6 +1150,7 @@ handle_get_channel_payload_support(lmc_data_t    *mc,
 				   void          *cb_data)
 {
     channel_t *channel;
+    unsigned char channel_num;
 
     if (msg->len < 1) {
 	rdata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
@@ -1157,7 +1158,25 @@ handle_get_channel_payload_support(lmc_data_t    *mc,
 	return;
     }
 
-    channel = mc->channels[msg->data[0] & 0xf];
+    channel_num = msg->data[0] & 0xf;
+
+	// current channel
+	if (channel_num == IPMI_SELF_CHANNEL) {
+		channel = msg->orig_channel;
+	} else if (channel_num >= IPMI_MAX_CHANNELS) { // invalid channel
+        rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+        *rdata_len = 1;
+        return;
+    } else { // specified channel
+		channel = mc->channels[channel_num];
+	}
+
+    // check if channel is valid
+    if (!channel) {
+        rdata[0] = IPMI_INVALID_DATA_FIELD_CC;
+        *rdata_len = 1;
+        return;
+    }
 
     rdata[0] = 0;
     rdata[1] = ((1 << 1) |
