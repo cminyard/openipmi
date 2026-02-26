@@ -2667,7 +2667,7 @@ handle_open_session_payload(lanserv_data_t *lan, msg_t *msg)
     memset(data, 0, sizeof(data));
     data[0] = msg->data[0];
     data[1] = 0;
-    data[2] = priv;
+    data[2] = max_priv;
     ipmi_set_uint32(data+4, session->rem_sid);
     ipmi_set_uint32(data+8, session->sid);
     data[12] = 0;
