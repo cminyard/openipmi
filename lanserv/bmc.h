@@ -276,6 +276,15 @@ struct lmc_data_s
     (IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE & (mc)->msg_flags)
     unsigned char msg_flags;
 
+    /*
+     * This bitmask is used for automated tests to simulate the
+     * receive queue and/or event queue getting stuff full of messages
+     * and continuously return that they are present.
+     */
+#define IPMI_MC_FLAG_STUCK_EVENTS 1
+#define IPMI_MC_FLAG_STUCK_RECV_Q 2
+    unsigned char flag_stuck_err;
+
 #define IPMI_MC_RCV_MSG_QUEUE_INT_BIT	0
 #define IPMI_MC_EVBUF_FULL_INT_BIT	1
 #define IPMI_MC_EVENT_MSG_BUF_BIT	2

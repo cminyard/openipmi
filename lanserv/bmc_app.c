@@ -908,8 +908,10 @@ handle_read_event_msg_buffer(lmc_data_t    *mc,
     rdata[0] = 0;
     memcpy(rdata + 1, mc->evq, 16);
     *rdata_len = 17;
-    mc->ev_in_q = 0;
-    mc->msg_flags &= ~IPMI_MC_MSG_FLAG_EVT_BUF_FULL;
+    if (!(mc->flag_stuck_err & IPMI_MC_FLAG_STUCK_EVENTS)) {
+	mc->ev_in_q = 0;
+	mc->msg_flags &= ~IPMI_MC_MSG_FLAG_EVT_BUF_FULL;
+    }
     if (chan->set_atn)
 	chan->set_atn(chan, !!mc->msg_flags,
 		      IPMI_MC_EVBUF_FULL_INT_ENABLED(mc));
@@ -1034,6 +1036,7 @@ handle_get_msg(lmc_data_t    *mc,
 	       void          *cb_data)
 {
     msg_t *qmsg;
+    int do_free = 1;
 
     if (!mc->sys) {
 	rdata[0] = IPMI_INVALID_CMD_CC;
@@ -1041,13 +1044,19 @@ handle_get_msg(lmc_data_t    *mc,
 	return;
     }
 
-    qmsg = get_next_msg_q(&mc->recv_q);
+    if (mc->flag_stuck_err & IPMI_MC_FLAG_STUCK_RECV_Q) {
+	qmsg = mc->recv_q.head;
+	do_free = 0;
+    } else {
+	qmsg = get_next_msg_q(&mc->recv_q);
+	if (qmsg)
+	    mc->recv_q_len--;
+    }
     if (!qmsg) {
 	rdata[0] = 0x80;
 	*rdata_len = 1;
 	return;
     }
-    mc->recv_q_len--;
 
     if (qmsg->len + 2 > *rdata_len) {
 	ipmi_msg_free(mc->sys, qmsg);
@@ -1064,7 +1073,8 @@ handle_get_msg(lmc_data_t    *mc,
      */
     memcpy(rdata + 2, qmsg->data, qmsg->len);
     *rdata_len = qmsg->len + 2;
-    ipmi_msg_free(mc->sys, qmsg);
+    if (do_free)
+	ipmi_msg_free(mc->sys, qmsg);
 }
 
 static void

@@ -95,7 +95,7 @@ set_power(lmc_data_t *mc, int pval)
 	if (extcmd_setvals(mc->sys, &val, mc->chassis_control_prog,
 			   &chassis_prog[CHASSIS_CONTROL_POWER], NULL, 1)) 
 	    rv = EINVAL;
-    } else if (HW_OP_CAN_POWER(mc->channels[15])) {
+    } else if (mc->channels[15] && HW_OP_CAN_POWER(mc->channels[15])) {
 	if (pval)
 	    mc->channels[15]->hw_op(mc->channels[15], HW_OP_POWERON);
 	else
@@ -170,7 +170,7 @@ ipmi_mc_is_power_on(lmc_data_t *mc)
 	return val;
     } else if (mc->startcmd.vmpid) {
 	return 1;
-    } else if (HW_OP_CAN_POWER(mc->channels[15])) {
+    } else if (mc->channels[15] && HW_OP_CAN_POWER(mc->channels[15])) {
 	int rv = mc->channels[15]->hw_op(mc->channels[15], HW_OP_CHECK_POWER);
 	return rv > 0;
     }
@@ -208,6 +208,7 @@ handle_chassis_control(lmc_data_t    *mc,
 		       void          *cb_data)
 {
     int rv;
+    unsigned int val;
 
     if (msg->len < 1) {
 	rdata[0] = IPMI_REQUEST_DATA_LENGTH_INVALID_CC;
@@ -277,7 +278,7 @@ handle_chassis_control(lmc_data_t    *mc,
 		*rdata_len = 1;
 		return;
 	    }
-	} else if (HW_OP_CAN_RESET(mc->channels[15]))
+	} else if (mc->channels[15] && HW_OP_CAN_RESET(mc->channels[15]))
 	    mc->channels[15]->hw_op(mc->channels[15], HW_OP_RESET);
 	else
 	    goto no_support;
@@ -305,7 +306,8 @@ handle_chassis_control(lmc_data_t    *mc,
 		*rdata_len = 1;
 		return;
 	    }
-	} else if (HW_OP_CAN_GRACEFUL_SHUTDOWN(mc->channels[15]))
+	} else if (mc->channels[15]
+		   && HW_OP_CAN_GRACEFUL_SHUTDOWN(mc->channels[15]))
 	    mc->channels[15]->hw_op(mc->channels[15], HW_OP_GRACEFUL_SHUTDOWN);
 	else
 	    goto no_support;
@@ -317,12 +319,28 @@ handle_chassis_control(lmc_data_t    *mc,
 	*rdata_len = 1;
 	return;
 
-    case 14: /* hack for disabling the BMC interface */
-	mc->channels[15]->hw_op(mc->channels[15], HW_OP_DISABLE);
+    case 14: /* hack for causing a continuous stream of events/messages. */
+	val = msg->data[0] >> 4;
+	mc->flag_stuck_err = val;
+	if (val & IPMI_MC_FLAG_STUCK_EVENTS) {
+	    mc->ev_in_q = 1;
+	    mc->msg_flags |= IPMI_MC_MSG_FLAG_EVT_BUF_FULL;
+	}
+	if (val & IPMI_MC_FLAG_STUCK_RECV_Q) {
+	    msg_t *nmsg = ipmi_msg_alloc(mc->sys, 2);
+
+	    if (nmsg)
+		add_to_msg_q(&mc->recv_q, nmsg);
+	    mc->msg_flags |= IPMI_MC_MSG_FLAG_RCV_MSG_QUEUE;
+	}
 	return;
 
-    case 15: /* hack for enabling the BMC interface */
-	mc->channels[15]->hw_op(mc->channels[15], HW_OP_ENABLE);
+    case 15: /* hack for disabling/enabling the BMC interface */
+	val = msg->data[0] >> 4;
+	if (val & 1)
+	    mc->channels[15]->hw_op(mc->channels[15], HW_OP_DISABLE);
+	else
+	    mc->channels[15]->hw_op(mc->channels[15], HW_OP_ENABLE);
 	return;
     }
 }

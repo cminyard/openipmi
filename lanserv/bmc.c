@@ -322,7 +322,7 @@ mc_tick(lmc_data_t *mc)
     /* Now check the receive queue for things to time out. */
     msg = msg_q_first(&mc->recv_q);
     prev = NULL;
-    while (msg) {
+    while (msg && !(mc->flag_stuck_err & IPMI_MC_FLAG_STUCK_RECV_Q)) {
 	next = msg->next;
 	if (msg->time_to_live == 0) {
 	    if (prev)
