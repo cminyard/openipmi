@@ -1710,8 +1710,13 @@ main(int argc, const char *argv[])
 	}
     }
 
-    if (command_file)
-	read_command_file(&stdio_console.out, data.emu, command_file);
+	if (command_file) {
+		err = read_command_file(&stdio_console.out, data.emu, command_file);
+		if (err) {
+			fprintf(stderr, "Error processing command file %s: %d\n", command_file, err);
+			goto out;
+		}
+	}
 
     if (command_string)
 	ipmi_emu_cmd(&stdio_console.out, data.emu, command_string);
