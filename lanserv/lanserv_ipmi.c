@@ -2913,6 +2913,10 @@ decrypt_message(lanserv_data_t *lan, session_t *session, msg_t *msg)
 	    return EINVAL;
 	}
 	return 0;
+    } else if (session->conf == 0) {
+	lan->sys->log(lan->sys, INVALID_MSG, msg,
+		      "Message failure: Encrypted msg on unencrypted session");
+	return EINVAL;
     }
 
     return session->confh->decrypt(lan, session, msg);
